@@ -1,0 +1,108 @@
+/* why-apto-premium.css */
+
+/* Grain texture – luxury analog depth */
+.grain-texture {
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Floating orbs – slower, cinematic luxury movement */
+.orb-container .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.22;
+  animation: drift 45s infinite ease-in-out;
+  will-change: transform, opacity;
+}
+
+.orb-1 {
+  width: 380px;
+  height: 380px;
+  top: 12%;
+  left: -10%;
+  background: radial-gradient(circle at 40% 30%, #fbbf24, transparent 70%);
+  animation-delay: 0s;
+  animation-duration: 68s;
+}
+
+.orb-2 {
+  width: 420px;
+  height: 420px;
+  bottom: 8%;
+  right: -15%;
+  background: radial-gradient(circle at 60% 70%, #6366f1, transparent 70%);
+  animation-delay: -18s;
+  animation-duration: 82s;
+}
+
+.orb-3 {
+  width: 320px;
+  height: 320px;
+  top: 55%;
+  left: 18%;
+  background: radial-gradient(circle at 30% 60%, #fcd34d, transparent 70%);
+  animation-delay: -32s;
+  animation-duration: 74s;
+}
+
+@keyframes drift {
+  0%, 100%   { transform: translate(0, 0) scale(1); opacity: 0.18; }
+  25%        { transform: translate(90px, -120px) scale(1.12); opacity: 0.38; }
+  50%        { transform: translate(-60px, 140px) scale(0.95); opacity: 0.28; }
+  75%        { transform: translate(120px, -80px) scale(1.08); opacity: 0.35; }
+}
+
+/* Glassmorphism pulsing badge */
+.glass-badge::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: linear-gradient(45deg, #fbbf24, #6366f1, #fbbf24);
+  opacity: 0.4;
+  filter: blur(12px);
+  z-index: -1;
+  animation: border-glow 6s infinite ease-in-out;
+}
+
+.pulse-glow {
+  animation: badge-pulse 4.8s infinite ease-in-out;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50%      { transform: scale(1.06); filter: brightness(1.18); }
+}
+
+@keyframes border-glow {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.65; }
+}
+
+/* Shine / micro-gloss effect on cards */
+.shine-effect {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 50%;
+  height: 300%;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.7) 50%, transparent 60%);
+  transform: skewX(-20deg);
+  transition: all 1.2s ease;
+  pointer-events: none;
+}
+
+.group:hover .shine-effect {
+  top: -50%;
+  left: 120%;
+}
+
+/* Optional: very subtle mouse light accent */
+.mouse-light {
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(251, 191, 36, 0.08) 0%, transparent 40%);
+}
+
+/* If you want mouse follow — add this JS snippet in useEffect or layout */

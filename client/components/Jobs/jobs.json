@@ -1,0 +1,653 @@
+{
+  "jobs": [
+    {
+      "id": "asj-720",
+      "title": "Digital Marketing Executive",
+      "department": "Marketing",
+      "jobType": "Permanent",
+      "experience": "2-6 years",
+      "location": "Delhi, DL",
+      "salary": "₹5-9 LPA",
+      "description": "Seeking a creative Digital Marketing Executive to manage online campaigns, SEO, social media, and content strategies to drive brand growth and lead generation.",
+      "responsibilities": [
+        "Develop and execute digital marketing campaigns",
+        "Manage social media channels and content creation",
+        "Optimize SEO and PPC campaigns",
+        "Analyze performance metrics and reports",
+        "Collaborate with content and sales teams",
+        "Handle email marketing and lead nurturing"
+      ],
+      "requirements": [
+        "2-6 years in digital marketing",
+        "Proficiency in Google Analytics, Ads, and social tools",
+        "Strong content writing and analytical skills",
+        "Bachelor's degree in Marketing or related field",
+        "Knowledge of current digital trends"
+      ],
+      "benefits": [
+        "Competitive salary + incentives",
+        "Health insurance",
+        "Flexible timings",
+        "Performance bonuses",
+        "Learning opportunities"
+      ],
+      "postedDate": "2026-01-20",
+      "deadline": "2026-03-25",
+      "featured": true,
+      "companyName": "Pulse Digital Solutions",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "careers@pulsedigital.in",
+      "contactPhone": "+91-98765-43210",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Delhi,DL,India"
+    },
+    {
+      "id": "asj-715",
+      "title": "Business Development Manager",
+      "department": "Sales",
+      "jobType": "Permanent",
+      "experience": "4-8 years",
+      "location": "Mumbai, MH",
+      "salary": "₹10-16 LPA",
+      "description": "Dynamic Business Development Manager needed to identify new business opportunities, build client relationships, and drive revenue growth in a competitive market.",
+      "responsibilities": [
+        "Identify and pursue new business leads",
+        "Negotiate contracts and close deals",
+        "Build and maintain client relationships",
+        "Prepare business proposals and presentations",
+        "Achieve sales targets consistently",
+        "Market research and competitor analysis"
+      ],
+      "requirements": [
+        "4-8 years in business development/sales",
+        "Excellent negotiation and communication skills",
+        "Experience in B2B sales preferred",
+        "Bachelor's/Master's degree",
+        "Target-oriented mindset"
+      ],
+      "benefits": [
+        "High commission structure",
+        "Health and life insurance",
+        "Travel allowances",
+        "Career progression",
+        "Team outings"
+      ],
+      "postedDate": "2026-02-01",
+      "deadline": "2026-03-30",
+      "featured": true,
+      "companyName": "GrowthAxis Ventures",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "hr@growthaxis.co.in",
+      "contactPhone": "+91-91234-56789",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Mumbai,MH,India"
+    },
+    {
+      "id": "asj-710",
+      "title": "Financial Analyst",
+      "department": "Finance",
+      "jobType": "Permanent",
+      "experience": "3-7 years",
+      "location": "Gurgaon, HR",
+      "salary": "₹7-12 LPA",
+      "description": "Join our Finance team as a Financial Analyst to support budgeting, forecasting, financial modeling, and strategic decision-making.",
+      "responsibilities": [
+        "Prepare financial reports and analysis",
+        "Conduct budgeting and variance analysis",
+        "Financial modeling and forecasting",
+        "Support management with insights",
+        "Compliance and audit support",
+        "Data analysis using Excel and tools"
+      ],
+      "requirements": [
+        "3-7 years in finance/analysis",
+        "CA/CFA/MBA Finance preferred",
+        "Advanced Excel and financial modeling skills",
+        "Strong analytical abilities",
+        "Attention to detail"
+      ],
+      "benefits": [
+        "Competitive pay + bonus",
+        "Health coverage",
+        "Professional certifications support",
+        "Work-life balance",
+        "Growth opportunities"
+      ],
+      "postedDate": "2026-01-25",
+      "deadline": "2026-03-15",
+      "featured": false,
+      "companyName": "Finastra Advisors",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "jobs@finastra.in",
+      "contactPhone": "+91-99887-76655",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Gurgaon,HR,India"
+    },
+    {
+      "id": "asj-705",
+      "title": "UI/UX Designer",
+      "department": "Technology",
+      "jobType": "Permanent",
+      "experience": "4-9 years",
+      "location": "Noida, UP",
+      "salary": "₹9-15 LPA",
+      "description": "Creative UI/UX Designer required to design intuitive user interfaces and experiences for web and mobile applications in a fast-paced tech environment.",
+      "responsibilities": [
+        "Create wireframes, prototypes, and mockups",
+        "Conduct user research and testing",
+        "Collaborate with developers and product teams",
+        "Ensure responsive and accessible designs",
+        "Maintain design systems and guidelines"
+      ],
+      "requirements": [
+        "4-9 years in UI/UX design",
+        "Proficiency in Figma, Adobe XD, Sketch",
+        "Portfolio showcasing strong work",
+        "Understanding of user-centered design",
+        "Bachelor's in Design or related"
+      ],
+      "benefits": [
+        "Attractive salary package",
+        "Health insurance",
+        "Creative freedom",
+        "Flexible hours",
+        "Learning stipend"
+      ],
+      "postedDate": "2026-02-05",
+      "deadline": "2026-04-05",
+      "featured": true,
+      "companyName": "Creative Nexus Labs",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "design@creativnexus.in",
+      "contactPhone": "+91-97654-32109",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Noida,UP,India"
+    },
+    {
+      "id": "asj-700",
+      "title": "Operations Manager",
+      "department": "Operations",
+      "jobType": "Permanent",
+      "experience": "6-12 years",
+      "location": "Jaipur, RJ",
+      "salary": "₹8-14 LPA",
+      "description": "Experienced Operations Manager to oversee daily operations, improve processes, manage teams, and ensure efficiency in a growing organization.",
+      "responsibilities": [
+        "Manage operational workflows and teams",
+        "Process optimization and cost control",
+        "Vendor and supply chain coordination",
+        "Performance monitoring and reporting",
+        "Implement SOPs and quality controls"
+      ],
+      "requirements": [
+        "6-12 years in operations management",
+        "Strong leadership and problem-solving",
+        "MBA or relevant degree",
+        "Experience in retail/manufacturing preferred",
+        "Analytical mindset"
+      ],
+      "benefits": [
+        "Competitive salary + incentives",
+        "Health and family insurance",
+        "Performance rewards",
+        "Housing assistance possible",
+        "Professional growth"
+      ],
+      "postedDate": "2026-01-15",
+      "deadline": "2026-03-10",
+      "featured": false,
+      "companyName": "Efficiency Pro India",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "ops@efficiencypro.in",
+      "contactPhone": "+91-78901-23456",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Jaipur,RJ,India"
+    },
+    {
+      "id": "asj-695",
+      "title": "Customer Success Manager",
+      "department": "Customer Support",
+      "jobType": "Permanent",
+      "experience": "3-7 years",
+      "location": "Delhi, DL",
+      "salary": "₹6-11 LPA",
+      "description": "Customer Success Manager to build strong client relationships, ensure satisfaction, reduce churn, and drive product adoption.",
+      "responsibilities": [
+        "Onboard and train new clients",
+        "Monitor account health and usage",
+        "Handle escalations and feedback",
+        "Upsell and renewal management",
+        "Prepare success metrics reports"
+      ],
+      "requirements": [
+        "3-7 years in customer success/account management",
+        "Excellent communication skills",
+        "CRM proficiency (e.g., Salesforce)",
+        "Problem-solving orientation",
+        "Bachelor's degree"
+      ],
+      "benefits": [
+        "Salary + bonuses",
+        "Health benefits",
+        "Remote/hybrid options",
+        "Career development",
+        "Team events"
+      ],
+      "postedDate": "2026-02-08",
+      "deadline": "2026-03-31",
+      "featured": true,
+      "companyName": "ClientFirst Technologies",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "success@clientfirst.in",
+      "contactPhone": "+91-96543-21098",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Delhi,DL,India"
+    },
+    {
+      "id": "asj-688",
+      "title": "Data Analyst",
+      "department": "Analytics",
+      "jobType": "Permanent",
+      "experience": "2-6 years",
+      "location": "Gurgaon, HR",
+      "salary": "₹6-12 LPA",
+      "description": "Data Analyst to extract insights from data, create dashboards, and support business decisions with analytics.",
+      "responsibilities": [
+        "Data cleaning and analysis",
+        "Build reports and visualizations",
+        "SQL querying and data modeling",
+        "Collaborate with stakeholders",
+        "Identify trends and recommendations"
+      ],
+      "requirements": [
+        "2-6 years in data analysis",
+        "Proficiency in SQL, Excel, Power BI/Tableau",
+        "Strong analytical skills",
+        "Bachelor's in Stats/Computer Science",
+        "Python knowledge a plus"
+      ],
+      "benefits": [
+        "Competitive package",
+        "Health insurance",
+        "Upskilling programs",
+        "Flexible work",
+        "Bonuses"
+      ],
+      "postedDate": "2026-01-30",
+      "deadline": "2026-03-20",
+      "featured": false,
+      "companyName": "DataVibe Analytics",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "analytics@datavibe.in",
+      "contactPhone": "+91-93456-78901",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Gurgaon,HR,India"
+    },
+    {
+      "id": "asj-684",
+      "title": "Recruitment Specialist",
+      "department": "Human Resources",
+      "jobType": "Permanent",
+      "experience": "4-8 years",
+      "location": "Mumbai, MH",
+      "salary": "₹7-12 LPA",
+      "description": "Recruitment Specialist to manage end-to-end hiring, source talent, and support talent acquisition strategies.",
+      "responsibilities": [
+        "Source and screen candidates",
+        "Conduct interviews and coordinate hiring",
+        "Manage job portals and LinkedIn",
+        "Build talent pipelines",
+        "Ensure diversity hiring"
+      ],
+      "requirements": [
+        "4-8 years in recruitment",
+        "Strong sourcing and interviewing skills",
+        "Experience with ATS tools",
+        "Good network in industry",
+        "HR degree preferred"
+      ],
+      "benefits": [
+        "Salary + incentives",
+        "Health coverage",
+        "Leave benefits",
+        "Professional development",
+        "Hybrid model"
+      ],
+      "postedDate": "2026-02-03",
+      "deadline": "2026-04-01",
+      "featured": false,
+      "companyName": "TalentForge HR",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "talent@talentforge.in",
+      "contactPhone": "+91-90123-45678",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Mumbai,MH,India"
+    },
+    {
+      "id": "asj-680",
+      "title": "Project Coordinator",
+      "department": "Project Management",
+      "jobType": "Permanent",
+      "experience": "3-7 years",
+      "location": "Noida, UP",
+      "salary": "₹5.5-10 LPA",
+      "description": "Project Coordinator to assist in planning, executing, and monitoring projects, ensuring timely delivery and stakeholder communication.",
+      "responsibilities": [
+        "Coordinate project activities",
+        "Track timelines and budgets",
+        "Prepare status reports",
+        "Facilitate team meetings",
+        "Risk identification and mitigation"
+      ],
+      "requirements": [
+        "3-7 years in project coordination",
+        "PMP certification a plus",
+        "MS Project/Asana proficiency",
+        "Strong organizational skills",
+        "Bachelor's degree"
+      ],
+      "benefits": [
+        "Competitive salary",
+        "Health insurance",
+        "Bonuses",
+        "Work-life balance",
+        "Training support"
+      ],
+      "postedDate": "2026-01-28",
+      "deadline": "2026-03-18",
+      "featured": false,
+      "companyName": "BuildSmart Projects",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "projects@buildsmart.in",
+      "contactPhone": "+91-87654-32109",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Noida,UP,India"
+    },
+    {
+      "id": "asj-675",
+      "title": "Content Writer",
+      "department": "Marketing",
+      "jobType": "Permanent",
+      "experience": "2-5 years",
+      "location": "Jaipur, RJ",
+      "salary": "₹4-8 LPA",
+      "description": "Creative Content Writer to produce engaging content for websites, blogs, social media, and marketing materials.",
+      "responsibilities": [
+        "Write SEO-optimized content",
+        "Create blog posts and articles",
+        "Manage content calendar",
+        "Edit and proofread materials",
+        "Research industry topics"
+      ],
+      "requirements": [
+        "2-5 years in content writing",
+        "Excellent English writing skills",
+        "SEO knowledge",
+        "Portfolio of work",
+        "Bachelor's in English/Journalism"
+      ],
+      "benefits": [
+        "Salary + incentives",
+        "Flexible timings",
+        "Health benefits",
+        "Creative environment",
+        "Growth path"
+      ],
+      "postedDate": "2026-02-06",
+      "deadline": "2026-03-28",
+      "featured": true,
+      "companyName": "StoryForge Media",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "content@storyforge.in",
+      "contactPhone": "+91-92345-67890",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Jaipur,RJ,India"
+    },
+    {
+      "id": "asj-712",
+      "title": "Inside Sales Representative",
+      "department": "Sales",
+      "jobType": "Permanent",
+      "experience": "1-5 years",
+      "location": "Mumbai, MH",
+      "salary": "₹4-6 LPA",
+      "description": "We are looking for a dynamic Inside Sales Representative to join our growing sales team. You will be responsible for identifying and engaging potential clients, managing sales pipelines, and closing deals to meet or exceed targets.",
+      "responsibilities": [
+        "Conduct outbound calls and emails to potential clients",
+        "Qualify leads and develop relationships with prospects",
+        "Present products/services effectively to prospects",
+        "Manage customer relationships and follow-ups",
+        "Meet and exceed monthly sales targets",
+        "Maintain accurate records in CRM systems",
+        "Collaborate with marketing team on lead generation"
+      ],
+      "requirements": [
+        "1-5 years of sales experience",
+        "Excellent communication and negotiation skills",
+        "Self-motivated and target-driven",
+        "Proficiency in MS Office and CRM tools",
+        "Bachelor's degree in any discipline",
+        "Strong problem-solving abilities"
+      ],
+      "benefits": [
+        "Competitive salary + performance bonus",
+        "Health insurance",
+        "Professional development opportunities",
+        "Flexible work arrangements",
+        "Career growth opportunities"
+      ],
+      "postedDate": "2025-02-04",
+      "deadline": "2025-03-15",
+      "featured": true,
+      "companyName": "ConnectPro Sales",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "sales@connectpro.in",
+      "contactPhone": "+91-95432-10987",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Mumbai,MH,India"
+    },
+    {
+      "id": "asj-709",
+      "title": "Contracts & QS",
+      "department": "Legal & Compliance",
+      "jobType": "Permanent",
+      "experience": "5-10 years",
+      "location": "Mumbai, MH",
+      "salary": "₹8-12 LPA",
+      "description": "Join our Legal team as a Contracts & Quality Surveyor professional. This role involves managing contractual agreements, quality assurance, and ensuring compliance with organizational standards.",
+      "responsibilities": [
+        "Draft and review contracts and legal agreements",
+        "Manage contract negotiations with vendors and clients",
+        "Ensure quality standards across all projects",
+        "Monitor contract compliance and deadlines",
+        "Prepare contract documentation and reports",
+        "Liaison between legal team and operations",
+        "Identify and mitigate legal risks"
+      ],
+      "requirements": [
+        "5-10 years of experience in contracts or QS",
+        "Law degree or relevant qualification",
+        "Expert knowledge of contract law",
+        "Strong analytical and negotiation skills",
+        "Excellent attention to detail",
+        "Project management experience"
+      ],
+      "benefits": [
+        "Competitive salary + performance bonus",
+        "Health and life insurance",
+        "Retirement benefits",
+        "Professional development allowance",
+        "Paid leave and holidays"
+      ],
+      "postedDate": "2025-02-02",
+      "deadline": "2025-03-10",
+      "featured": true,
+      "companyName": "Compliance Experts LLP",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "legal@complianceexperts.in",
+      "contactPhone": "+91-89012-34567",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Mumbai,MH,India"
+    },
+    {
+      "id": "asj-696",
+      "title": "Senior Factory Automation Engineer",
+      "department": "Engineering",
+      "jobType": "Permanent",
+      "experience": "10-15 years",
+      "location": "Pune, MH",
+      "salary": "₹12-18 LPA",
+      "description": "We are seeking an experienced Senior Factory Automation Engineer to lead automation projects and drive operational excellence. You will work with cutting-edge technology and contribute to process improvements.",
+      "responsibilities": [
+        "Design and implement factory automation systems",
+        "Lead automation projects from conception to implementation",
+        "Troubleshoot and optimize automated processes",
+        "Mentor junior engineers and oversee team",
+        "Conduct feasibility studies and ROI analysis",
+        "Collaborate with operations and maintenance teams",
+        "Stay updated with latest automation technologies"
+      ],
+      "requirements": [
+        "10-15 years of factory automation experience",
+        "Bachelor's degree in Mechanical/Electrical Engineering",
+        "Expert knowledge of PLC, SCADA, and automation tools",
+        "Strong project management skills",
+        "Leadership and communication abilities",
+        "Experience with Six Sigma or lean principles"
+      ],
+      "benefits": [
+        "Premium salary package",
+        "Performance-based incentives",
+        "Comprehensive health coverage",
+        "Stock options / ESOP",
+        "Executive education support",
+        "Flexible work arrangements"
+      ],
+      "postedDate": "2025-01-28",
+      "deadline": "2025-03-05",
+      "featured": false,
+      "companyName": "AutoTech Innovations",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "engineering@autotech.in",
+      "contactPhone": "+91-81234-56789",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Pune,MH,India"
+    },
+    {
+      "id": "asj-690",
+      "title": "Admin Executive",
+      "department": "Administration",
+      "jobType": "Permanent",
+      "experience": "5-10 years",
+      "location": "Surendranagar, GJ",
+      "salary": "₹3.5-5.5 LPA",
+      "description": "We are looking for an organized and efficient Admin Executive to manage administrative operations, coordinate with departments, and ensure smooth office functioning.",
+      "responsibilities": [
+        "Manage day-to-day administrative operations",
+        "Coordinate with various departments",
+        "Maintain office supplies and inventory",
+        "Organize meetings and maintain records",
+        "Handle employee onboarding and documentation",
+        "Manage vendor relationships and contracts",
+        "Ensure compliance with company policies"
+      ],
+      "requirements": [
+        "5-10 years of administrative experience",
+        "Bachelor's degree in any discipline",
+        "Excellent organizational and communication skills",
+        "Proficiency in MS Office and ERP systems",
+        "Attention to detail and multitasking ability",
+        "Customer service orientation"
+      ],
+      "benefits": [
+        "Competitive salary",
+        "Health insurance",
+        "Performance bonus",
+        "Training and development",
+        "Casual work environment",
+        "Leave benefits"
+      ],
+      "postedDate": "2025-02-01",
+      "deadline": "2025-02-28",
+      "featured": false,
+      "companyName": "SupportCore Admin",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "admin@supportcore.in",
+      "contactPhone": "+91-98765-12345",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Surendranagar,GJ,India"
+    },
+    {
+      "id": "asj-685",
+      "title": "Senior Software Developer",
+      "department": "Technology",
+      "jobType": "Permanent",
+      "experience": "7-12 years",
+      "location": "Bangalore, KA",
+      "salary": "₹15-22 LPA",
+      "description": "Seeking a Senior Software Developer to architect and develop scalable software solutions. Lead technical initiatives and mentor development team members.",
+      "responsibilities": [
+        "Design and develop high-quality software solutions",
+        "Lead code reviews and maintain coding standards",
+        "Architect technical solutions for complex problems",
+        "Mentor junior developers",
+        "Collaborate with product and UX teams",
+        "Participate in system design discussions",
+        "Ensure application performance and security"
+      ],
+      "requirements": [
+        "7-12 years of software development experience",
+        "Strong knowledge of modern programming languages",
+        "Experience with cloud platforms (AWS/Azure/GCP)",
+        "System design and architecture skills",
+        "Leadership and communication abilities",
+        "Experience with agile methodologies"
+      ],
+      "benefits": [
+        "Premium salary package",
+        "Stock options",
+        "Health and wellness programs",
+        "Career development support",
+        "Flexible work policy",
+        "Modern tech stack"
+      ],
+      "postedDate": "2025-02-03",
+      "deadline": "2025-03-20",
+      "featured": true,
+      "companyName": "InnoTech Bangalore",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "tech@innotech.in",
+      "contactPhone": "+91-93456-78901",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Bangalore,KA,India"
+    },
+    {
+      "id": "asj-681",
+      "title": "HR Manager",
+      "department": "Human Resources",
+      "jobType": "Permanent",
+      "experience": "6-10 years",
+      "location": "Delhi, DL",
+      "salary": "₹7-10 LPA",
+      "description": "We are looking for an experienced HR Manager to lead human resources initiatives, manage talent acquisition, and drive organizational development.",
+      "responsibilities": [
+        "Oversee recruitment and talent acquisition",
+        "Manage employee onboarding and training programs",
+        "Handle employee relations and grievances",
+        "Develop HR policies and procedures",
+        "Conduct performance reviews and appraisals",
+        "Lead organizational development initiatives",
+        "Ensure compliance with labor laws"
+      ],
+      "requirements": [
+        "6-10 years of HR experience",
+        "Bachelor's degree in HR or related field",
+        "Strong knowledge of labor laws",
+        "Excellent interpersonal and communication skills",
+        "HRIS software proficiency",
+        "Leadership and strategic thinking abilities"
+      ],
+      "benefits": [
+        "Competitive salary package",
+        "Performance bonus",
+        "Health insurance for self and family",
+        "Professional development budget",
+        "Flexible work arrangement",
+        "Leave and holiday benefits"
+      ],
+      "postedDate": "2025-01-30",
+      "deadline": "2025-03-12",
+      "featured": false,
+      "companyName": "PeopleFirst HR Solutions",
+      "companyLogo": "https://img.freepik.com/premium-vector/creative-elegant-abstract-minimalistic-logo-design-vector-any-brand-company_1253202-137644.jpg?semt=ais_wordcount_boost&w=740&q=80",
+      "contactEmail": "hr@peoplefirst.in",
+      "contactPhone": "+91-87654-32109",
+      "mapDirections": "https://www.google.com/maps/dir/?api=1&destination=Delhi,DL,India"
+    }
+  ]
+}

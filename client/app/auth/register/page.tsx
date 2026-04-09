@@ -1,0 +1,8 @@
+import SignUpForm from '@/components/Login/SignUpForm'
+import React from 'react'
+
+const page = () => {
+  return <SignUpForm/>
+}
+
+export default page

@@ -1,0 +1,14 @@
+Create migration
+npx sequelize-cli migration:generate --name create-users
+
+Run migrations
+npx sequelize-cli db:migrate
+
+
+Undo last migration
+npx sequelize-cli db:migrate:undo
+
+(Seed Data)
+
+npx sequelize-cli seed:generate --name demo-admin
+npx sequelize-cli db:seed:all

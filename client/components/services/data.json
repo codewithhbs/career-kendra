@@ -1,0 +1,76 @@
+{
+  "company": "Career Kendra",
+  "services": [
+    {
+      "id": 1,
+      "title": "RPO",
+      "slug": "rpo",
+      "shortDescription": "Tailored Recruitment Process Outsourcing to streamline hiring and reduce time-to-hire.",
+      "fullDescription": "We specialize in delivering tailored Recruitment Process Outsourcing (RPO) services that align seamlessly with your organization's unique hiring needs. Our expert team takes a proactive approach, managing your recruitment process from planning to execution with precision and efficiency...",
+      "image": "https://i.ibb.co/qY17vm2s/image.png",
+      "keywords": ["RPO", "Recruitment Process Outsourcing", "hiring solutions", "talent acquisition", "recruitment outsourcing"]
+    },
+    {
+      "id": 2,
+      "title": "Permanent Staffing",
+      "slug": "permanent-staffing",
+      "shortDescription": "Connecting organizations with top-tier permanent talent for long-term success and cultural fit.",
+      "fullDescription": "We understand that the foundation of any successful organization lies in its permanent workforce. Our Permanent Staffing service is designed to connect you with top-tier talent that aligns with your company's values and goals...",
+      "image": "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      "keywords": ["permanent staffing", "full-time recruitment", "executive placement", "long-term hiring", "talent sourcing"]
+    },
+    {
+      "id": 3,
+      "title": "Executive Search / CXO Hiring",
+      "slug": "executive-search",
+      "shortDescription": "Identifying and securing visionary C-level leaders across IT, BFSI, Pharma, Manufacturing & more.",
+      "fullDescription": "We understand that the right leadership is pivotal to driving organizational success. Our Executive Search and CXO Hiring service is meticulously crafted to identify and secure top-tier talent across diverse industry verticals...",
+      "image": "https://i.ibb.co/KxPdb7bs/image.png",
+      "keywords": ["executive search", "CXO hiring", "C-level recruitment", "leadership hiring", "board level talent"]
+    },
+    {
+      "id": 4,
+      "title": "Project / Contract Staffing",
+      "slug": "contract-staffing",
+      "shortDescription": "Flexible, skilled talent for projects — on-demand expertise without long-term commitment.",
+      "fullDescription": "We understand that every project demands a unique blend of talent, precision, and agility. Our Project and Contract Staffing services are designed to provide your business with the flexibility and expertise needed...",
+      "image": "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      "keywords": ["contract staffing", "project staffing", "temporary staffing", "freelance talent", "on-demand workforce"]
+    },
+    {
+      "id": 5,
+      "title": "Payroll Services",
+      "slug": "payroll-management",
+      "shortDescription": "End-to-end payroll, compliance, variable pay & legal documentation — accurate and stress-free.",
+      "fullDescription": "We offer comprehensive Payroll Management services tailored to meet your business's unique needs. Our solutions go beyond mere number crunching; we provide end-to-end support...",
+      "image": "https://i.ibb.co/35VK1VX2/image.png",
+      "keywords": ["payroll services", "payroll management", "salary processing", "compliance payroll", "employee payroll"]
+    },
+    {
+      "id": 6,
+      "title": "Training & Development",
+      "slug": "training-development",
+      "shortDescription": "Customized training programs to upskill teams, boost productivity, and drive long-term performance.",
+      "fullDescription": "We understand that the key to business success lies in a well-trained, highly skilled workforce. Our Training & Development services are designed to unlock your team's full potential...",
+      "image": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+      "keywords": ["training development", "employee training", "skill development", "corporate training", "learning programs"]
+    },
+    {
+      "id": 7,
+      "title": "Manpower Supply",
+      "slug": "manpower-supply",
+      "shortDescription": "Reliable, skilled manpower solutions especially tailored for construction and large-scale projects.",
+      "fullDescription": "We specialize in providing top-tier manpower and labor solutions tailored specifically for the construction industry. Whether you need skilled workers for a large-scale project...",
+      "image": "https://images.pexels.com/photos/1591060/pexels-photo-1591060.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      "keywords": ["manpower supply", "labor supply", "construction manpower", "workforce solutions", "skilled labor"]
+    }
+  ],
+  "meta": {
+    "lastUpdated": "2026-02-04",
+    "totalServices": 7,
+    "seo": {
+      "title": "Career Kendra – Expert Recruitment, Staffing & HR Services",
+      "description": "Explore Career Kendra's full range of HR services: RPO, Permanent Staffing, Executive Search, Contract Staffing, Payroll, Training, and Manpower Supply."
+    }
+  }
+}

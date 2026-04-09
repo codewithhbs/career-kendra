@@ -1,0 +1,90 @@
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===============================
+# Logs
+# ===============================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===============================
+# Env files (IMPORTANT)
+# ===============================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ===============================
+# Node
+# ===============================
+node_modules/
+**/node_modules/
+
+# ===============================
+# Next.js (admin)
+# ===============================
+admin/.next/
+admin/out/
+admin/.turbo/
+admin/.vercel/
+
+# ===============================
+# React/Vite (client)
+# ===============================
+client/dist/
+client/.vite/
+client/.vercel/
+
+# ===============================
+# Server (Express/Node)
+# ===============================
+server/dist/
+server/build/
+server/.vercel/
+
+# ===============================
+# Cache
+# ===============================
+.cache/
+.nyc_output/
+coverage/
+*.tsbuildinfo
+
+# ===============================
+# Package manager lockfiles (choose ONE)
+# ===============================
+# If using npm:
+# pnpm-lock.yaml
+# yarn.lock
+
+# If using pnpm:
+# package-lock.json
+# yarn.lock
+
+# If using yarn:
+# package-lock.json
+# pnpm-lock.yaml
+
+# ===============================
+# Misc
+# ===============================
+*.pem
+*.key
+*.crt
+
+tmp/
+temp/

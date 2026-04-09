@@ -1,0 +1,33 @@
+{
+  "brandLogos": [
+    { "id": 1, "src": "https://www.aptohr.com/1.jpg" },
+    { "id": 2, "src": "https://www.aptohr.com/2.jpg" },
+    { "id": 3, "src": "https://www.aptohr.com/3.jpg" },
+    { "id": 4, "src": "https://www.aptohr.com/4.jpg" },
+    { "id": 5, "src": "https://www.aptohr.com/5.jpg" },
+    { "id": 6, "src": "https://www.aptohr.com/6.jpg" },
+    { "id": 7, "src": "https://www.aptohr.com/7.jpg" },
+    { "id": 8, "src": "https://www.aptohr.com/8.jpg" },
+    { "id": 9, "src": "https://www.aptohr.com/9.jpg" },
+    { "id": 10, "src": "https://www.aptohr.com/10.jpg" },
+    { "id": 11, "src": "https://www.aptohr.com/11.jpg" },
+    { "id": 12, "src": "https://www.aptohr.com/12.jpg" },
+    { "id": 13, "src": "https://www.aptohr.com/13.jpg" },
+    { "id": 14, "src": "https://www.aptohr.com/14.jpg" },
+    { "id": 15, "src": "https://www.aptohr.com/15.jpg" },
+    { "id": 16, "src": "https://www.aptohr.com/16.jpg" },
+    { "id": 17, "src": "https://www.aptohr.com/17.jpg" },
+    { "id": 18, "src": "https://www.aptohr.com/18.jpg" },
+    { "id": 19, "src": "https://www.aptohr.com/19.jpg" },
+    { "id": 20, "src": "https://www.aptohr.com/20.jpg" },
+    { "id": 21, "src": "https://www.aptohr.com/21.jpg" },
+    { "id": 22, "src": "https://www.aptohr.com/22.jpg" },
+    { "id": 23, "src": "https://www.aptohr.com/23.jpg" },
+    { "id": 24, "src": "https://www.aptohr.com/24.jpg" },
+    { "id": 25, "src": "https://www.aptohr.com/25.jpg" },
+    { "id": 26, "src": "https://www.aptohr.com/26.jpg" },
+    { "id": 27, "src": "https://www.aptohr.com/27.jpg" },
+    { "id": 28, "src": "https://www.aptohr.com/28.jpg" },
+    { "id": 29, "src": "https://www.aptohr.com/29.jpg" }
+  ]
+}

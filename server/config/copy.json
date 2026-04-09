@@ -1,0 +1,31 @@
+
+
+
+{
+  "development": {
+    "username": "root",
+    "password": "",
+    "database": "u905431022_apto",
+    "host": "localhost",
+    "dialect": "mysql",
+    "logging": false
+  },
+  "test": {
+    "username": "u905431022_apto",
+    "password": "Apto@#123",
+    "database": "u905431022_apto",
+    "host": "82.25.121.158",
+    "dialect": "mysql",
+      "logging": false
+
+  },
+  "production": {
+    "username": "u905431022_apto_db",
+    "password": "Apto@#123",
+    "database": "u905431022_apto_db",
+    "host": "82.25.121.158",
+    "dialect": "mysql",
+    "logging": false
+
+  }
+}
