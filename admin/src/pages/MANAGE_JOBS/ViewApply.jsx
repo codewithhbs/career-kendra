@@ -338,7 +338,7 @@ const ViewApply = () => {
                         <div className="flex gap-3">
                           {/* View PDF Button */}
                           <a
-                            href={`http://localhost:9012${doc.filePath}`}
+                            href={`https://api.careerkendra.com${doc.filePath}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white py-3 rounded-xl text-sm font-medium transition"
