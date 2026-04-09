@@ -18,6 +18,8 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://localhost:5173",
+      "https://careerkendra.com",
+      "https://www.careerkendra.com",
 
     ],
     credentials: true,
