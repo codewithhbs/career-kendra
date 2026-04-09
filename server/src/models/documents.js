@@ -29,14 +29,18 @@ module.exports = (sequelize, DataTypes) => {
             uploadedBy: {
                 type: DataTypes.INTEGER,
             },
+        },
+        {
+            tableName: "jobapplicationdocuments", // optional but best
+            freezeTableName: true,
         }
     );
 
     JobApplicationDocument.associate = (models) => {
-       JobApplicationDocument.belongsTo(models.JobApplication, {
-  foreignKey: "applicationId",
-  as: "application",
-});
+        JobApplicationDocument.belongsTo(models.JobApplication, {
+            foreignKey: "applicationId",
+            as: "application",
+        });
         JobApplicationDocument.belongsTo(models.User, {
             foreignKey: "uploadedBy",
             as: "uploader",
