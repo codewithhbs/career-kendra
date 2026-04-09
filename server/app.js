@@ -20,6 +20,8 @@ app.use(
       "http://localhost:5173",
       "https://careerkendra.com",
       "https://www.careerkendra.com",
+      "https://www.admin.careerkendra.com",
+      "https://admin.careerkendra.com",
 
     ],
     credentials: true,
