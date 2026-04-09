@@ -16,10 +16,10 @@
     "logging": false
   },
   "production": {
-    "username": "root",
-    "password": "",
-    "database": "career_kendra",
-    "host": "localhost",
+    "username": "u905431022_careerkendra",
+    "password": "2zK7GOJ!2:Y",
+    "database": "u905431022_careerkendra",
+    "host": "82.25.121.158",
     "dialect": "mysql",
     "logging": false
   }
