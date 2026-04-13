@@ -39,6 +39,27 @@ const jobShape = {
 
   isFeatured: z.boolean().default(false),
   expiryDate: z.coerce.date().optional(),
+
+  // ✅ Working Days
+  workingDays: z.array(z.string()).optional().default([]),
+
+  // ✅ Job Timing
+  jobTiming: z.string().optional(),
+
+  // ✅ Gender
+  gender: z.enum(["male", "female", "other", "any"]).default("any"),
+
+  // ✅ Incentive Checkbox
+  isIncentive: z.boolean().default(false),
+
+  // ✅ Screening Questions
+  screeningQuestions: z.array(
+    z.object({
+      question: z.string().min(5, "Question must be at least 5 characters"),
+      type: z.enum(["boolean"]).default("boolean"),
+      options: z.array(z.string()).min(2, "At least 2 options required")
+    })
+  ).optional().default([]),
 };
 
 const jobBaseSchema = z

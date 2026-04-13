@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import api from '../../utils/api';
-import Swal from 'sweetalert2';
-import JoditEditor from 'jodit-react';
+import React, { useEffect, useState, useRef } from "react";
+import api from "../../utils/api";
+import Swal from "sweetalert2";
+import JoditEditor from "jodit-react";
 import {
   Calendar,
   Mail,
@@ -16,9 +16,9 @@ import {
   Eye,
   ThumbsUp,
   ThumbsDown,
-  FileText
-} from 'lucide-react';
-import { useParams } from 'react-router-dom';
+  FileText,
+} from "lucide-react";
+import { useParams } from "react-router-dom";
 
 const ViewApply = () => {
   const { id } = useParams();
@@ -26,19 +26,31 @@ const ViewApply = () => {
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showOfferModal, setShowOfferModal] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailBody, setEmailBody] = useState('');
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
   const [offerEmailsSent, setOfferEmailsSent] = useState(0);
 
   // Document Verification States
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionReason, setRejectionReason] = useState("");
   const [verifyingDocId, setVerifyingDocId] = useState(null);
 
   const editor = useRef(null);
   const fileInputRef = useRef(null);
+
+  const parsedAnswers = (() => {
+    try {
+      if (!application?.screeningAnswers) return null;
+
+      return typeof application.screeningAnswers === "string"
+        ? JSON.parse(application.screeningAnswers)
+        : application.screeningAnswers;
+    } catch {
+      return null;
+    }
+  })();
 
   const joditConfig = {
     readonly: false,
@@ -46,14 +58,31 @@ const ViewApply = () => {
     toolbarAdaptive: false,
     toolbarSticky: false,
     buttons: [
-      'bold', 'italic', 'underline', 'strikethrough', '|',
-      'ul', 'ol', '|',
-      'font', 'fontsize', 'brush', 'paragraph', '|',
-      'align', 'undo', 'redo', '|',
-      'link', 'image', '|',
-      'hr', 'table', 'source'
+      "bold",
+      "italic",
+      "underline",
+      "strikethrough",
+      "|",
+      "ul",
+      "ol",
+      "|",
+      "font",
+      "fontsize",
+      "brush",
+      "paragraph",
+      "|",
+      "align",
+      "undo",
+      "redo",
+      "|",
+      "link",
+      "image",
+      "|",
+      "hr",
+      "table",
+      "source",
     ],
-    style: { fontSize: '15px', lineHeight: '1.6' }
+    style: { fontSize: "15px", lineHeight: "1.6" },
   };
 
   const fetchApplication = async () => {
@@ -65,9 +94,13 @@ const ViewApply = () => {
 
       const defaultSubject = `Congratulations! You have been selected for ${appData.job.jobTitle}`;
       setEmailSubject(defaultSubject);
-      setEmailBody('');
+      setEmailBody("");
     } catch (error) {
-      Swal.fire({ title: "Error", text: "Failed to fetch application details", icon: "error" });
+      Swal.fire({
+        title: "Error",
+        text: "Failed to fetch application details",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -80,7 +113,7 @@ const ViewApply = () => {
   // ===================== DOCUMENT VERIFICATION =====================
 
   const handleVerifyDocument = async (docId, type, status, reason = null) => {
-    if (status === 'rejected' && !reason) {
+    if (status === "rejected" && !reason) {
       Swal.fire("Error", "Please provide a rejection reason", "error");
       return;
     }
@@ -91,13 +124,13 @@ const ViewApply = () => {
       await api.put(`/applications/verify-document/${docId}`, {
         type: type || selectedDocument.type,
         status,
-        rejectionReason: reason
+        rejectionReason: reason,
       });
 
       Swal.fire({
-        title: status === 'approved' ? "Approved!" : "Rejected",
+        title: status === "approved" ? "Approved!" : "Rejected",
         text: `Document has been ${status}`,
-        icon: status === 'approved' ? "success" : "warning"
+        icon: status === "approved" ? "success" : "warning",
       });
 
       // Refresh application data
@@ -107,14 +140,14 @@ const ViewApply = () => {
     } finally {
       setVerifyingDocId(null);
       setShowRejectModal(false);
-      setRejectionReason('');
+      setRejectionReason("");
       setSelectedDocument(null);
     }
   };
 
   const openRejectModal = (doc) => {
     setSelectedDocument(doc);
-    setRejectionReason('');
+    setRejectionReason("");
     setShowRejectModal(true);
   };
 
@@ -132,8 +165,12 @@ const ViewApply = () => {
         body: emailBody,
       });
 
-      Swal.fire("Success!", `Offer email sent to ${application.candidate.emailAddress}`, "success");
-      setOfferEmailsSent(prev => prev + 1);
+      Swal.fire(
+        "Success!",
+        `Offer email sent to ${application.candidate.emailAddress}`,
+        "success",
+      );
+      setOfferEmailsSent((prev) => prev + 1);
       setShowOfferModal(false);
       fetchApplication();
     } catch (error) {
@@ -151,17 +188,24 @@ const ViewApply = () => {
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading application details...</p>
+          <p className="text-lg text-gray-600">
+            Loading application details...
+          </p>
         </div>
       </div>
     );
   }
 
   if (!application) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-red-500 text-xl">Application not found</p></div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-red-500 text-xl">Application not found</p>
+      </div>
+    );
   }
 
-  const isSelected = application.status === "selected" || application.isSelected;
+  const isSelected =
+    application.status === "selected" || application.isSelected;
   const documents = application.applicationDocuments?.documents || [];
 
   return (
@@ -170,16 +214,23 @@ const ViewApply = () => {
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Application Details</h1>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+              Application Details
+            </h1>
             <p className="text-gray-500 mt-2 flex items-center gap-2">
-              Application ID: <span className="font-mono font-medium">#{application.id}</span>
+              Application ID:{" "}
+              <span className="font-mono font-medium">#{application.id}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className={`px-6 py-3 rounded-2xl text-lg font-semibold flex items-center gap-2 ${isSelected ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-              : "bg-amber-100 text-amber-700 border border-amber-200"
-              }`}>
+            <div
+              className={`px-6 py-3 rounded-2xl text-lg font-semibold flex items-center gap-2 ${
+                isSelected
+                  ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                  : "bg-amber-100 text-amber-700 border border-amber-200"
+              }`}
+            >
               {isSelected && <CheckCircle className="w-5 h-5" />}
               {application.status.toUpperCase()}
             </div>
@@ -191,7 +242,11 @@ const ViewApply = () => {
               >
                 <Send className="w-5 h-5" />
                 Send Offer Email
-                {offerEmailsSent > 0 && <span className="ml-1 bg-indigo-500 text-xs px-2 py-0.5 rounded-full">{offerEmailsSent}</span>}
+                {offerEmailsSent > 0 && (
+                  <span className="ml-1 bg-indigo-500 text-xs px-2 py-0.5 rounded-full">
+                    {offerEmailsSent}
+                  </span>
+                )}
               </button>
             )}
           </div>
@@ -206,35 +261,48 @@ const ViewApply = () => {
                   <UserCheck className="w-10 h-10" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-semibold text-gray-900">{application.candidate.userName}</h3>
-                  <p className="text-gray-600 mt-1">{application.candidate.emailAddress}</p>
+                  <h3 className="text-2xl font-semibold text-gray-900">
+                    {application.candidate.userName}
+                  </h3>
+                  <p className="text-gray-600 mt-1">
+                    {application.candidate.emailAddress}
+                  </p>
                 </div>
               </div>
 
               {application.candidate.contactNumber && (
                 <div className="flex items-center gap-3 text-gray-600 py-4 border-t border-gray-100">
                   <Phone className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium">{application.candidate.contactNumber}</span>
+                  <span className="font-medium">
+                    {application.candidate.contactNumber}
+                  </span>
                 </div>
               )}
 
               <div className="pt-6 border-t border-gray-100 mt-4">
                 <p className="text-sm text-gray-500 mb-1">Applied On</p>
                 <p className="font-medium text-gray-800">
-                  {new Date(application.appliedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {new Date(application.appliedAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </p>
               </div>
               <div className="pt-6 border-t border-gray-100 mt-4">
                 <p className="text-sm text-gray-500 mb-1">Last Updated</p>
                 <p className="font-medium text-gray-800">
-                  {new Date(application.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {new Date(application.updatedAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </p>
               </div>
               {/* Upload Offer Letter Button */}
 
               {isSelected && (
                 <div className="mt-8">
-
                   <button
                     onClick={() => fileInputRef.current.click()}
                     className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl text-sm font-medium transition"
@@ -254,28 +322,39 @@ const ViewApply = () => {
                       const formData = new FormData();
                       formData.append("offer-letter", file);
 
-                      api.post(`/applications/upload-cover-letter/${application?.id}`, formData, {
-                        headers: {
-                          "Content-Type": "multipart/form-data"
-                        }
-                      })
+                      api
+                        .post(
+                          `/applications/upload-cover-letter/${application?.id}`,
+                          formData,
+                          {
+                            headers: {
+                              "Content-Type": "multipart/form-data",
+                            },
+                          },
+                        )
                         .then(() => {
-                          Swal.fire("Success", "Offer letter uploaded successfully", "success");
+                          Swal.fire(
+                            "Success",
+                            "Offer letter uploaded successfully",
+                            "success",
+                          );
                           fetchApplication();
                         })
                         .catch((err) => {
                           console.error(err);
-                          Swal.fire("Error", "Failed to upload offer letter", "error");
+                          Swal.fire(
+                            "Error",
+                            "Failed to upload offer letter",
+                            "error",
+                          );
                         })
                         .finally(() => {
                           e.target.value = "";
                         });
                     }}
                   />
-
                 </div>
               )}
-
             </div>
           </div>
 
@@ -283,14 +362,42 @@ const ViewApply = () => {
           <div className="lg:col-span-8 space-y-8">
             {/* Job Details */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Job Position</h2>
-              <h3 className="text-3xl font-bold text-gray-800 mb-6">{application.job.jobTitle}</h3>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                Job Position
+              </h2>
+              <h3 className="text-3xl font-bold text-gray-800 mb-6">
+                {application.job.jobTitle}
+              </h3>
               {application.job.jobDescription && (
                 <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
                   {application.job.jobDescription}
                 </div>
               )}
             </div>
+
+            {parsedAnswers && Object.keys(parsedAnswers).length > 0 && (
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+                  Screening Answers
+                </h2>
+
+                <div className="space-y-4">
+                  {Object.entries(parsedAnswers).map(
+                    ([question, answer], index) => (
+                      <div
+                        key={index}
+                        className="border rounded-xl p-4 bg-gray-50"
+                      >
+                        <p className="font-medium text-gray-800">{question}</p>
+                        <p className="text-amber-600 font-semibold mt-1">
+                          {answer}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Uploaded Documents Section - NEW */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
@@ -299,32 +406,46 @@ const ViewApply = () => {
                   <FileText className="w-7 h-7" />
                   Uploaded Documents
                 </h2>
-                <span className="text-sm text-gray-500">{documents.length} documents</span>
+                <span className="text-sm text-gray-500">
+                  {documents.length} documents
+                </span>
               </div>
 
               {documents.length === 0 ? (
-                <p className="text-center py-12 text-gray-500">No documents uploaded yet.</p>
+                <p className="text-center py-12 text-gray-500">
+                  No documents uploaded yet.
+                </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {documents.map((doc) => {
-                    const isPending = doc.status === 'pending';
-                    const isApproved = doc.status === 'approved';
-                    const isRejected = doc.status === 'rejected';
+                    const isPending = doc.status === "pending";
+                    const isApproved = doc.status === "approved";
+                    const isRejected = doc.status === "rejected";
 
                     return (
-                      <div key={doc.type} className="border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition-all">
+                      <div
+                        key={doc.type}
+                        className="border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition-all"
+                      >
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <p className="font-medium text-gray-900 capitalize">
-                              {doc.type.replace(/_/g, ' ')}
+                              {doc.type.replace(/_/g, " ")}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1 truncate">{doc.fileName}</p>
+                            <p className="text-sm text-gray-500 mt-1 truncate">
+                              {doc.fileName}
+                            </p>
                           </div>
 
-                          <div className={`px-4 py-1 text-xs font-medium rounded-full ${isApproved ? 'bg-emerald-100 text-emerald-700' :
-                            isRejected ? 'bg-red-100 text-red-700' :
-                              'bg-yellow-100 text-yellow-700'
-                            }`}>
+                          <div
+                            className={`px-4 py-1 text-xs font-medium rounded-full ${
+                              isApproved
+                                ? "bg-emerald-100 text-emerald-700"
+                                : isRejected
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
                             {doc.status.toUpperCase()}
                           </div>
                         </div>
@@ -350,8 +471,16 @@ const ViewApply = () => {
                           {isPending && (
                             <>
                               <button
-                                onClick={() => handleVerifyDocument(application?.applicationDocuments?.id, doc.type, 'approved')}
-                                disabled={verifyingDocId === (doc.id || doc.type)}
+                                onClick={() =>
+                                  handleVerifyDocument(
+                                    application?.applicationDocuments?.id,
+                                    doc.type,
+                                    "approved",
+                                  )
+                                }
+                                disabled={
+                                  verifyingDocId === (doc.id || doc.type)
+                                }
                                 className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-3 rounded-xl text-sm font-medium transition"
                               >
                                 <ThumbsUp size={18} /> Approve
@@ -380,26 +509,39 @@ const ViewApply = () => {
                   <div className="w-10 h-10 bg-emerald-100 rounded-2xl flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <h2 className="text-3xl font-semibold text-emerald-800">Final Offer Details</h2>
+                  <h2 className="text-3xl font-semibold text-emerald-800">
+                    Final Offer Details
+                  </h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div>
-                    <p className="text-emerald-700 text-sm font-medium tracking-widest">FINAL SALARY</p>
+                    <p className="text-emerald-700 text-sm font-medium tracking-widest">
+                      FINAL SALARY
+                    </p>
                     <p className="text-4xl font-bold text-emerald-700 mt-3">
-                      ₹{application.finalSalaryOffered?.toLocaleString() || 'N/A'}
+                      ₹
+                      {application.finalSalaryOffered?.toLocaleString() ||
+                        "N/A"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-emerald-700 text-sm font-medium tracking-widest">JOINING DATE</p>
+                    <p className="text-emerald-700 text-sm font-medium tracking-widest">
+                      JOINING DATE
+                    </p>
                     <p className="text-2xl font-semibold text-gray-800 mt-3">
                       {application.joiningDate
-                        ? new Date(application.joiningDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-                        : 'Not Specified'}
+                        ? new Date(application.joiningDate).toLocaleDateString(
+                            "en-IN",
+                            { day: "numeric", month: "long", year: "numeric" },
+                          )
+                        : "Not Specified"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-emerald-700 text-sm font-medium tracking-widest">DECIDED BY</p>
+                    <p className="text-emerald-700 text-sm font-medium tracking-widest">
+                      DECIDED BY
+                    </p>
                     <p className="text-2xl font-semibold text-gray-800 mt-3">
                       {application.decidedByEmployer?.employerName || "Admin"}
                     </p>
@@ -410,13 +552,18 @@ const ViewApply = () => {
 
             {/* Interview History */}
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-8">Interview History</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-8">
+                Interview History
+              </h2>
               {application.interviews && application.interviews.length > 0 ? (
                 <div className="space-y-12">
                   {application.interviews
                     .sort((a, b) => a.round - b.round)
                     .map((interview) => (
-                      <div key={interview.id} className="relative pl-10 border-l-2 border-indigo-200 last:border-none">
+                      <div
+                        key={interview.id}
+                        className="relative pl-10 border-l-2 border-indigo-200 last:border-none"
+                      >
                         <div className="absolute -left-[7px] top-2 w-5 h-5 bg-white border-4 border-indigo-500 rounded-full" />
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div>
@@ -428,22 +575,36 @@ const ViewApply = () => {
                             </p>
                           </div>
                           <div className="text-right text-sm">
-                            <p className="text-gray-500">{new Date(interview.scheduledAt).toLocaleString('en-IN')}</p>
-                            {interview.completedAt && <p className="text-emerald-600 mt-1 font-medium">✓ Completed</p>}
+                            <p className="text-gray-500">
+                              {new Date(interview.scheduledAt).toLocaleString(
+                                "en-IN",
+                              )}
+                            </p>
+                            {interview.completedAt && (
+                              <p className="text-emerald-600 mt-1 font-medium">
+                                ✓ Completed
+                              </p>
+                            )}
                           </div>
                         </div>
 
                         {interview.feedback && (
                           <div className="mt-8 bg-gray-50 border border-gray-100 p-7 rounded-2xl">
-                            <p className="uppercase text-xs tracking-widest text-gray-500 mb-3">FEEDBACK</p>
-                            <p className="text-gray-700">{interview.feedback}</p>
+                            <p className="uppercase text-xs tracking-widest text-gray-500 mb-3">
+                              FEEDBACK
+                            </p>
+                            <p className="text-gray-700">
+                              {interview.feedback}
+                            </p>
                           </div>
                         )}
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-center py-20 text-gray-400">No interviews conducted yet.</p>
+                <p className="text-center py-20 text-gray-400">
+                  No interviews conducted yet.
+                </p>
               )}
             </div>
           </div>
@@ -455,9 +616,11 @@ const ViewApply = () => {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[110] p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
             <div className="p-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-2">Reject Document</h3>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                Reject Document
+              </h3>
               <p className="text-gray-600 mb-6">
-                {selectedDocument.type.replace(/_/g, ' ')}
+                {selectedDocument.type.replace(/_/g, " ")}
               </p>
 
               <textarea
@@ -475,7 +638,14 @@ const ViewApply = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleVerifyDocument(application?.applicationDocuments?.id, selectedDocument.type, 'rejected', rejectionReason)}
+                  onClick={() =>
+                    handleVerifyDocument(
+                      application?.applicationDocuments?.id,
+                      selectedDocument.type,
+                      "rejected",
+                      rejectionReason,
+                    )
+                  }
                   disabled={!rejectionReason.trim()}
                   className="flex-1 py-4 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-2xl transition"
                 >
@@ -498,8 +668,15 @@ const ViewApply = () => {
                   <Mail className="w-7 h-7 text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-semibold text-gray-900">Send Offer Letter</h2>
-                  <p className="text-gray-500 mt-1">To: <span className="font-medium">{application.candidate.emailAddress}</span></p>
+                  <h2 className="text-3xl font-semibold text-gray-900">
+                    Send Offer Letter
+                  </h2>
+                  <p className="text-gray-500 mt-1">
+                    To:{" "}
+                    <span className="font-medium">
+                      {application.candidate.emailAddress}
+                    </span>
+                  </p>
                 </div>
               </div>
               <button
@@ -536,13 +713,14 @@ const ViewApply = () => {
                       value={emailBody}
                       config={joditConfig}
                       onBlur={(newContent) => setEmailBody(newContent)}
-                      onChange={(newContent) => { }}
+                      onChange={(newContent) => {}}
                     />
                   </div>
                 </div>
 
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-sm">
-                  <strong className="text-amber-800">Note:</strong> The candidate is expected to reply with the following documents:
+                  <strong className="text-amber-800">Note:</strong> The
+                  candidate is expected to reply with the following documents:
                   <ul className="list-disc list-inside mt-3 space-y-1 text-amber-700">
                     <li>Signed Offer Letter</li>
                     <li>Latest Salary Slips (last 3 months)</li>
@@ -564,7 +742,9 @@ const ViewApply = () => {
               </button>
               <button
                 onClick={handleSendEmail}
-                disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+                disabled={
+                  sendingEmail || !emailSubject.trim() || !emailBody.trim()
+                }
                 className="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-all flex items-center justify-center gap-3 text-lg"
               >
                 {sendingEmail ? (

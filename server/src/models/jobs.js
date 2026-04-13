@@ -246,10 +246,55 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: false,
       },
-      // ✅ Job Expiry
       expiryDate: {
         type: DataTypes.DATE,
         allowNull: true,
+      },
+
+
+      workingDays: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        get() {
+          const raw = this.getDataValue("workingDays");
+          try {
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        }
+      },
+
+      jobTiming: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+
+      gender: {
+        type: DataTypes.ENUM("male", "female", "other", "any"),
+        allowNull: false,
+        defaultValue: "any",
+      },
+
+      isIncentive: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+
+      screeningQuestions: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: [],
+        get() {
+          const raw = this.getDataValue("screeningQuestions");
+          try {
+            return raw ? JSON.parse(raw) : [];
+          } catch {
+            return [];
+          }
+        }
       },
     },
     {
@@ -299,6 +344,8 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: "jobId",
       as: "applicants",
     });
+
+
 
 
   };

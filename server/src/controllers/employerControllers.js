@@ -540,4 +540,108 @@ exports.getEmployerProfile = async (req, res) => {
   }
 };
 
+exports.getAllEmployers = async (req, res) => {
+  try {
+    const employers = await Employer.findAll({
+      order: [["createdAt", "DESC"]],
+    });
 
+    if (employers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No employers found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      total: employers.length,
+      data: employers,
+    });
+  } catch (error) {
+    console.error("Get employers error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch employers",
+    });
+  }
+};
+
+exports.updateBasicDetailsOfEmployer = async (req, res) => {
+  try {
+    const { userId, specialAccess } = req.body;
+
+    console.log("REQUEST BODY:", req.body);
+
+    // ✅ 1. Validate userId
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required",
+      });
+    }
+
+    // ✅ 2. Prepare update object
+    const updateData = {};
+
+    // 🔁 Boolean helper (handles true / "true")
+    const toBool = (val) => val === true || val === "true";
+
+    // ✅ NEW FIELD
+    if (typeof specialAccess !== "undefined") {
+      updateData.specialAccess = toBool(specialAccess);
+    }
+
+    // ❗ Nothing to update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields provided to update",
+      });
+    }
+
+    console.log("UPDATE DATA:", updateData);
+
+    // ✅ 3. Update
+    const [updatedRows] = await Employer.update(updateData, {
+      where: { id: userId },
+    });
+
+    console.log("Rows Updated:", updatedRows);
+
+    if (!updatedRows) {
+      return res.status(400).json({
+        success: false,
+        message: "Update failed or no changes applied",
+      });
+    }
+
+    // ✅ 4. Fetch updated user
+    const updatedUser = await Employer.findByPk(userId, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found after update",
+      });
+    }
+
+    // ✅ 5. Response
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: updatedUser,
+    });
+
+  } catch (error) {
+    console.error("Update Basic Details Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};

@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import axios from "axios";
 import { format } from "date-fns";
 import { useAuthStore } from "@/store/auth.store";
@@ -38,7 +43,7 @@ export default function ApplyJob() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { profile, getProfile, token  ,isAuthenticated} = useAuthStore();
+  const { profile, getProfile, token, isAuthenticated } = useAuthStore();
 
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +56,9 @@ export default function ApplyJob() {
   const [showThankYou, setShowThankYou] = useState(false);
   const [confettiActive, setConfettiActive] = useState(false);
 
+  const [answers, setAnswers] = useState({});
+  const [showQuestionsPopup, setShowQuestionsPopup] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,7 +66,7 @@ export default function ApplyJob() {
   }, [getProfile]);
 
   useEffect(() => {
-   if (!isAuthenticated || !slug) return;
+    if (!isAuthenticated || !slug) return;
 
     const fetchJob = async () => {
       try {
@@ -101,7 +109,11 @@ export default function ApplyJob() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type === "application/pdf" && file.size <= 5 * 1024 * 1024) {
+    if (
+      file &&
+      file.type === "application/pdf" &&
+      file.size <= 5 * 1024 * 1024
+    ) {
       setSelectedCvFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     } else {
@@ -140,39 +152,46 @@ export default function ApplyJob() {
     }
   };
 
- const handleApply = async () => {
+  const handleApply = async () => {
   try {
-    // 🔐 Not Logged In
     if (!token) {
       alert("Please login to apply for jobs.");
-
-      const returnPath = `${pathname}${
-        searchParams.toString() ? `?${searchParams.toString()}` : ""
-      }`;
-
-      router.push(`/auth/login?returnTo=${encodeURIComponent(returnPath)}`);
       return;
     }
 
-    setApplying(true);
-
     let cvReady = !!profile?.user?.uploadedCv;
 
-    // 📄 If new CV selected → upload first
     if (selectedCvFile) {
       cvReady = await uploadNewCv();
     }
 
     if (!cvReady) {
       alert("Please upload a CV before applying.");
-      setApplying(false);
       return;
     }
 
-    // ✅ Apply API Call (Correct headers position)
-   const res= await axios.post(
+    // ✅ अगर questions हैं → popup खोलो
+    if (job?.screeningQuestions?.length > 0) {
+      setShowQuestionsPopup(true);
+      return;
+    }
+
+    // ✅ अगर questions नहीं हैं → direct apply
+    await submitApplication({});
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const submitApplication = async (answersData) => {
+  try {
+    setApplying(true);
+
+    const res = await axios.post(
       `${API_URL}/applications/apply-job/${job?.id}`,
-      {}, // no body needed
+      {
+        screeningAnswers: answersData,
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -180,37 +199,22 @@ export default function ApplyJob() {
       }
     );
 
-    console.log(res.data)
-    // 🎉 Success UI
+    setShowQuestionsPopup(false);
+
     setConfettiActive(true);
     setShowThankYou(true);
 
     setTimeout(() => setConfettiActive(false), 5000);
     setTimeout(() => router.push("/jobs"), 3500);
 
-  } catch (error: unknown) {
-
-  if (axios.isAxiosError(error)) {
-    console.error(
-      "Apply Error:",
-      error.response?.data || error.message
-    );
-
-    const message =
-      error.response?.data?.message ??
-      error.response?.data?.error ??
-      "Something went wrong. Please try again.";
-
-    alert(message);
-
-  } else {
-    console.error("Unexpected Error:", error);
-    alert("Something went wrong. Please try again.");
-  }
-} finally {
+  } catch (error) {
+    alert("Failed to apply");
+  } finally {
     setApplying(false);
   }
 };
+
+
   const viewCurrentCv = () => {
     if (profile?.user?.uploadedCv) {
       const url = `${IMAGE_URL}${profile.user.uploadedCv}`;
@@ -230,101 +234,113 @@ export default function ApplyJob() {
     return `${job.currency} ${range}${period}`;
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50/50 flex items-center justify-center px-5 py-12">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-xl border border-amber-100/60 overflow-hidden">
+            {/* Top accent bar */}
+            <div className="h-2 bg-gradient-to-r from-amber-500 to-amber-600" />
 
-if (!isAuthenticated) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50/50 flex items-center justify-center px-5 py-12">
-      <div className="w-full max-w-md animate-fade-in">
-        <div className="bg-white rounded-3xl shadow-xl border border-amber-100/60 overflow-hidden">
-          {/* Top accent bar */}
-          <div className="h-2 bg-gradient-to-r from-amber-500 to-amber-600" />
+            <div className="p-8 lg:p-10 text-center">
+              {/* Icon */}
+              <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
 
-          <div className="p-8 lg:p-10 text-center">
-            {/* Icon */}
-            <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
-              <svg
-                className="w-10 h-10 text-amber-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+              {/* Title */}
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
+                Login Required
+              </h2>
+
+              {/* Message */}
+              <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                You need to be signed in to apply for this job and let employers
+                see your profile and CV.
+              </p>
+
+              {/* Main CTA */}
+              <Button
+                size="lg"
+                className="w-full h-14 text-base font-semibold bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 mb-6"
+                asChild
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-
-            {/* Title */}
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3">
-              Login Required
-            </h2>
-
-            {/* Message */}
-            <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-              You need to be signed in to apply for this job and let employers see your profile and CV.
-            </p>
-
-            {/* Main CTA */}
-            <Button
-              size="lg"
-              className="w-full h-14 text-base font-semibold bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 mb-6"
-              asChild
-            >
-              <a
-                href={`/auth/login?returnTo=${encodeURIComponent(
-                  pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "")
-                )}`}
-              >
-                Sign in to Apply
-              </a>
-            </Button>
-
-            {/* Secondary action */}
-            <p className="text-sm text-gray-500 mb-2">Don't have an account yet?</p>
-            <Button variant="link" className="text-amber-700 hover:text-amber-800 font-medium" asChild>
-              <a href="/auth/register">Create a free account →</a>
-            </Button>
-
-            {/* Browse link */}
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900" asChild>
-                <Link href="/jobs">
-                  ← Continue browsing jobs
-                </Link>
+                <a
+                  href={`/auth/login?returnTo=${encodeURIComponent(
+                    pathname +
+                      (searchParams.toString()
+                        ? `?${searchParams.toString()}`
+                        : ""),
+                  )}`}
+                >
+                  Sign in to Apply
+                </a>
               </Button>
+
+              {/* Secondary action */}
+              <p className="text-sm text-gray-500 mb-2">
+                Don't have an account yet?
+              </p>
+              <Button
+                variant="link"
+                className="text-amber-700 hover:text-amber-800 font-medium"
+                asChild
+              >
+                <a href="/auth/register">Create a free account →</a>
+              </Button>
+
+              {/* Browse link */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900"
+                  asChild
+                >
+                  <Link href="/jobs">← Continue browsing jobs</Link>
+                </Button>
+              </div>
             </div>
           </div>
+
+          {/* Optional subtle footer text */}
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Your next dream job is just a login away
+          </p>
         </div>
 
-        {/* Optional subtle footer text */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Your next dream job is just a login away
-        </p>
+        {/* Optional: very subtle background pattern or animation */}
+        <style jsx global>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-fade-in {
+            animation: fadeInUp 0.7s ease-out forwards;
+          }
+        `}</style>
       </div>
-
-      {/* Optional: very subtle background pattern or animation */}
-      <style jsx global>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fadeInUp 0.7s ease-out forwards;
-        }
-      `}</style>
-    </div>
-  );
-}
+    );
+  }
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -337,7 +353,9 @@ if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center px-5 text-center">
         <div className="max-w-md">
-          <h2 className="text-2xl font-bold mb-4">{error || "Job not found"}</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            {error || "Job not found"}
+          </h2>
           <Button className="bg-amber-600 hover:bg-amber-700" asChild>
             <a href="/jobs">Back to Jobs</a>
           </Button>
@@ -345,8 +363,6 @@ if (!isAuthenticated) {
       </div>
     );
   }
-
-
 
   const companyInitials = job.company.companyName
     .split(" ")
@@ -366,7 +382,10 @@ if (!isAuthenticated) {
               <div className="p-6 lg:p-9 border-b bg-gradient-to-r from-amber-50/40 to-white">
                 <div className="flex flex-col sm:flex-row gap-6">
                   <Avatar className="h-20 w-20 lg:h-24 lg:w-24 rounded-xl border-2 border-amber-200">
-                    <AvatarImage src={`${IMAGE_URL}${job.company.companyLogo}`} alt={job.company.companyName} />
+                    <AvatarImage
+                      src={`${IMAGE_URL}${job.company.companyLogo}`}
+                      alt={job.company.companyName}
+                    />
                     <AvatarFallback className="bg-amber-500 text-white text-2xl font-bold">
                       {companyInitials}
                     </AvatarFallback>
@@ -384,7 +403,9 @@ if (!isAuthenticated) {
                         <MapPin className="h-5 w-5 text-gray-600" />
                         {job.locationText}
                       </div>
-                      <div className="font-medium text-gray-800">{formatSalary()}</div>
+                      <div className="font-medium text-gray-800">
+                        {formatSalary()}
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -404,7 +425,9 @@ if (!isAuthenticated) {
 
               {/* CV Upload / Management Section */}
               <div className="p-6 lg:p-10 border-b">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Your CV for Application</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Your CV for Application
+                </h2>
 
                 <div className="space-y-6">
                   {/* Already uploaded CV from profile */}
@@ -447,7 +470,8 @@ if (!isAuthenticated) {
                               {selectedCvFile.name}
                             </p>
                             <p className="text-sm text-gray-600">
-                              {(selectedCvFile.size / 1024 / 1024).toFixed(2)} MB • PDF
+                              {(selectedCvFile.size / 1024 / 1024).toFixed(2)}{" "}
+                              MB • PDF
                             </p>
                           </div>
                         </div>
@@ -488,7 +512,9 @@ if (!isAuthenticated) {
                   >
                     <Upload className="mx-auto h-10 w-10 text-amber-600 mb-4" />
                     <p className="text-lg font-medium text-gray-800 mb-1">
-                      {selectedCvFile ? "Replace with new file" : "Upload or drag your CV here"}
+                      {selectedCvFile
+                        ? "Replace with new file"
+                        : "Upload or drag your CV here"}
                     </p>
                     <p className="text-sm text-gray-500">
                       PDF format • maximum 5 MB
@@ -508,7 +534,11 @@ if (!isAuthenticated) {
               <div className="p-6 lg:p-9 bg-gray-50 flex justify-end">
                 <Button
                   onClick={handleApply}
-                  disabled={applying || cvUploading || (!profile?.user?.uploadedCv && !selectedCvFile)}
+                  disabled={
+                    applying ||
+                    cvUploading ||
+                    (!profile?.user?.uploadedCv && !selectedCvFile)
+                  }
                   size="lg"
                   className="px-12 py-7 text-lg font-semibold bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 shadow-md disabled:opacity-50"
                 >
@@ -530,7 +560,8 @@ if (!isAuthenticated) {
             <div className="sticky top-10 bg-white rounded-2xl border p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Need help?</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Make sure your CV is up-to-date and highlights relevant skills like React, Next.js, Node.js, etc.
+                Make sure your CV is up-to-date and highlights relevant skills
+                like React, Next.js, Node.js, etc.
               </p>
               <Button variant="outline" className="w-full">
                 View Job Details Again
@@ -544,24 +575,97 @@ if (!isAuthenticated) {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-4 md:hidden z-50">
         <Button
           onClick={handleApply}
-          disabled={applying || cvUploading || (!profile?.user?.uploadedCv && !selectedCvFile)}
+          disabled={
+            applying ||
+            cvUploading ||
+            (!profile?.user?.uploadedCv && !selectedCvFile)
+          }
           className="w-full h-12 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
         >
           {applying ? "Submitting..." : "Submit Application"}
         </Button>
       </div>
 
+      <Dialog open={showQuestionsPopup} onOpenChange={setShowQuestionsPopup}>
+  <DialogContent className="max-w-lg">
+    <DialogHeader>
+      <DialogTitle>Answer Screening Questions</DialogTitle>
+      <DialogDescription>
+        Please answer all questions before applying.
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="space-y-5 max-h-[400px] overflow-y-auto">
+      {job?.screeningQuestions?.map((q, index) => (
+        <div key={index}>
+          <p className="font-medium mb-2">{q.question}</p>
+
+          {q.options?.map((opt, i) => (
+            <label key={i} className="flex items-center gap-2 mb-2">
+              <input
+                type="radio"
+                name={`q-${index}`}
+                value={opt}
+                onChange={() =>
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [q.question]: opt,
+                  }))
+                }
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      ))}
+    </div>
+
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setShowQuestionsPopup(false)}>
+        Cancel
+      </Button>
+
+      <Button
+        className="bg-amber-600 hover:bg-amber-700"
+        onClick={() => {
+          const isAllAnswered = job.screeningQuestions.every(
+            (q) => answers[q.question]
+          );
+
+          if (!isAllAnswered) {
+            alert("Please answer all questions");
+            return;
+          }
+
+          submitApplication(answers);
+        }}
+      >
+        Submit Application
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
       {/* Success confetti + dialog */}
       {confettiActive && (
         <div className="fixed inset-0 pointer-events-none z-[9999]">
-          <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} />
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+          />
         </div>
       )}
 
-      <Dialog open={showThankYou} onOpenChange={(open) => !open && router.push("/jobs")}>
+      <Dialog
+        open={showThankYou}
+        onOpenChange={(open) => !open && router.push("/jobs")}
+      >
         <DialogContent className="sm:max-w-md text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <DialogTitle className="text-2xl font-bold">Application Submitted!</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            Application Submitted!
+          </DialogTitle>
           <DialogDescription className="mt-3">
             Thank you for applying to <strong>{job.jobTitle}</strong> at{" "}
             <span className="font-medium">{job.company.companyName}</span>.
@@ -570,7 +674,10 @@ if (!isAuthenticated) {
             <Button variant="outline" onClick={() => router.push("/jobs")}>
               Browse More Jobs
             </Button>
-            <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => router.push("/jobs")}>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={() => router.push("/jobs")}
+            >
               Done
             </Button>
           </DialogFooter>

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, X, LogOut, Menu, AlertTriangle } from "lucide-react";
-import Image from "next/image";
+import { X, LogOut, Menu, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
@@ -11,8 +10,8 @@ import { useSettings } from "@/hooks/useSettings";
 
 const MENU_ITEMS = [
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
   { label: "Gallery", href: "/gallery" },
+  { label: "Contact", href: "/contact" },
   { label: "Jobs", href: "/jobs" },
 ] as const;
 
@@ -25,10 +24,8 @@ export default function Header() {
     logout: employeeLogout,
   } = useAuthStore();
 
-  const {
-    isAuthenticated: isEmployerAuth,
-    logout: employerLogout,
-  } = useEmployerAuthStore();
+  const { isAuthenticated: isEmployerAuth, logout: employerLogout } =
+    useEmployerAuthStore();
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -59,7 +56,10 @@ export default function Header() {
   // Handlers
   const closeMobileMenu = () => setMobileOpen(false);
 
-  const handleHashScroll = (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => {
+  const handleHashScroll = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href?: string,
+  ) => {
     if (!href || !href.startsWith("#")) return;
     e.preventDefault();
     const targetId = href.slice(1);
@@ -93,7 +93,8 @@ export default function Header() {
         <div className="bg-amber-500 text-white py-2.5 text-center text-sm font-medium flex items-center justify-center gap-2">
           <AlertTriangle className="h-5 w-5" />
           <span>
-            The website is currently under maintenance. Some features may be unavailable.
+            The website is currently under maintenance. Some features may be
+            unavailable.
           </span>
         </div>
       )}
@@ -106,7 +107,15 @@ export default function Header() {
           <div className="flex justify-between items-center h-16 md:h-20">
             {/* Logo */}
             <Link href="/" className="shrink-0 flex items-center gap-3 h-full">
-              <div className="relative w-auto h-full" style={{display:'flex',alignItems:'center',justifyContent:'center',color:''}}>
+              <div
+                className="relative w-auto h-full"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "",
+                }}
+              >
                 <img
                   src={logoSrc}
                   alt={`${siteName} Logo`}
@@ -137,7 +146,11 @@ export default function Header() {
               {isLoggedIn ? (
                 <div className="flex items-center gap-4">
                   <Link href={profileLink}>
-                    <Button variant="outline" size="sm" className="min-w-[140px]">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="min-w-[140px]"
+                    >
                       {userDisplayName}
                     </Button>
                   </Link>
@@ -155,7 +168,7 @@ export default function Header() {
                 <div className="flex items-center gap-3">
                   <Link href="/auth/login">
                     <Button variant="ghost" size="sm">
-                      For Employees
+                      Register for Jobs
                     </Button>
                   </Link>
                   <Link href="/auth/login-employers">
@@ -173,7 +186,11 @@ export default function Header() {
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
-              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -181,8 +198,9 @@ export default function Header() {
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed inset-y-0 right-0 z-[60] w-4/5 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 md:hidden ${mobileOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed inset-y-0 right-0 z-[60] w-4/5 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 md:hidden ${
+          mobileOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Drawer Header */}
@@ -237,7 +255,7 @@ export default function Header() {
               <>
                 <Link href="/auth/login" onClick={closeMobileMenu}>
                   <Button variant="outline" className="w-full">
-                    For Employees
+                    Register for Jobs
                   </Button>
                 </Link>
                 <Link href="/auth/login-employers" onClick={closeMobileMenu}>

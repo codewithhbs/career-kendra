@@ -66,14 +66,19 @@ interface Job {
     companyWebsite?: string;
     companyPhone?: string;
   };
+  gender: string;
+  workingDays: string[]; // JSON string of array
+  jobTiming: string;
+  isIncentive: boolean;
 }
 
 export default function JobDetails() {
   const { company, fetchCompanyProfile } = useEmployerAuthStore();
-  const { saveJob, removeSavedJob, checkAlreadySaved, isAlreadySaved, } = useJob()
+  const { saveJob, removeSavedJob, checkAlreadySaved, isAlreadySaved } =
+    useJob();
   const { id: slug } = useParams<{ id: string }>();
   const router = useRouter();
-const [saveLoading, setSaveLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +92,7 @@ const [saveLoading, setSaveLoading] = useState(false);
         const res = await axios.get(`/jobs/job-via/${slug}`);
         if (res.data?.success && res.data?.data) {
           setJob(res.data.data);
-          await checkAlreadySaved(res.data.data.id)
+          await checkAlreadySaved(res.data.data.id);
         } else {
           setError("Job not found");
         }
@@ -128,8 +133,8 @@ const [saveLoading, setSaveLoading] = useState(false);
 
   // Parse JSON strings from API
 
-  const skills = job.requiredSkills || []
-  const benefits = job.benefits || []
+  const skills = job.requiredSkills || [];
+  const benefits = job.benefits || [];
 
   const formatSalary = () => {
     if (job.hideSalary) return "Confidential";
@@ -160,29 +165,29 @@ const [saveLoading, setSaveLoading] = useState(false);
   const isEmployer = company !== null;
   const isActiveForUsers = job?.status === "active";
 
-const handleSaveToggle = async () => {
-  if (!job) return;
-  setSaveLoading(true);
+  const handleSaveToggle = async () => {
+    if (!job) return;
+    setSaveLoading(true);
 
-  try {
-    // Ensure at least 3 seconds loading
-    await new Promise(async (resolve) => {
-      if (isAlreadySaved) {
-        await removeSavedJob(job.id);
-      } else {
-        await saveJob(job.id);
-      }
-      // Wait for remaining time if API was faster than 3 seconds
-      setTimeout(resolve, 3000);
-    });
-   await checkAlreadySaved(job.id)
-    // Note: checkAlreadySavedJobs is automatically refreshed via your hook
-  } catch (err) {
-    console.error("Save action failed:", err);
-  } finally {
-    setSaveLoading(false);
-  }
-};
+    try {
+      // Ensure at least 3 seconds loading
+      await new Promise(async (resolve) => {
+        if (isAlreadySaved) {
+          await removeSavedJob(job.id);
+        } else {
+          await saveJob(job.id);
+        }
+        // Wait for remaining time if API was faster than 3 seconds
+        setTimeout(resolve, 3000);
+      });
+      await checkAlreadySaved(job.id);
+      // Note: checkAlreadySavedJobs is automatically refreshed via your hook
+    } catch (err) {
+      console.error("Save action failed:", err);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
   // ─── Access Control ─────────────────────────────────────────────
   if (!isEmployer && !isActiveForUsers) {
     return (
@@ -290,6 +295,7 @@ const handleSaveToggle = async () => {
                   label="Posted"
                   value={postedDate}
                 />
+
                 {expiryDate && (
                   <InfoItem
                     icon={<Clock className="h-4 w-4" />}
@@ -309,12 +315,43 @@ const handleSaveToggle = async () => {
             <JobSection title="Responsibilities">
               <ul className="space-y-2.5">
                 {job?.jobResponsibilities.map((item: string, i: number) => (
-                  <li key={i} className="flex items-start gap-3 text-muted-foreground">
+                  <li
+                    key={i}
+                    className="flex items-start gap-3 text-muted-foreground"
+                  >
                     <span className="text-primary mt-1.5 text-lg">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
+            </JobSection>
+
+            <JobSection title="Work Details">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <InfoItem
+                  icon={<CalendarDays className="h-4 w-4" />}
+                  label="Working Days"
+                  value={job.workingDays?.join(", ")}
+                />
+
+                <InfoItem
+                  icon={<Clock className="h-4 w-4" />}
+                  label="Job Timing"
+                  value={job.jobTiming}
+                />
+
+                <InfoItem
+                  icon={<Briefcase className="h-4 w-4" />}
+                  label="Gender"
+                  value={job.gender}
+                />
+
+                <InfoItem
+                  icon={<IndianRupee className="h-4 w-4" />}
+                  label="Incentive"
+                  value={job.isIncentive ? "Available" : "Not Available"}
+                />
+              </div>
             </JobSection>
 
             <JobSection title="Required Skills">
@@ -350,9 +387,8 @@ const handleSaveToggle = async () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-
             {/* ================= APPLY / EMPLOYER ACTION CARD ================= */}
-           <Card className="border shadow-sm rounded-2xl">
+            <Card className="border shadow-sm rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-lg">
                   {isEmployer ? "Employer Actions" : "Job Actions"}
@@ -361,7 +397,10 @@ const handleSaveToggle = async () => {
               <CardContent className="space-y-4">
                 {!isEmployer ? (
                   <>
-                    <Button className="w-full h-12 text-base font-medium" asChild>
+                    <Button
+                      className="w-full h-12 text-base font-medium"
+                      asChild
+                    >
                       <Link href={`/jobs/${job.slug}/apply-for-this-job`}>
                         Apply with Easy Apply
                       </Link>
@@ -397,7 +436,11 @@ const handleSaveToggle = async () => {
                         className="w-full justify-between text-muted-foreground hover:text-foreground"
                         asChild
                       >
-                        <a href={job.company.companyWebsite} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={job.company.companyWebsite}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           Visit Company Website
                           <ArrowRight className="h-4 w-4" />
                         </a>
@@ -407,7 +450,9 @@ const handleSaveToggle = async () => {
                 ) : (
                   <>
                     <Button variant="outline" className="w-full h-11" asChild>
-                      <Link href={`/employer/profile?tab=post-jobs&edit=${job.id}`}>
+                      <Link
+                        href={`/employer/profile?tab=post-jobs&edit=${job.id}`}
+                      >
                         Edit Job
                       </Link>
                     </Button>
@@ -421,7 +466,6 @@ const handleSaveToggle = async () => {
               </CardContent>
             </Card>
 
-
             {/* ================= COMPANY CARD ================= */}
             <Card className="border shadow-sm rounded-2xl">
               <CardHeader>
@@ -429,13 +473,10 @@ const handleSaveToggle = async () => {
               </CardHeader>
 
               <CardContent className="space-y-4 text-sm">
-
                 <div className="flex items-center gap-3">
                   <Building2 className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">
-                      {job.company.companyName}
-                    </p>
+                    <p className="font-medium">{job.company.companyName}</p>
 
                     {job.company.companyTagline && (
                       <p className="text-muted-foreground text-xs mt-1">
@@ -454,10 +495,8 @@ const handleSaveToggle = async () => {
                     <p>Size: {job.company.companySize} employees</p>
                   )}
                 </div>
-
               </CardContent>
             </Card>
-
           </div>
         </div>
       </div>

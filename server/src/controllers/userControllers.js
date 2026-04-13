@@ -1114,7 +1114,7 @@ exports.getAlluserListed = async (req, res) => {
 
 exports.updateBasicDetails = async (req, res) => {
   try {
-    const { userId, isDeleted, accountStatus } = req.body;
+    const { userId, isDeleted, accountStatus, specialAccess } = req.body;
 
     console.log("REQUEST BODY:", req.body);
 
@@ -1140,6 +1140,11 @@ exports.updateBasicDetails = async (req, res) => {
       updateData.accountActive = toBool(accountStatus);
     }
 
+    // ✅ NEW FIELD
+    if (typeof specialAccess !== "undefined") {
+      updateData.specialAccess = toBool(specialAccess);
+    }
+
     // ❗ Nothing to update
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
@@ -1150,14 +1155,13 @@ exports.updateBasicDetails = async (req, res) => {
 
     console.log("UPDATE DATA:", updateData);
 
-    // ✅ 3. Update using Model (best practice)
+    // ✅ 3. Update
     const [updatedRows] = await User.update(updateData, {
       where: { id: userId },
     });
 
     console.log("Rows Updated:", updatedRows);
 
-    // ❗ If no row updated
     if (!updatedRows) {
       return res.status(400).json({
         success: false,
@@ -1167,10 +1171,9 @@ exports.updateBasicDetails = async (req, res) => {
 
     // ✅ 4. Fetch updated user
     const updatedUser = await User.findByPk(userId, {
-      attributes: { exclude: ["password"] }, // 🔥 hide password
+      attributes: { exclude: ["password"] },
     });
 
-    // ❗ Safety check
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
@@ -1178,7 +1181,7 @@ exports.updateBasicDetails = async (req, res) => {
       });
     }
 
-    // ✅ 5. Success response
+    // ✅ 5. Response
     return res.status(200).json({
       success: true,
       message: "User updated successfully",

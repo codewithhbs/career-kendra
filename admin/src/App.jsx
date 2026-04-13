@@ -30,6 +30,7 @@ import Organization from "./pages/MANAGE_WEBSITE/Organization";
 import Services from "./pages/MANAGE_WEBSITE/service";
 import CreateAndEditService from "./pages/EditAndCreatePages/CreateAndEditService";
 import CreateAndEditPages from "./pages/EditAndCreatePages/CreateAndEditPages";
+import AllEmployerList from "./pages/MANAGE_EMPLOYERS/AllEmployerList";
 
 
 const App = () => {
@@ -73,6 +74,11 @@ const App = () => {
             <Route path="/users" element={<AllListedUser />} />
             <Route path="/view-user/:id" element={<ViewUser />} />
             <Route path="/edit-user/:id" element={<EditUser />} />
+
+            {/* Employer Related */}
+            <Route path="/employers" element={<AllEmployerList />} />
+            {/* <Route path="/view-employer/:id" element={<ViewUser />} />
+            <Route path="/edit-employer/:id" element={<EditUser />} /> */}
 
 
             {/* Company Releated  */}

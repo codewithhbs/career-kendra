@@ -14,7 +14,9 @@ import {
     EDUCATION_LEVELS
 } from '../../utils/industries';
 
-
+const DAYS_OF_WEEK = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+];
 
 const EditJob = () => {
     const { id } = useParams();
@@ -33,6 +35,8 @@ const EditJob = () => {
     const [skillInput, setSkillInput] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [benefitInput, setBenefitInput] = useState("");
+    const [sqInput, setSqInput] = useState("");
+    const [sqOptions] = useState(["Yes", "No"]);
 
     const [formData, setFormData] = useState({
         jobTitle: "",
@@ -65,6 +69,12 @@ const EditJob = () => {
         applyType: "easy-apply",
         applyEmail: "",
         applyLink: "",
+        // New fields
+        gender: "any",
+        isIncentive: false,
+        jobTiming: "",
+        workingDays: [],
+        screeningQuestions: [],
     });
 
     // Load Job Data
@@ -112,6 +122,20 @@ const EditJob = () => {
                     applyType: job.applyType || "easy-apply",
                     applyEmail: job.applyEmail || "",
                     applyLink: job.applyLink || "",
+                    // New fields
+                    gender: job.gender || "any",
+                    isIncentive: !!job.isIncentive,
+                    jobTiming: job.jobTiming || "",
+                    workingDays: Array.isArray(job.workingDays)
+                        ? job.workingDays
+                        : typeof job.workingDays === "string"
+                            ? JSON.parse(job.workingDays)
+                            : [],
+                    screeningQuestions: Array.isArray(job.screeningQuestions)
+                        ? job.screeningQuestions
+                        : typeof job.screeningQuestions === "string"
+                            ? JSON.parse(job.screeningQuestions)
+                            : [],
                 });
             } catch (err) {
                 Swal.fire({ title: "Error", text: "Could not load job details.", icon: "error" });
@@ -170,6 +194,37 @@ const EditJob = () => {
             benefits: prev.benefits.includes(benefit)
                 ? prev.benefits.filter(b => b !== benefit)
                 : [...prev.benefits, benefit]
+        }));
+    };
+
+    const toggleWorkingDay = (day) => {
+        setFormData(prev => ({
+            ...prev,
+            workingDays: prev.workingDays.includes(day)
+                ? prev.workingDays.filter(d => d !== day)
+                : [...prev.workingDays, day]
+        }));
+    };
+
+    const addScreeningQuestion = () => {
+        const trimmed = sqInput.trim();
+        if (!trimmed) return;
+        const newQ = {
+            question: trimmed,
+            type: "boolean",
+            options: sqOptions.filter(o => o.trim()),
+        };
+        setFormData(prev => ({
+            ...prev,
+            screeningQuestions: [...prev.screeningQuestions, newQ],
+        }));
+        setSqInput("");
+    };
+
+    const removeScreeningQuestion = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
         }));
     };
 
@@ -431,6 +486,60 @@ const EditJob = () => {
                         </div>
                     </div>
 
+                    {/* Job Timing + Gender */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Job Timing</label>
+                            <input
+                                type="text"
+                                name="jobTiming"
+                                value={formData.jobTiming}
+                                onChange={handleInputChange}
+                                placeholder="e.g. 9:00 AM - 6:00 PM"
+                                className="w-full px-5 py-3.5 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Gender Preference</label>
+                            <select
+                                value={formData.gender}
+                                onChange={(e) => handleSelectChange("gender")(e.target.value)}
+                                className="w-full px-5 py-3.5 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500"
+                            >
+                                <option value="any">Any</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Working Days */}
+                    <div>
+                        <h3 className="font-semibold text-lg mb-4">Working Days</h3>
+                        <div className="flex flex-wrap gap-3">
+                            {DAYS_OF_WEEK.map(day => (
+                                <button
+                                    key={day}
+                                    type="button"
+                                    onClick={() => toggleWorkingDay(day)}
+                                    className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                                        formData.workingDays.includes(day)
+                                            ? 'bg-blue-600 text-white border border-blue-600'
+                                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
+                                    }`}
+                                >
+                                    {day.slice(0, 3)}
+                                </button>
+                            ))}
+                        </div>
+                        {formData.workingDays.length > 0 && (
+                            <p className="text-sm text-gray-500 mt-2">
+                                Selected: {formData.workingDays.join(", ")}
+                            </p>
+                        )}
+                    </div>
+
                     {/* Location */}
                     <div>
                         <div className="flex items-center gap-2 mb-4">
@@ -472,6 +581,15 @@ const EditJob = () => {
                             <label className="flex items-center gap-2">
                                 <input type="checkbox" checked={formData.salaryNegotiable} disabled={formData.hideSalary} onChange={(e) => setFormData(p => ({ ...p, salaryNegotiable: e.target.checked, hideSalary: false }))} />
                                 Negotiable / Competitive
+                            </label>
+                            {/* isIncentive */}
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isIncentive}
+                                    onChange={(e) => setFormData(p => ({ ...p, isIncentive: e.target.checked }))}
+                                />
+                                Includes Incentive / Variable Pay
                             </label>
                         </div>
 
@@ -545,14 +663,62 @@ const EditJob = () => {
                         </div>
                     </div>
 
+                    {/* Screening Questions */}
+                    <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                        <h3 className="font-semibold text-lg mb-1">Screening Questions</h3>
+                        <p className="text-sm text-gray-500 mb-4">Add Yes/No questions to filter applicants before they apply</p>
+
+                        <div className="flex gap-3 mb-4">
+                            <input
+                                type="text"
+                                value={sqInput}
+                                onChange={(e) => setSqInput(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && addScreeningQuestion()}
+                                placeholder="e.g. Do you have experience with React?"
+                                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500"
+                            />
+                            <button
+                                onClick={addScreeningQuestion}
+                                disabled={!sqInput.trim()}
+                                className="px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50"
+                            >
+                                <Plus size={20} />
+                            </button>
+                        </div>
+
+                        {formData.screeningQuestions.length > 0 && (
+                            <div className="space-y-2">
+                                {formData.screeningQuestions.map((q, i) => (
+                                    <div key={i} className="bg-white px-4 py-3 rounded-xl border border-gray-200 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-blue-600 font-semibold text-sm shrink-0">Q{i + 1}.</span>
+                                            <span className="text-sm text-gray-700 truncate">{q.question}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {q.options.map(opt => (
+                                                <span key={opt} className="px-2 py-0.5 text-xs border border-gray-300 rounded-full text-gray-600">{opt}</span>
+                                            ))}
+                                            <button
+                                                onClick={() => removeScreeningQuestion(i)}
+                                                className="text-red-500 hover:text-red-600 ml-1"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Apply Type */}
                     <div>
                         <h3 className="font-semibold text-lg mb-4">How Candidates Should Apply</h3>
                         <div className="grid sm:grid-cols-3 gap-4">
                             {[
                                 { id: "easy-apply", label: "Easy Apply (on platform)", icon: Send },
-                                { id: "external-link", label: "External Link", icon: FileText },
-                                { id: "email", label: "Email Application", icon: Clock },
+                                // { id: "external-link", label: "External Link", icon: FileText },
+                                // { id: "email", label: "Email Application", icon: Clock },
                             ].map(({ id, label, icon: Icon }) => (
                                 <div
                                     key={id}

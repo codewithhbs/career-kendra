@@ -1,6 +1,6 @@
 "use strict";
 
-const { Job, Company, Employer, JobInterview, User, JobApplication,admin_employees, Message,SavedJobs,Role,role_permissions, JobApplicationDocument, jobAssign } = require("../models");
+const { Job, Company, Employer, JobInterview, User, JobApplication, admin_employees, Message, SavedJobs, Role, role_permissions, JobApplicationDocument, jobAssign } = require("../models");
 console.log("Models imported in job.applications.js:", role_permissions)
 const { GenerateOtp } = require("../utils/generateOtp"); // assume you have these
 const { sendError, sendSuccess } = require("../utils/api");
@@ -8,6 +8,8 @@ const { where, Op, fn, col } = require("sequelize");
 const addEmailJob = require("../services/emailService");
 const sendEmail = require("../utils/sendEmail");
 const { sendMessage } = require("../utils/sendMessage");
+// const webSettings = require("../models/webSettings");
+const { WebSettings } = require("../models");
 const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
   let lastError;
 
@@ -30,6 +32,7 @@ const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
 exports.ApplyToJob = async (req, res) => {
   const userId = req.user?.id;
   const { jobId } = req.params;
+  const { screeningAnswers } = req.body;
 
   if (!userId) {
     return sendError(res, 401, "Unauthorized access");
@@ -97,6 +100,7 @@ exports.ApplyToJob = async (req, res) => {
       status: "applied",
       appliedAt: new Date(),
       resume: user.uploadedCv,
+      screeningAnswers: screeningAnswers || {}
     });
 
     // ================================
@@ -135,8 +139,14 @@ exports.ApplyToJob = async (req, res) => {
 
     const employerId = applicationDetails?.job?.employerId;
 
+    const websiteDetail = await WebSettings.findOne({ where: { id: 1 } });
+    console.log("websiteDetail", websiteDetail);
+
+    const adminEmail = websiteDetail?.contactEmail || "";
+    console.log("adminEmail", adminEmail);
+
     // ================================
-    // 6️⃣ Send Email (Async)
+    // 6️⃣ Send Email to Candidate (Async)
     // ================================
     if (user.emailAddress) {
       const applicationEmail = `
@@ -184,18 +194,6 @@ matches the job requirements, you will be contacted for the next steps.
 While you wait, why not explore more exciting opportunities? Thousands of 
 companies are hiring right now on <strong>Career Kendra</strong>.
 </p>
-
-<!-- CTA BUTTON -->
-<table cellpadding="0" cellspacing="0" style="margin:25px 0;">
-<tr>
-<td align="center">
-<a href="https://yourdomain.com/jobs"
-style="background:#1a73e8;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:5px;font-size:15px;font-weight:bold;display:inline-block;">
-Browse More Jobs
-</a>
-</td>
-</tr>
-</table>
 
 <p>
 🚀 Discover new opportunities, connect with top employers, and grow your career 
@@ -252,7 +250,173 @@ Helping professionals discover better career opportunities.
     }
 
     // ================================
-    // 7️⃣ Message to Employer
+    // 7️⃣ Send Email to Admin (Async)
+    // ================================
+    if (adminEmail) {
+      console.log("adminEmail i am in",adminEmail)
+      const appliedAt = new Date(application.appliedAt).toLocaleString("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
+      const adminNotificationEmail = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>New Job Application</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:30px 0;">
+<tr>
+<td align="center">
+
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,0.08);">
+
+<!-- HEADER -->
+<tr>
+<td style="background:#1a73e8;color:#ffffff;padding:25px;text-align:center;">
+<h1 style="margin:0;font-size:24px;">Career Kendra — Admin</h1>
+<p style="margin:5px 0 0;font-size:14px;">New Job Application Received</p>
+</td>
+</tr>
+
+<!-- CONTENT -->
+<tr>
+<td style="padding:35px; color:#333; font-size:15px; line-height:1.6;">
+
+<p style="margin-top:0;">A new application has been submitted on the platform. Here are the details:</p>
+
+<!-- Candidate Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">
+<tr>
+<td style="background:#f8f9fa;padding:12px 16px;font-weight:bold;font-size:13px;color:#1a73e8;letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid #e0e0e0;">
+Candidate Details
+</td>
+</tr>
+<tr>
+<td style="padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;width:40%;background:#fafafa;">Full Name</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : candidateName}</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Email Address</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${user.emailAddress}</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Phone Number</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${user.phoneNumber || "Not provided"}</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">User ID</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">#${user.id}</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<!-- Job Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">
+<tr>
+<td style="background:#f8f9fa;padding:12px 16px;font-weight:bold;font-size:13px;color:#1a73e8;letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid #e0e0e0;">
+Job Details
+</td>
+</tr>
+<tr>
+<td style="padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;width:40%;background:#fafafa;">Job Title</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${jobTitle}</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Company</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${companyName}</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Job ID</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">#${jobId}</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Applied At</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">${appliedAt}</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<!-- Application Details -->
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">
+<tr>
+<td style="background:#f8f9fa;padding:12px 16px;font-weight:bold;font-size:13px;color:#1a73e8;letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid #e0e0e0;">
+Application Details
+</td>
+</tr>
+<tr>
+<td style="padding:0;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr style="border-bottom:1px solid #f0f0f0;">
+<td style="padding:12px 16px;font-size:14px;color:#666;width:40%;background:#fafafa;">Application ID</td>
+<td style="padding:12px 16px;font-size:14px;color:#333;font-weight:500;">#${application.id}</td>
+</tr>
+<tr>
+<td style="padding:12px 16px;font-size:14px;color:#666;background:#fafafa;">Status</td>
+<td style="padding:12px 16px;font-size:14px;font-weight:500;">
+<span style="background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:12px;font-size:13px;">Applied</span>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p style="color:#888;font-size:13px;margin-top:24px;margin-bottom:0;">
+This is an automated notification from Career Kendra. No action is required on this email.
+</p>
+
+</td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+<td style="background:#f1f3f6;padding:20px;text-align:center;font-size:13px;color:#666;">
+<p style="margin:0;">© ${new Date().getFullYear()} Career Kendra — Admin Notification</p>
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`;
+
+      try {
+        const adminEmailJob = await addEmailJob({
+          html: adminNotificationEmail,
+          options: {
+            receiver_email: adminEmail,
+            subject: `New Application: ${jobTitle} — ${candidateName}`,
+          },
+        });
+
+        console.log("Admin notification email job queued:", adminEmailJob?.id);
+      } catch (error) {
+        console.log("Failed to queue admin notification email:", error.message);
+      }
+    }
+
+    // ================================
+    // 8️⃣ Message to Employer
     // ================================
     await sendMessage({
       applicationId: application.id,
@@ -264,7 +428,7 @@ Helping professionals discover better career opportunities.
     });
 
     // ================================
-    // 8️⃣ System Message to User
+    // 9️⃣ System Message to User
     // ================================
     await sendMessage({
       applicationId: application.id,
@@ -276,7 +440,7 @@ Helping professionals discover better career opportunities.
     });
 
     // ================================
-    // 9️⃣ Response
+    // 🔟 Response
     // ================================
     return sendSuccess(
       res,
@@ -2209,7 +2373,7 @@ exports.getEmployerDashboard = async (req, res) => {
     /* ================= RECENT MESSAGES ================= */
 
     const recentMessages = await Message.findAll({
-  
+
       order: [["createdAt", "DESC"]],
       limit: 5
     });

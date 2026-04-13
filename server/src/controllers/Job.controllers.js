@@ -55,6 +55,15 @@ exports.createJob = async (req, res) => {
     const data = createJobSchema.parse({
       ...req.body,
       companyId: req.body.companyId,
+
+      // ✅ ensure JSON fields are parsed
+      workingDays: typeof req.body.workingDays === "string"
+        ? JSON.parse(req.body.workingDays)
+        : req.body.workingDays,
+
+      screeningQuestions: typeof req.body.screeningQuestions === "string"
+        ? JSON.parse(req.body.screeningQuestions)
+        : req.body.screeningQuestions,
     });
 
     console.log("Creating job with data:", req.body);
@@ -64,10 +73,20 @@ exports.createJob = async (req, res) => {
 
     if (!company) {
       return sendError(
+        
         res,
         403,
         "You do not own this company or company not found",
       );
+    }
+
+     // ✅ 🔥 NEW: Employee check
+    const employee = await Employer.findByPk(employerId); // ya Employee model jo bhi hai
+
+    let status = "under-verification";
+
+    if (employee?.specialAccess) {
+      status = "active";
     }
 
     let slug = data.slug?.trim();
@@ -87,6 +106,8 @@ exports.createJob = async (req, res) => {
 
     const otp = GenerateOtp();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // const conditionalStatus = 
 
     const job = await Job.create({
       ...data,

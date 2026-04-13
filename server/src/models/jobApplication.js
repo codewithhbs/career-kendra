@@ -85,6 +85,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
+      screeningAnswers: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: []
+      },
+
       expectedSalary: {
         type: DataTypes.INTEGER,
         allowNull: true,

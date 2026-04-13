@@ -93,6 +93,11 @@ const navItems = [
         icon: <Users size={18} />
       },
       {
+        label: "All Employers",
+        path: "/employers",
+        icon: <Users size={18} />
+      },
+      {
         label: "Company Employees",
         path: "/active/company-employees",
         icon: <TeamIcon size={18} />

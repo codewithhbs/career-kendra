@@ -290,7 +290,6 @@ const Hero = () => {
               </div>
             </form>
 
-            {/* Stats row */}
             <div className="flex items-center gap-6 mt-7">
               {[
                 { num: "10k+", label: "Companies hiring" },
@@ -319,9 +318,8 @@ const Hero = () => {
               ))}
             </div>
           </div>
-          <div className="hidden lg:flex items-center justify-center">
+          {/* <div className="hidden lg:flex items-center justify-center">
             <div className="relative w-full max-w-120">
-              {/* Glow effect behind illustration */}
               <div
                 className="absolute inset-0 rounded-3xl"
                 style={{
@@ -334,7 +332,6 @@ const Hero = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-full h-auto"
               >
-                {/* Background */}
                 <circle cx="380" cy="90" r="90" fill="#6366F1" opacity="0.08" />
                 <circle
                   cx="120"
@@ -344,7 +341,6 @@ const Hero = () => {
                   opacity="0.08"
                 />
 
-                {/* Laptop */}
                 <rect
                   x="180"
                   y="220"
@@ -370,7 +366,6 @@ const Hero = () => {
                   fill="#334155"
                 />
 
-                {/* Screen content (job cards) */}
                 <rect
                   x="215"
                   y="165"
@@ -421,7 +416,6 @@ const Hero = () => {
                   fill="#94A3B8"
                 />
 
-                {/* Person body */}
                 <rect
                   x="235"
                   y="230"
@@ -431,17 +425,13 @@ const Hero = () => {
                   fill="#6366F1"
                 />
 
-                {/* Head */}
                 <circle cx="260" cy="200" r="22" fill="#FDE68A" />
 
-                {/* Hair */}
                 <path d="M238 195 Q260 170 282 195" fill="#1E293B" />
 
-                {/* Eyes */}
                 <circle cx="252" cy="200" r="2" fill="#1E293B" />
                 <circle cx="268" cy="200" r="2" fill="#1E293B" />
 
-                {/* Smile */}
                 <path
                   d="M252 210 Q260 215 268 210"
                   stroke="#1E293B"
@@ -449,7 +439,6 @@ const Hero = () => {
                   fill="none"
                 />
 
-                {/* Arms */}
                 <path
                   d="M235 250 Q210 260 200 250"
                   stroke="#FDE68A"
@@ -463,7 +452,6 @@ const Hero = () => {
                   strokeLinecap="round"
                 />
 
-                {/* Resume floating card */}
                 <g transform="translate(80,130)">
                   <rect
                     width="120"
@@ -510,7 +498,6 @@ const Hero = () => {
                   </text>
                 </g>
 
-                {/* Check hired badge */}
                 <g transform="translate(360,200)">
                   <circle
                     cx="20"
@@ -527,7 +514,6 @@ const Hero = () => {
                   />
                 </g>
 
-                {/* Search icon */}
                 <g transform="translate(60,260)">
                   <circle cx="30" cy="30" r="30" fill="#6366F1" opacity="0.1" />
                   <circle
@@ -549,7 +535,7 @@ const Hero = () => {
                 </g>
               </svg>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

@@ -55,6 +55,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING,
                 allowNull: false,
             },
+
+            specialAccess: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false
+            },
         },
         {
             tableName: "employers",

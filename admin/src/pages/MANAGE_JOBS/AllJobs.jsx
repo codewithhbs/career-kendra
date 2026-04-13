@@ -3,10 +3,27 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import Swal from "sweetalert2";
 import {
-  Search, SlidersHorizontal, MapPin, DollarSign, Briefcase,
-  Eye, Pencil, Trash2, CheckCircle, XCircle, ChevronLeft,
-  ChevronRight, Building2, Clock, Layers, TrendingUp, X,
-  ArrowUpDown, BadgeCheck, AlertCircle, Timer,
+  Search,
+  SlidersHorizontal,
+  MapPin,
+  DollarSign,
+  Briefcase,
+  Eye,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+  Building2,
+  Clock,
+  Layers,
+  TrendingUp,
+  X,
+  ArrowUpDown,
+  BadgeCheck,
+  AlertCircle,
+  Timer,
   Apple,
   UploadCloudIcon,
 } from "lucide-react";
@@ -29,7 +46,9 @@ const StatusBadge = ({ status }) => {
     closed: <XCircle size={12} />,
   };
   return (
-    <span className={`inline-flex capitalize items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${map[status] || "bg-gray-100 text-gray-600"}`}>
+    <span
+      className={`inline-flex capitalize items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${map[status] || "bg-gray-100 text-gray-600"}`}
+    >
       {icons[status]}
       {status?.replace(/-/g, " ")}
     </span>
@@ -77,8 +96,12 @@ const JobDrawer = ({ job, onClose }) => {
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white px-6 py-6 flex-shrink-0">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0 pr-4">
-              <p className="text-slate-400 text-xs font-medium tracking-widest mb-1">JOB DETAILS</p>
-              <h2 className="text-2xl font-semibold tracking-tight truncate">{job.jobTitle}</h2>
+              <p className="text-slate-400 text-xs font-medium tracking-widest mb-1">
+                JOB DETAILS
+              </p>
+              <h2 className="text-2xl font-semibold tracking-tight truncate">
+                {job.jobTitle}
+              </h2>
               <p className="text-slate-300 text-sm mt-2 flex items-center gap-2">
                 <Building2 size={16} />
                 {job.company?.companyName || "N/A"}
@@ -108,7 +131,9 @@ const JobDrawer = ({ job, onClose }) => {
           </div>
 
           {/* Days Left - Prominent */}
-          <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-sm font-medium ${getDaysColor()}`}>
+          <div
+            className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-sm font-medium ${getDaysColor()}`}
+          >
             {isExpired ? (
               "Expired"
             ) : (
@@ -129,7 +154,8 @@ const JobDrawer = ({ job, onClose }) => {
                 <DollarSign size={14} /> Salary
               </div>
               <p className="font-semibold text-slate-900">
-                ₹{job.salaryMin?.toLocaleString()} – ₹{job.salaryMax?.toLocaleString()}
+                ₹{job.salaryMin?.toLocaleString()} – ₹
+                {job.salaryMax?.toLocaleString()}
               </p>
               <p className="text-xs text-slate-500 mt-0.5">{job.salaryType}</p>
             </div>
@@ -158,16 +184,56 @@ const JobDrawer = ({ job, onClose }) => {
 
           {/* Job Description */}
           <div>
-            <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">Job Description</h3>
+            <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+              Job Description
+            </h3>
             <p className="text-slate-600 leading-relaxed whitespace-pre-wrap text-[13px]">
               {job.jobDescription}
             </p>
           </div>
 
+          <div>
+            <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+              Work Details
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white border border-slate-100 rounded-2xl p-4">
+                <p className="text-xs text-slate-500">Working Days</p>
+                <p className="font-medium text-slate-800 mt-0.5">
+                  {job.workingDays?.join(", ") || "N/A"}
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-100 rounded-2xl p-4">
+                <p className="text-xs text-slate-500">Job Timing</p>
+                <p className="font-medium text-slate-800 mt-0.5">
+                  {job.jobTiming || "N/A"}
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-100 rounded-2xl p-4">
+                <p className="text-xs text-slate-500">Gender</p>
+                <p className="font-medium text-slate-800 mt-0.5 capitalize">
+                  {job.gender || "Any"}
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-100 rounded-2xl p-4">
+                <p className="text-xs text-slate-500">Incentive</p>
+                <p className="font-medium text-slate-800 mt-0.5">
+                  {job.isIncentive ? "Available" : "Not Available"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Responsibilities */}
           {job.jobResponsibilities?.length > 0 && (
             <div>
-              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">Key Responsibilities</h3>
+              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+                Key Responsibilities
+              </h3>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600 text-[13px]">
                 {job.jobResponsibilities.map((item, i) => (
                   <li key={i}>{item}</li>
@@ -180,29 +246,45 @@ const JobDrawer = ({ job, onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white border border-slate-100 rounded-2xl p-4">
               <p className="text-xs text-slate-500">Education</p>
-              <p className="font-medium text-slate-800 mt-0.5">{job.education || "Not specified"}</p>
+              <p className="font-medium text-slate-800 mt-0.5">
+                {job.education || "Not specified"}
+              </p>
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl p-4">
               <p className="text-xs text-slate-500">Notice Period</p>
-              <p className="font-medium text-slate-800 mt-0.5">{job.noticePeriod || "N/A"}</p>
+              <p className="font-medium text-slate-800 mt-0.5">
+                {job.noticePeriod || "N/A"}
+              </p>
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl p-4">
               <p className="text-xs text-slate-500">Category</p>
-              <p className="font-medium text-slate-800 mt-0.5">{job.jobCategory}</p>
+              <p className="font-medium text-slate-800 mt-0.5">
+                {job.jobCategory}
+              </p>
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl p-4">
               <p className="text-xs text-slate-500">Openings</p>
-              <p className="font-medium text-slate-800 mt-0.5">{job.openings}</p>
+              <p className="font-medium text-slate-800 mt-0.5">
+                {job.openings}
+              </p>
             </div>
           </div>
 
           {/* Apply Details */}
           <div>
-            <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">How to Apply</h3>
+            <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+              How to Apply
+            </h3>
             <div className="bg-slate-50 rounded-2xl p-5 space-y-3 text-[13px]">
-              <p><span className="font-medium text-slate-500">Apply Type:</span> {job.applyType}</p>
+              <p>
+                <span className="font-medium text-slate-500">Apply Type:</span>{" "}
+                {job.applyType}
+              </p>
               {job.applyEmail && (
-                <p><span className="font-medium text-slate-500">Email:</span> {job.applyEmail}</p>
+                <p>
+                  <span className="font-medium text-slate-500">Email:</span>{" "}
+                  {job.applyEmail}
+                </p>
               )}
               {job.applyLink && (
                 <p>
@@ -223,7 +305,9 @@ const JobDrawer = ({ job, onClose }) => {
           {/* Skills & Benefits */}
           {job.requiredSkills?.length > 0 && (
             <div>
-              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">Required Skills</h3>
+              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+                Required Skills
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {job.requiredSkills.map((s, i) => (
                   <span
@@ -237,9 +321,49 @@ const JobDrawer = ({ job, onClose }) => {
             </div>
           )}
 
+          {job.screeningQuestions?.length > 0 && (
+            <div>
+              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+                Screening Questions
+              </h3>
+
+              <div className="space-y-3">
+                {job.screeningQuestions.map((q, i) => (
+                  <div
+                    key={i}
+                    className="bg-slate-50 border border-slate-100 rounded-2xl p-4"
+                  >
+                    <p className="font-medium text-slate-800 text-sm">
+                      {i + 1}. {q.question}
+                    </p>
+
+                    {q.options?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {q.options.map((opt, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-100"
+                          >
+                            {opt}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* <p className="text-xs text-slate-400 mt-2">
+                      Type: {q.type}
+                    </p> */}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {job.benefits?.length > 0 && (
             <div>
-              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">Benefits</h3>
+              <h3 className="text-slate-700 font-semibold mb-3 text-sm tracking-tight">
+                Benefits
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {job.benefits.map((b, i) => (
                   <span
@@ -259,7 +383,9 @@ const JobDrawer = ({ job, onClose }) => {
               <div className="flex gap-3">
                 <div className="text-red-500 text-2xl mt-0.5">⚠️</div>
                 <div>
-                  <h3 className="font-semibold text-red-700 text-sm">Reason for Rejection</h3>
+                  <h3 className="font-semibold text-red-700 text-sm">
+                    Reason for Rejection
+                  </h3>
                   <p className="text-red-600 text-[13px] mt-1 whitespace-pre-wrap">
                     {job.reasonToReject}
                   </p>
@@ -270,12 +396,26 @@ const JobDrawer = ({ job, onClose }) => {
 
           {/* Company Info */}
           <div className="border-t border-slate-100 pt-6">
-            <h3 className="text-slate-700 font-semibold mb-4 text-sm tracking-tight">About the Company</h3>
+            <h3 className="text-slate-700 font-semibold mb-4 text-sm tracking-tight">
+              About the Company
+            </h3>
             <div className="text-[13px] text-slate-600 space-y-2">
-              <p><span className="text-slate-500">Name:</span> {job.company?.companyName}</p>
-              <p><span className="text-slate-500">Category:</span> {job.company?.companyCategory}</p>
-              <p><span className="text-slate-500">Size:</span> {job.company?.companySize}</p>
-              <p><span className="text-slate-500">Location:</span> {job.company?.fullAddress}</p>
+              <p>
+                <span className="text-slate-500">Name:</span>{" "}
+                {job.company?.companyName}
+              </p>
+              <p>
+                <span className="text-slate-500">Category:</span>{" "}
+                {job.company?.companyCategory}
+              </p>
+              <p>
+                <span className="text-slate-500">Size:</span>{" "}
+                {job.company?.companySize}
+              </p>
+              <p>
+                <span className="text-slate-500">Location:</span>{" "}
+                {job.company?.fullAddress}
+              </p>
               {job.company?.companyWebsite && (
                 <a
                   href={job.company.companyWebsite}
@@ -326,9 +466,9 @@ const JobDrawer = ({ job, onClose }) => {
 export const AllJobs = () => {
   const { status } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
   const userRole = getUserRole();
-  const isAdmin = userRole.toLowerCase().includes("admin")
+  const isAdmin = userRole.toLowerCase().includes("admin");
   const [jobs, setJobs] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -338,7 +478,6 @@ export const AllJobs = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
-
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -360,14 +499,21 @@ export const AllJobs = () => {
       const res = await api.get("/jobs/for-user", {
         params: {
           admin: true,
-            ...(!isAdmin && { employeeId: user?.id }),
+          ...(!isAdmin && { employeeId: user?.id }),
           page,
           limit,
           search,
           ...(status && { status }),
-          jobType, workMode, shiftType, city,
-          minSalary, maxSalary, minExperience, maxExperience,
-          sortBy, order,
+          jobType,
+          workMode,
+          shiftType,
+          city,
+          minSalary,
+          maxSalary,
+          minExperience,
+          maxExperience,
+          sortBy,
+          order,
         },
       });
       setJobs(res.data.jobs || []);
@@ -380,48 +526,81 @@ export const AllJobs = () => {
     }
   };
 
-  useEffect(() => { fetchJobs(); }, [
-    page, limit, search, status, jobType, workMode, shiftType,
-    city, minSalary, maxSalary, minExperience, maxExperience, sortBy, order,
+  useEffect(() => {
+    fetchJobs();
+  }, [
+    page,
+    limit,
+    search,
+    status,
+    jobType,
+    workMode,
+    shiftType,
+    city,
+    minSalary,
+    maxSalary,
+    minExperience,
+    maxExperience,
+    sortBy,
+    order,
   ]);
 
-  const handle = (setter) => (e) => { setter(e.target.value); setPage(1); };
+  const handle = (setter) => (e) => {
+    setter(e.target.value);
+    setPage(1);
+  };
 
   const handleVerify = async (id) => {
     const result = await Swal.fire({
-      title: "Verify this job?", icon: "question",
-      showCancelButton: true, confirmButtonColor: "#10b981", confirmButtonText: "Yes, Verify",
+      title: "Verify this job?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#10b981",
+      confirmButtonText: "Yes, Verify",
     });
     if (!result.isConfirmed) return;
     try {
       await api.put(`/jobs/admin/change-status/${id}`, { status: "active" });
       Swal.fire("Verified!", "Job verified successfully", "success");
       fetchJobs();
-    } catch { Swal.fire("Error", "Failed to verify job", "error"); }
+    } catch {
+      Swal.fire("Error", "Failed to verify job", "error");
+    }
   };
 
   const handleReject = async (id) => {
-
     const { value: reason } = await Swal.fire({
-      title: "Reject Job", input: "textarea",
-      inputLabel: "Reason for rejection", inputPlaceholder: "Enter detailed reason...",
-      showCancelButton: true, confirmButtonText: "Reject", confirmButtonColor: "#ef4444",
+      title: "Reject Job",
+      input: "textarea",
+      inputLabel: "Reason for rejection",
+      inputPlaceholder: "Enter detailed reason...",
+      showCancelButton: true,
+      confirmButtonText: "Reject",
+      confirmButtonColor: "#ef4444",
     });
 
     if (!reason?.trim()) return;
 
     try {
-      await api.put(`/jobs/admin/change-status/${id}`, { status: "reject", reason: reason.trim() });
+      await api.put(`/jobs/admin/change-status/${id}`, {
+        status: "reject",
+        reason: reason.trim(),
+      });
       Swal.fire("Rejected", "Job has been rejected", "success");
       fetchJobs();
-    } catch { Swal.fire("Error", "Failed to reject job", "error"); }
+    } catch {
+      Swal.fire("Error", "Failed to reject job", "error");
+    }
   };
 
   const handleDelete = async (id, title) => {
     const result = await Swal.fire({
-      title: `Delete "${title}"?`, text: "This action cannot be undone!",
-      icon: "warning", showCancelButton: true,
-      confirmButtonColor: "#ef4444", confirmButtonText: "Yes, Delete",
+      title: `Delete "${title}"?`,
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      confirmButtonText: "Yes, Delete",
     });
     if (!result.isConfirmed) return;
     try {
@@ -429,18 +608,16 @@ export const AllJobs = () => {
       Swal.fire("Deleted!", "Job has been deleted.", "success");
       fetchJobs();
     } catch (err) {
-      console.log(err)
+      console.log(err);
       Swal.fire("Error", "Failed to delete job", "error");
     }
   };
-
 
   const fetchEmployees = async () => {
     setLoading(true);
     try {
       const res = await api.get("/ad/employees");
       setEmployees(res.data.data || []);
-
     } catch (err) {
       console.error("Failed to fetch employees:", err);
       Swal.fire({
@@ -455,14 +632,28 @@ export const AllJobs = () => {
 
   useEffect(() => {
     if (openAssign) fetchEmployees();
-  }, [openAssign])
+  }, [openAssign]);
 
-
-  const activeFiltersCount = [jobType, workMode, shiftType, city, minSalary, maxSalary, minExperience, maxExperience].filter(Boolean).length;
+  const activeFiltersCount = [
+    jobType,
+    workMode,
+    shiftType,
+    city,
+    minSalary,
+    maxSalary,
+    minExperience,
+    maxExperience,
+  ].filter(Boolean).length;
 
   const clearFilters = () => {
-    setJobType(""); setWorkMode(""); setShiftType(""); setCity("");
-    setMinSalary(""); setMaxSalary(""); setMinExperience(""); setMaxExperience("");
+    setJobType("");
+    setWorkMode("");
+    setShiftType("");
+    setCity("");
+    setMinSalary("");
+    setMaxSalary("");
+    setMinExperience("");
+    setMaxExperience("");
     setPage(1);
   };
 
@@ -470,41 +661,51 @@ export const AllJobs = () => {
     setSelectedUser(null);
     setOpenAssign(true);
     setSelectedJob(job);
-  }
+  };
   const handleAssignEmployee = async () => {
     console.log("Assigning job:", selectedJob, "to employee ID:", selectedUser);
     try {
-      const res = await api.post(`/job-assign/${selectedJob.id}`, { adminEmployeId: selectedUser, priority: "medium", remarks: "Assigned via admin panel" });
-      console.log(res)
+      const res = await api.post(`/job-assign/${selectedJob.id}`, {
+        adminEmployeId: selectedUser,
+        priority: "medium",
+        remarks: "Assigned via admin panel",
+      });
+      console.log(res);
       Swal.fire("Success", "Job assigned successfully", "success");
       setOpenAssign(false);
       setSelectedUser(null);
       fetchJobs();
-
     } catch (error) {
       console.error("Failed to assign job:", error);
       Swal.fire("Error", "Failed to assign job", "error");
-
     }
-  }
+  };
 
   return (
     <div className="min-h-screen ">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 py-8">
-
         {/* ── Page Header ── */}
         <div className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">Admin Panel</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
+            Admin Panel
+          </p>
           <div className="flex items-center justify-between">
             <h1 className="text-3xl capitalize font-bold text-slate-900 tracking-tight">
               {status ? `${status.replace(/-/g, " ")} Jobs` : "All Jobs"}
             </h1>
             <select
               value={limit}
-              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1);
+              }}
               className="text-sm border border-slate-200 bg-white rounded-xl px-3 py-2 text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-300"
             >
-              {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n} / page</option>)}
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n} / page
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -512,7 +713,10 @@ export const AllJobs = () => {
         {/* ── Search + Filter Bar ── */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-4 p-3 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
             <input
               type="text"
               placeholder="Search by title, company, city…"
@@ -524,10 +728,16 @@ export const AllJobs = () => {
 
           <div className="flex gap-2 flex-wrap">
             <div className="relative">
-              <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ArrowUpDown
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              />
               <select
                 value={sortBy}
-                onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-8 pr-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 appearance-none cursor-pointer"
               >
                 <option value="createdAt">Date</option>
@@ -537,7 +747,10 @@ export const AllJobs = () => {
             </div>
             <select
               value={order}
-              onChange={(e) => { setOrder(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setOrder(e.target.value);
+                setPage(1);
+              }}
               className="px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 appearance-none cursor-pointer"
             >
               <option value="DESC">Newest</option>
@@ -545,11 +758,12 @@ export const AllJobs = () => {
             </select>
 
             <button
-              onClick={() => setShowFilters(v => !v)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition ${showFilters || activeFiltersCount > 0
-                ? "bg-slate-800 text-white border-slate-800"
-                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                }`}
+              onClick={() => setShowFilters((v) => !v)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition ${
+                showFilters || activeFiltersCount > 0
+                  ? "bg-slate-800 text-white border-slate-800"
+                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+              }`}
             >
               <SlidersHorizontal size={15} />
               Filters
@@ -567,32 +781,61 @@ export const AllJobs = () => {
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm mb-4 p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {[
               {
-                label: "Job Type", value: jobType, setter: setJobType,
-                options: [["", "All Types"], ["full-time", "Full Time"], ["part-time", "Part Time"], ["contract", "Contract"], ["internship", "Internship"]],
+                label: "Job Type",
+                value: jobType,
+                setter: setJobType,
+                options: [
+                  ["", "All Types"],
+                  ["full-time", "Full Time"],
+                  ["part-time", "Part Time"],
+                  ["contract", "Contract"],
+                  ["internship", "Internship"],
+                ],
               },
               {
-                label: "Work Mode", value: workMode, setter: setWorkMode,
-                options: [["", "All Modes"], ["remote", "Remote"], ["hybrid", "Hybrid"], ["onsite", "On-site"]],
+                label: "Work Mode",
+                value: workMode,
+                setter: setWorkMode,
+                options: [
+                  ["", "All Modes"],
+                  ["remote", "Remote"],
+                  ["hybrid", "Hybrid"],
+                  ["onsite", "On-site"],
+                ],
               },
               {
-                label: "Shift", value: shiftType, setter: setShiftType,
-                options: [["", "All Shifts"], ["day", "Day"], ["night", "Night"]],
+                label: "Shift",
+                value: shiftType,
+                setter: setShiftType,
+                options: [
+                  ["", "All Shifts"],
+                  ["day", "Day"],
+                  ["night", "Night"],
+                ],
               },
             ].map(({ label, value, setter, options }) => (
               <div key={label}>
-                <label className="text-xs font-medium text-slate-500 mb-1.5 block">{label}</label>
+                <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                  {label}
+                </label>
                 <select
                   value={value}
                   onChange={handle(setter)}
                   className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
                 >
-                  {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  {options.map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
                 </select>
               </div>
             ))}
 
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1.5 block">City</label>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                City
+              </label>
               <input
                 type="text"
                 placeholder="e.g. Mumbai"
@@ -603,22 +846,46 @@ export const AllJobs = () => {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1.5 block">Salary Range (₹)</label>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                Salary Range (₹)
+              </label>
               <div className="flex gap-1.5">
-                <input type="number" placeholder="Min" value={minSalary} onChange={handle(setMinSalary)}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300" />
-                <input type="number" placeholder="Max" value={maxSalary} onChange={handle(setMaxSalary)}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minSalary}
+                  onChange={handle(setMinSalary)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxSalary}
+                  onChange={handle(setMaxSalary)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1.5 block">Experience (yrs)</label>
+              <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+                Experience (yrs)
+              </label>
               <div className="flex gap-1.5">
-                <input type="number" placeholder="Min" value={minExperience} onChange={handle(setMinExperience)}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300" />
-                <input type="number" placeholder="Max" value={maxExperience} onChange={handle(setMaxExperience)}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minExperience}
+                  onChange={handle(setMinExperience)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxExperience}
+                  onChange={handle(setMaxExperience)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
               </div>
             </div>
 
@@ -641,7 +908,16 @@ export const AllJobs = () => {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-slate-100">
-                  {["Job", "Company", "Location", "Salary", "Exp", "Type", "Status", "Actions"].map((h, i) => (
+                  {[
+                    "Job",
+                    "Company",
+                    "Location",
+                    "Salary",
+                    "Exp",
+                    "Type",
+                    "Status",
+                    "Actions",
+                  ].map((h, i) => (
                     <th
                       key={i}
                       className={`px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-50/70 ${i === 7 ? "text-right" : "text-left"}`}
@@ -657,7 +933,10 @@ export const AllJobs = () => {
                     <tr key={i} className="border-b border-slate-50">
                       {[...Array(8)].map((_, j) => (
                         <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-slate-100 rounded-lg animate-pulse" style={{ width: `${60 + (j * 7) % 40}%` }} />
+                          <div
+                            className="h-4 bg-slate-100 rounded-lg animate-pulse"
+                            style={{ width: `${60 + ((j * 7) % 40)}%` }}
+                          />
                         </td>
                       ))}
                     </tr>
@@ -668,18 +947,29 @@ export const AllJobs = () => {
                       <div className="flex flex-col items-center gap-3 text-slate-400">
                         <Briefcase size={36} strokeWidth={1.2} />
                         <p className="text-base font-medium">No jobs found</p>
-                        <p className="text-sm">Try adjusting your filters or search query</p>
+                        <p className="text-sm">
+                          Try adjusting your filters or search query
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   jobs.map((job) => (
-                    <tr key={job.id} className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors">
+                    <tr
+                      key={job.id}
+                      className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors"
+                    >
                       {/* Job */}
                       <td className="px-4 py-3 max-w-xs">
-                        <p className="font-semibold text-slate-800 text-sm truncate">{job.jobTitle}</p>
+                        <p className="font-semibold text-slate-800 text-sm truncate">
+                          {job.jobTitle}
+                        </p>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {job.openings} opening{job.openings > 1 ? "s" : ""} · {new Date(job.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          {job.openings} opening{job.openings > 1 ? "s" : ""} ·{" "}
+                          {new Date(job.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })}
                         </p>
                       </td>
 
@@ -706,9 +996,12 @@ export const AllJobs = () => {
                       {/* Salary */}
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-slate-700 whitespace-nowrap">
-                          ₹{job.salaryMin?.toLocaleString()} – ₹{job.salaryMax?.toLocaleString()}
+                          ₹{job.salaryMin?.toLocaleString()} – ₹
+                          {job.salaryMax?.toLocaleString()}
                         </p>
-                        <p className="text-xs text-slate-400">{job.salaryType}</p>
+                        <p className="text-xs text-slate-400">
+                          {job.salaryType}
+                        </p>
                       </td>
 
                       {/* Experience */}
@@ -720,7 +1013,9 @@ export const AllJobs = () => {
 
                       {/* Type */}
                       <td className="px-4 py-3">
-                        <p className="text-xs text-slate-600 capitalize">{job.jobType}</p>
+                        <p className="text-xs text-slate-600 capitalize">
+                          {job.jobType}
+                        </p>
                         <p className="text-xs text-slate-400">{job.workMode}</p>
                       </td>
 
@@ -778,7 +1073,9 @@ export const AllJobs = () => {
                           {job.status === "active" && (
                             <>
                               <button
-                                onClick={() => navigate(`/jobs/check-applies/${job.id}`)}
+                                onClick={() =>
+                                  navigate(`/jobs/check-applies/${job.id}`)
+                                }
                                 title="Verify"
                                 className="p-2 rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                               >
@@ -833,7 +1130,7 @@ export const AllJobs = () => {
           <div className="flex items-center gap-2">
             <button
               disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
+              onClick={() => setPage((p) => p - 1)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               <ChevronLeft size={15} /> Prev
@@ -846,10 +1143,11 @@ export const AllJobs = () => {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`w-9 h-9 rounded-xl text-sm font-medium transition ${page === p
-                      ? "bg-slate-800 text-white shadow-sm"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                    className={`w-9 h-9 rounded-xl text-sm font-medium transition ${
+                      page === p
+                        ? "bg-slate-800 text-white shadow-sm"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
                   >
                     {p}
                   </button>
@@ -859,7 +1157,7 @@ export const AllJobs = () => {
 
             <button
               disabled={page === totalPages}
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage((p) => p + 1)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Next <ChevronRight size={15} />
@@ -877,9 +1175,9 @@ export const AllJobs = () => {
           setSelectedUser(null);
         }}
         title="Assign Employee To Job"
-        items={employees.map(emp => ({
-          label: `${emp.name} ${emp.email ? `(${emp.email})` : ''}`,
-          value: emp.id
+        items={employees.map((emp) => ({
+          label: `${emp.name} ${emp.email ? `(${emp.email})` : ""}`,
+          value: emp.id,
         }))}
         selectedValue={selectedUser}
         onSelect={(selectedItem) => {

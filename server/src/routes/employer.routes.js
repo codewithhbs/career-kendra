@@ -1,7 +1,7 @@
 const router = require("express").Router();
 
 
-const {  resendOtp, login, logout, verifyLoginOtp, verifyOtpController, registerEmployer, getEmployerProfile, } = require("../controllers/employerControllers");
+const {  resendOtp, login, logout, verifyLoginOtp, verifyOtpController, registerEmployer, getEmployerProfile, getAllEmployers, updateBasicDetailsOfEmployer, } = require("../controllers/employerControllers");
 const { getEmployerDashboard } = require("../controllers/job.applications");
 const auth = require("../middlewares/auth");
 
@@ -13,5 +13,7 @@ router.post('/login-otp-verify', verifyLoginOtp)
 router.get('/logout', auth, logout)
 router.get('/get-profile-details',auth,getEmployerProfile)
 router.get('/dashboard', getEmployerDashboard)
+router.get('/get-all-employers', getAllEmployers)
+router.post('/update-basic', updateBasicDetailsOfEmployer)
 
 module.exports = router;

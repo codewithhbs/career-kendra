@@ -65,7 +65,11 @@ module.exports = (sequelize, DataTypes) => {
             profileDetailsId: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
-
+            },
+            
+            specialAccess: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false
             },
         },
         {

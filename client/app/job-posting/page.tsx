@@ -91,6 +91,22 @@ const COMPANY_CATEGORIES = [
   "Other",
 ];
 
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+interface ScreeningQuestion {
+  question: string;
+  type: "boolean";
+  options: string[];
+}
+
 interface CompanyFormData {
   companyName: string;
   companyTagline: string;
@@ -109,7 +125,6 @@ interface JobFormData {
   jobDescription: string;
   jobResponsibilities: string[];
   jobCategory: string;
-  department: string;
   jobType: string;
   workMode: string;
   shiftType: string;
@@ -136,14 +151,20 @@ interface JobFormData {
   applyType: string;
   applyEmail: string;
   applyLink: string;
+  // New fields
+  gender: string;
+  isIncentive: boolean;
+  jobTiming: string;
+  workingDays: string[];
+  screeningQuestions: ScreeningQuestion[];
 }
 
 // ─── Step definitions ────────────────────────────────────────────────────────
 const STEPS = [
   { id: 1, label: "Basic Info" },
   { id: 2, label: "Job Details" },
-  { id: 3, label: "Candidate Info" },
-  { id: 4, label: "Job Description" },
+  { id: 3, label: "Job Description" },
+  { id: 4, label: "Candidate Info" },
   { id: 5, label: "Confirmation" },
 ];
 
@@ -157,7 +178,6 @@ function PreviewPanel({
   companyData: CompanyFormData;
   existingCompany: any;
 }) {
-  // Use existing company data if available, otherwise use form data
   const displayCompany = existingCompany
     ? {
         companyName: existingCompany.companyName,
@@ -221,6 +241,11 @@ function PreviewPanel({
               {formData.shiftType} shift
             </Badge>
           )}
+          {formData.gender && formData.gender !== "any" && (
+            <Badge variant="outline" className="text-xs capitalize">
+              {formData.gender}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -258,7 +283,6 @@ function PreviewPanel({
       <PreviewSection title="Basic Info">
         <PreviewRow label="Category" value={empty(formData.jobCategory)} />
         <PreviewRow label="Industry" value={empty(formData.industry)} />
-        <PreviewRow label="Department" value={empty(formData.department)} />
         <PreviewRow label="Openings" value={empty(formData.openings)} />
       </PreviewSection>
 
@@ -272,9 +296,27 @@ function PreviewPanel({
         )}
       </PreviewSection>
 
+      {/* Work Schedule */}
+      {(formData.jobTiming || formData.workingDays.length > 0) && (
+        <PreviewSection title="Work Schedule">
+          {formData.jobTiming && (
+            <PreviewRow label="Timing" value={formData.jobTiming} />
+          )}
+          {formData.workingDays.length > 0 && (
+            <PreviewRow
+              label="Working Days"
+              value={formData.workingDays.join(", ")}
+            />
+          )}
+        </PreviewSection>
+      )}
+
       {/* Compensation */}
       <PreviewSection title="Compensation">
         <PreviewRow label="Salary" value={salaryDisplay()} />
+        {formData.isIncentive && (
+          <PreviewRow label="Incentive" value="Yes" />
+        )}
       </PreviewSection>
 
       {/* Candidate */}
@@ -295,6 +337,9 @@ function PreviewPanel({
           value={empty(formData.noticePeriod)}
         />
         <PreviewRow label="Expiry Date" value={empty(formData.expiryDate)} />
+        {formData.gender && formData.gender !== "any" && (
+          <PreviewRow label="Gender" value={formData.gender} />
+        )}
       </PreviewSection>
 
       {/* Skills */}
@@ -356,6 +401,19 @@ function PreviewPanel({
               </span>
             ))}
           </div>
+        </PreviewSection>
+      )}
+
+      {/* Screening Questions */}
+      {formData.screeningQuestions.length > 0 && (
+        <PreviewSection title="Screening Questions">
+          <ul className="space-y-1 mt-1">
+            {formData.screeningQuestions.map((q, i) => (
+              <li key={i} className="text-xs text-gray-700">
+                {i + 1}. {q.question}
+              </li>
+            ))}
+          </ul>
         </PreviewSection>
       )}
 
@@ -502,7 +560,10 @@ const page = () => {
   const [loading, setLoading] = useState(false);
   const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
 
-  // ── Company form data — only used when company is null ──
+  // Screening question input state
+  const [sqInput, setSqInput] = useState("");
+  const [sqOptions, setSqOptions] = useState(["Yes", "No"]);
+
   const [companyData, setCompanyData] = useState<CompanyFormData>({
     companyName: "",
     companyTagline: "",
@@ -516,13 +577,16 @@ const page = () => {
     city: "",
   });
 
+  const handleRedirect = () => {
+    navigate.push("/auth/login-employers");
+  };
+
   const [formData, setFormData] = useState<JobFormData>({
     jobTitle: "",
     jobDescription: "",
     jobResponsibilities: [],
     jobCategory: "",
     industry: "",
-    department: "",
     jobType: "full-time",
     workMode: "onsite",
     shiftType: "day",
@@ -548,6 +612,12 @@ const page = () => {
     applyType: "easy-apply",
     applyEmail: "",
     applyLink: "",
+    // New fields
+    gender: "any",
+    isIncentive: false,
+    jobTiming: "",
+    workingDays: [],
+    screeningQuestions: [],
   });
 
   const [skillInput, setSkillInput] = useState("");
@@ -574,7 +644,6 @@ const page = () => {
       jobResponsibilities: [],
       jobCategory: "",
       industry: "",
-      department: "",
       jobType: "full-time",
       workMode: "onsite",
       shiftType: "day",
@@ -600,10 +669,16 @@ const page = () => {
       applyType: "easy-apply",
       applyEmail: "",
       applyLink: "",
+      gender: "any",
+      isIncentive: false,
+      jobTiming: "",
+      workingDays: [],
+      screeningQuestions: [],
     });
     setSkillInput("");
     setTagInput("");
     setBenefitInput("");
+    setSqInput("");
     setCurrentStep(1);
     setCreatedCompanyId(null);
   }, []);
@@ -620,7 +695,6 @@ const page = () => {
       .toISOString()
       .split("T")[0];
 
-    // Only fill company demo data if no existing company
     if (!isCompany) {
       setCompanyData({
         companyName: "TechVenture Pvt. Ltd.",
@@ -646,7 +720,6 @@ const page = () => {
       ],
       jobCategory: "Software Development",
       industry: "IT",
-      department: "Engineering",
       jobType: "full-time",
       workMode: "hybrid",
       shiftType: "day",
@@ -685,6 +758,17 @@ const page = () => {
       applyType: "easy-apply",
       applyEmail: "",
       applyLink: "",
+      gender: "any",
+      isIncentive: true,
+      jobTiming: "9:00 AM - 6:00 PM",
+      workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      screeningQuestions: [
+        {
+          question: "Do you have experience with React?",
+          type: "boolean",
+          options: ["Yes", "No"],
+        },
+      ],
     });
     setUseDemoData(false);
   }, [useDemoData]);
@@ -752,10 +836,40 @@ const page = () => {
     }));
   };
 
+  const toggleWorkingDay = (day: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      workingDays: prev.workingDays.includes(day)
+        ? prev.workingDays.filter((d) => d !== day)
+        : [...prev.workingDays, day],
+    }));
+  };
+
+  const addScreeningQuestion = () => {
+    const trimmed = sqInput.trim();
+    if (!trimmed) return;
+    const newQ: ScreeningQuestion = {
+      question: trimmed,
+      type: "boolean",
+      options: sqOptions.filter((o) => o.trim()),
+    };
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: [...prev.screeningQuestions, newQ],
+    }));
+    setSqInput("");
+  };
+
+  const removeScreeningQuestion = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
+    }));
+  };
+
   const validateStep = (step: number): string | null => {
     if (step === 1) {
       if (!formData.jobTitle.trim()) return "Job title is required";
-      // Only validate company form fields if no existing company in store
       if (!isCompany && !companyData.companyName.trim())
         return "Company name is required";
     }
@@ -769,10 +883,6 @@ const page = () => {
       if (Number(formData.openings) < 1) return "At least 1 opening required";
     }
     if (step === 3) {
-      if (formData.requiredSkills.length === 0)
-        return "At least one skill required";
-    }
-    if (step === 4) {
       if (formData.jobDescription.length < 120)
         return "Description too short (min 120 characters)";
       if (formData.jobResponsibilities.length === 0)
@@ -781,6 +891,10 @@ const page = () => {
         return "Email required for email apply";
       if (formData.applyType === "external-link" && !formData.applyLink.trim())
         return "Link required for external apply";
+    }
+    if (step === 4) {
+      if (formData.requiredSkills.length === 0)
+        return "At least one skill required";
     }
     return null;
   };
@@ -816,7 +930,6 @@ const page = () => {
     }
   };
 
-  // ── Create company first (only if needed), then post the job ──
   const handleSubmit = async () => {
     const error = validateForm();
     if (error) {
@@ -833,12 +946,9 @@ const page = () => {
     setLoading(true);
 
     try {
-      // Step A: Determine companyId
-      // Priority: existing company from store → already created in this session → create new
       let companyId: number | null = company?.id ?? createdCompanyId ?? null;
 
       if (!companyId) {
-        // No existing company — create one using the form data
         const companyRes = await axios.post(
           "/company/create-step1",
           {
@@ -866,7 +976,6 @@ const page = () => {
         setCreatedCompanyId(companyId);
       }
 
-      // Step B: Post the job with the resolved companyId
       const payload = {
         ...formData,
         salaryMin: formData.salaryMin ? Number(formData.salaryMin) : undefined,
@@ -931,19 +1040,16 @@ const page = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">Sign In</Button>
+            <Button onClick={handleRedirect} className="w-full">Sign In</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // ─── Step Content ────────────────────────────────────────────────────────
-
-  // Step 1: Basic Info + Company (show form if no company, read-only card if exists)
+  // ─── Step 1: Basic Info + Company ────────────────────────────────────────
   const renderStep1 = () => (
     <div className="space-y-10">
-      {/* ── Job Info ── */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
           <span className="w-3 h-3 bg-[#F54A00] rounded-full"></span>
@@ -962,8 +1068,7 @@ const page = () => {
               className="h-12 text-base border-gray-300 focus:border-[#F54A00] placeholder:text-gray-400"
             />
             <p className="text-xs text-gray-500 pl-1">
-              Be specific. Include role level and key technologies for better
-              reach.
+              Be specific. Include role level and key technologies for better reach.
             </p>
           </div>
 
@@ -1004,28 +1109,16 @@ const page = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2 w-full">
-            <Label className="text-gray-700 font-medium">Department</Label>
-            <Input
-              name="department"
-              value={formData.department}
-              onChange={handleInputChange}
-              placeholder="e.g. Engineering, Marketing"
-              className="h-12 border-gray-300"
-            />
-          </div>
         </div>
       </div>
 
-      {/* ── Company Section ── */}
+      {/* Company Section */}
       <div className="border-t border-gray-100 pt-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <Building2 className="h-5 w-5 text-[#F54A00]" />
           Your Company
         </h3>
 
-        {/* CASE 1: Existing company found in store → show read-only info card */}
         {isCompany ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
@@ -1049,7 +1142,6 @@ const page = () => {
             </div>
           </div>
         ) : (
-          /* CASE 2: No company → show form to create one */
           <>
             <p className="text-sm text-gray-500 mb-6">
               Tell candidates a bit about the company behind this role.
@@ -1069,9 +1161,7 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">
-                  Company Size
-                </Label>
+                <Label className="text-gray-700 font-medium">Company Size</Label>
                 <Select
                   value={companyData.companySize}
                   onValueChange={handleCompanySelectChange("companySize")}
@@ -1090,9 +1180,7 @@ const page = () => {
               </div>
 
               <div className="space-y-2 lg:col-span-3">
-                <Label className="text-gray-700 font-medium">
-                  Company Tagline
-                </Label>
+                <Label className="text-gray-700 font-medium">Company Tagline</Label>
                 <Input
                   name="companyTagline"
                   value={companyData.companyTagline}
@@ -1103,9 +1191,7 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">
-                  Company Sector
-                </Label>
+                <Label className="text-gray-700 font-medium">Company Sector</Label>
                 <Select
                   value={companyData.companyCategory}
                   onValueChange={handleCompanySelectChange("companyCategory")}
@@ -1124,9 +1210,7 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">
-                  Founded Year
-                </Label>
+                <Label className="text-gray-700 font-medium">Founded Year</Label>
                 <Input
                   name="foundedYear"
                   value={companyData.foundedYear}
@@ -1142,10 +1226,10 @@ const page = () => {
     </div>
   );
 
-  // Step 2: Job Details + Company HQ (only if no existing company)
+  // ─── Step 2: Job Details ─────────────────────────────────────────────────
   const renderStep2 = () => (
     <div className="space-y-10">
-      {/* Job Type / Mode / Shift / Openings */}
+      {/* Work Type & Schedule */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <h3 className="text-base font-semibold mb-5 flex items-center gap-2">
           <Briefcase className="h-5 w-5 text-[#F54A00]" />
@@ -1224,6 +1308,60 @@ const page = () => {
               placeholder="Enter openings"
             />
           </div>
+        </div>
+
+        {/* Job Timing & Working Days */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Job Timing</Label>
+            <Input
+              name="jobTiming"
+              value={formData.jobTiming}
+              onChange={handleInputChange}
+              placeholder="e.g. 9:00 AM - 6:00 PM"
+              className="h-11"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Gender Preference</Label>
+            <Select
+              value={formData.gender}
+              onValueChange={handleSelectChange("gender")}
+            >
+              <SelectTrigger className="h-11 w-full">
+                <SelectValue placeholder="Select gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="male">Male</SelectItem>
+                <SelectItem value="female">Female</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Working Days */}
+        <div className="mt-6 space-y-3">
+          <Label className="text-sm font-medium">Working Days</Label>
+          <div className="flex flex-wrap gap-2">
+            {DAYS_OF_WEEK.map((day) => (
+              <Badge
+                key={day}
+                variant={formData.workingDays.includes(day) ? "default" : "outline"}
+                className="cursor-pointer text-sm px-3 py-1.5 select-none"
+                onClick={() => toggleWorkingDay(day)}
+              >
+                {day.slice(0, 3)}
+              </Badge>
+            ))}
+          </div>
+          {formData.workingDays.length > 0 && (
+            <p className="text-xs text-gray-500">
+              Selected: {formData.workingDays.join(", ")}
+            </p>
+          )}
         </div>
       </div>
 
@@ -1365,6 +1503,16 @@ const page = () => {
             />
             <Label htmlFor="negotiable">Negotiable / Competitive</Label>
           </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="isIncentive"
+              checked={formData.isIncentive}
+              onCheckedChange={(c) =>
+                setFormData((p) => ({ ...p, isIncentive: !!c }))
+              }
+            />
+            <Label htmlFor="isIncentive">Includes Incentive / Variable Pay</Label>
+          </div>
         </div>
 
         {!formData.hideSalary && !formData.salaryNegotiable && (
@@ -1440,203 +1588,8 @@ const page = () => {
     </div>
   );
 
-  // Step 3: Candidate Info
+  // ─── Step 3: Job Description & Responsibilities & Apply type (was step 4) ──
   const renderStep3 = () => (
-    <div className="space-y-10">
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-2">
-          <Label>Min Experience (years)</Label>
-          <Input
-            type="number"
-            min={0}
-            name="experienceMin"
-            value={formData.experienceMin}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Max Experience (years)</Label>
-          <Input
-            type="number"
-            min={0}
-            name="experienceMax"
-            value={formData.experienceMax}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Notice Period</Label>
-          <Input
-            name="noticePeriod"
-            value={formData.noticePeriod}
-            onChange={handleInputChange}
-            placeholder="e.g. 30 days / Immediate"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Education Level</Label>
-          <Select
-            value={formData.education}
-            onValueChange={handleSelectChange("education")}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select level" />
-            </SelectTrigger>
-            <SelectContent>
-              {EDUCATION_LEVELS.map((lvl) => (
-                <SelectItem key={lvl} value={lvl}>
-                  {lvl}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
-        <div className="space-y-1">
-          <Label className="text-base font-semibold">
-            Required Skills & Technologies
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Press Enter or click Add
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Input
-            value={skillInput}
-            onChange={(e) => setSkillInput(e.target.value)}
-            placeholder="Type skill e.g. React, Node.js"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addItem("requiredSkills", skillInput, setSkillInput);
-              }
-            }}
-            className="flex-1 h-11"
-          />
-          <Button
-            type="button"
-            onClick={() => addItem("requiredSkills", skillInput, setSkillInput)}
-            className="h-11 px-5"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-3 pt-2">
-          {formData.requiredSkills.map((skill) => (
-            <Badge
-              key={skill}
-              variant="secondary"
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
-            >
-              {skill}
-              <button
-                onClick={() => removeItem("requiredSkills", skill)}
-                className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition"
-              >
-                <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <Label>Benefits & Perks</Label>
-        <div className="flex flex-wrap gap-2">
-          {COMMON_BENEFITS.map((b) => (
-            <Badge
-              key={b}
-              variant={formData.benefits.includes(b) ? "default" : "outline"}
-              className="cursor-pointer text-sm px-3 py-1.5"
-              onClick={() =>
-                setFormData((prev) => ({
-                  ...prev,
-                  benefits: prev.benefits.includes(b)
-                    ? prev.benefits.filter((x) => x !== b)
-                    : [...prev.benefits, b],
-                }))
-              }
-            >
-              {b}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-2 max-w-md">
-          <Input
-            value={benefitInput}
-            onChange={(e) => setBenefitInput(e.target.value)}
-            placeholder="Custom benefit (e.g. Stock Options)"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addItem("benefits", benefitInput, setBenefitInput);
-              }
-            }}
-          />
-          <Button
-            variant="outline"
-            onClick={() => addItem("benefits", benefitInput, setBenefitInput)}
-          >
-            Add
-          </Button>
-        </div>
-        {formData.benefits.filter((b) => !COMMON_BENEFITS.includes(b)).length >
-          0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.benefits
-              .filter((b) => !COMMON_BENEFITS.includes(b))
-              .map((b) => (
-                <Badge key={b} variant="secondary" className="gap-1 px-3 py-1">
-                  {b}
-                  <button onClick={() => removeItem("benefits", b)}>
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        <Label>Job Tags / Keywords (helps in search)</Label>
-        <div className="flex gap-2">
-          <Input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            placeholder="e.g. startup, equity, ai, python"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addItem("jobTags", tagInput, setTagInput);
-              }
-            }}
-          />
-          <Button
-            variant="secondary"
-            onClick={() => addItem("jobTags", tagInput, setTagInput)}
-          >
-            <Plus className="mr-1 h-4 w-4" /> Add
-          </Button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {formData.jobTags.map((tag) => (
-            <Badge key={tag} variant="outline" className="px-3 py-1 gap-1">
-              #{tag}
-              <button onClick={() => removeItem("jobTags", tag)}>
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Step 4: Job Description & Responsibilities & Apply type
-  const renderStep4 = () => (
     <div className="space-y-10">
       <div className="grid gap-6 md:grid-cols-1">
         <div className="space-y-2">
@@ -1767,8 +1720,269 @@ const page = () => {
     </div>
   );
 
-  // Step 5: Confirmation / Summary
-  // Company summary uses store data if available, otherwise companyData form state
+  // ─── Step 4: Candidate Info (was step 3) ─────────────────────────────────
+  const renderStep4 = () => (
+    <div className="space-y-10">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-2">
+          <Label>Min Experience (years)</Label>
+          <Input
+            type="number"
+            min={0}
+            name="experienceMin"
+            value={formData.experienceMin}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Max Experience (years)</Label>
+          <Input
+            type="number"
+            min={0}
+            name="experienceMax"
+            value={formData.experienceMax}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Notice Period</Label>
+          <Input
+            name="noticePeriod"
+            value={formData.noticePeriod}
+            onChange={handleInputChange}
+            placeholder="e.g. 30 days / Immediate"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Education Level</Label>
+          <Select
+            value={formData.education}
+            onValueChange={handleSelectChange("education")}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select level" />
+            </SelectTrigger>
+            <SelectContent>
+              {EDUCATION_LEVELS.map((lvl) => (
+                <SelectItem key={lvl} value={lvl}>
+                  {lvl}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Required Skills */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="space-y-1">
+          <Label className="text-base font-semibold">
+            Required Skills & Technologies
+            <span className="text-red-500 ml-1">*</span>
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Press Enter or click Add
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Input
+            value={skillInput}
+            onChange={(e) => setSkillInput(e.target.value)}
+            placeholder="Type skill e.g. React, Node.js"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem("requiredSkills", skillInput, setSkillInput);
+              }
+            }}
+            className="flex-1 h-11"
+          />
+          <Button
+            type="button"
+            onClick={() => addItem("requiredSkills", skillInput, setSkillInput)}
+            className="h-11 px-5"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-3 pt-2">
+          {formData.requiredSkills.map((skill) => (
+            <Badge
+              key={skill}
+              variant="secondary"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm"
+            >
+              {skill}
+              <button
+                onClick={() => removeItem("requiredSkills", skill)}
+                className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition"
+              >
+                <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Benefits */}
+      <div className="space-y-4">
+        <Label>Benefits & Perks</Label>
+        <div className="flex flex-wrap gap-2">
+          {COMMON_BENEFITS.map((b) => (
+            <Badge
+              key={b}
+              variant={formData.benefits.includes(b) ? "default" : "outline"}
+              className="cursor-pointer text-sm px-3 py-1.5"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  benefits: prev.benefits.includes(b)
+                    ? prev.benefits.filter((x) => x !== b)
+                    : [...prev.benefits, b],
+                }))
+              }
+            >
+              {b}
+            </Badge>
+          ))}
+        </div>
+        <div className="flex gap-2 max-w-md">
+          <Input
+            value={benefitInput}
+            onChange={(e) => setBenefitInput(e.target.value)}
+            placeholder="Custom benefit (e.g. Stock Options)"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem("benefits", benefitInput, setBenefitInput);
+              }
+            }}
+          />
+          <Button
+            variant="outline"
+            onClick={() => addItem("benefits", benefitInput, setBenefitInput)}
+          >
+            Add
+          </Button>
+        </div>
+        {formData.benefits.filter((b) => !COMMON_BENEFITS.includes(b)).length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {formData.benefits
+              .filter((b) => !COMMON_BENEFITS.includes(b))
+              .map((b) => (
+                <Badge key={b} variant="secondary" className="gap-1 px-3 py-1">
+                  {b}
+                  <button onClick={() => removeItem("benefits", b)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Job Tags */}
+      <div className="space-y-3">
+        <Label>Job Tags / Keywords (helps in search)</Label>
+        <div className="flex gap-2">
+          <Input
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            placeholder="e.g. startup, equity, ai, python"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addItem("jobTags", tagInput, setTagInput);
+              }
+            }}
+          />
+          <Button
+            variant="secondary"
+            onClick={() => addItem("jobTags", tagInput, setTagInput)}
+          >
+            <Plus className="mr-1 h-4 w-4" /> Add
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {formData.jobTags.map((tag) => (
+            <Badge key={tag} variant="outline" className="px-3 py-1 gap-1">
+              #{tag}
+              <button onClick={() => removeItem("jobTags", tag)}>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Screening Questions */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
+        <div className="space-y-1">
+          <Label className="text-base font-semibold">Screening Questions</Label>
+          <p className="text-xs text-muted-foreground">
+            Add Yes/No questions to filter applicants before they apply
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Input
+            value={sqInput}
+            onChange={(e) => setSqInput(e.target.value)}
+            placeholder="e.g. Do you have experience with React?"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addScreeningQuestion();
+              }
+            }}
+            className="flex-1 h-11"
+          />
+          <Button
+            type="button"
+            onClick={addScreeningQuestion}
+            disabled={!sqInput.trim()}
+            className="h-11 px-5"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add
+          </Button>
+        </div>
+
+        {formData.screeningQuestions.length > 0 && (
+          <div className="space-y-2 pt-1">
+            {formData.screeningQuestions.map((q, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3"
+              >
+                <div className="flex items-start gap-2 min-w-0">
+                  <span className="text-[#F54A00] font-semibold text-sm shrink-0">
+                    Q{i + 1}.
+                  </span>
+                  <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
+                    {q.question}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {q.options.map((opt) => (
+                    <Badge key={opt} variant="outline" className="text-xs">
+                      {opt}
+                    </Badge>
+                  ))}
+                  <button
+                    onClick={() => removeScreeningQuestion(i)}
+                    className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition ml-1"
+                  >
+                    <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ─── Step 5: Confirmation / Summary ──────────────────────────────────────
   const renderStep5 = () => {
     const summaryCompany = company
       ? {
@@ -1794,8 +2008,7 @@ const page = () => {
           <CheckCircle2 className="h-14 w-14 text-green-500 mx-auto" />
           <h2 className="text-2xl font-bold">Review & Publish</h2>
           <p className="text-muted-foreground">
-            Please review all details before publishing. You can go back to edit
-            any section.
+            Please review all details before publishing. You can go back to edit any section.
           </p>
         </div>
 
@@ -1811,7 +2024,6 @@ const page = () => {
             <SummaryRow label="Job Title" value={formData.jobTitle} />
             <SummaryRow label="Category" value={formData.jobCategory} />
             <SummaryRow label="Industry" value={formData.industry} />
-            <SummaryRow label="Department" value={formData.department} />
           </SummaryCard>
 
           <SummaryCard title="Job Details">
@@ -1825,6 +2037,16 @@ const page = () => {
                 .filter(Boolean)
                 .join(", ")}
             />
+            {formData.jobTiming && (
+              <SummaryRow label="Timing" value={formData.jobTiming} />
+            )}
+            {formData.workingDays.length > 0 && (
+              <SummaryRow
+                label="Working Days"
+                value={formData.workingDays.join(", ")}
+              />
+            )}
+            <SummaryRow label="Gender" value={formData.gender} />
           </SummaryCard>
 
           <SummaryCard title="Compensation">
@@ -1837,6 +2059,10 @@ const page = () => {
                     ? "Negotiable"
                     : `${formData.currency} ${formData.salaryMin}–${formData.salaryMax} / ${formData.salaryType}`
               }
+            />
+            <SummaryRow
+              label="Incentive"
+              value={formData.isIncentive ? "Yes" : "No"}
             />
             <SummaryRow label="Expiry" value={formData.expiryDate} />
           </SummaryCard>
@@ -1869,6 +2095,18 @@ const page = () => {
               <SummaryRow label="Link" value={formData.applyLink} />
             )}
           </SummaryCard>
+
+          {formData.screeningQuestions.length > 0 && (
+            <SummaryCard title="Screening Questions">
+              <ul className="space-y-1 mt-1">
+                {formData.screeningQuestions.map((q, i) => (
+                  <li key={i} className="text-sm text-gray-700">
+                    {i + 1}. {q.question}
+                  </li>
+                ))}
+              </ul>
+            </SummaryCard>
+          )}
         </div>
       </div>
     );
@@ -1891,7 +2129,7 @@ const page = () => {
     }
   };
 
-  // ─── Main Layout ─────────────────────────────────────────────────────────
+  // ─── Main Layout ──────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Header */}

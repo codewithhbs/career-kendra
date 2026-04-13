@@ -71,6 +71,23 @@ const EDUCATION_LEVELS = [
   "PhD",
   "Any",
 ];
+
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+interface ScreeningQuestion {
+  question: string;
+  type: "boolean";
+  options: string[];
+}
+
 interface JobFormData {
   jobTitle: string;
   jobDescription: string;
@@ -103,6 +120,12 @@ interface JobFormData {
   applyType: string;
   applyEmail: string;
   applyLink: string;
+  // New fields
+  gender: string;
+  isIncentive: boolean;
+  jobTiming: string;
+  workingDays: string[];
+  screeningQuestions: ScreeningQuestion[];
 }
 
 export default function PostJob() {
@@ -125,6 +148,10 @@ export default function PostJob() {
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+
+  // Screening question input state
+  const [sqInput, setSqInput] = useState("");
+  const [sqOptions] = useState(["Yes", "No"]);
 
   const [formData, setFormData] = useState<JobFormData>({
     jobTitle: "",
@@ -158,6 +185,12 @@ export default function PostJob() {
     applyType: "easy-apply",
     applyEmail: "",
     applyLink: "",
+    // New fields
+    gender: "any",
+    isIncentive: false,
+    jobTiming: "",
+    workingDays: [],
+    screeningQuestions: [],
   });
 
   const [skillInput, setSkillInput] = useState("");
@@ -198,10 +231,17 @@ export default function PostJob() {
       applyType: "easy-apply",
       applyEmail: "",
       applyLink: "",
+      // New fields
+      gender: "any",
+      isIncentive: false,
+      jobTiming: "",
+      workingDays: [],
+      screeningQuestions: [],
     });
     setSkillInput("");
     setTagInput("");
     setBenefitInput("");
+    setSqInput("");
   }, []);
 
   useEffect(() => {
@@ -295,6 +335,20 @@ export default function PostJob() {
           applyType: job.applyType || "easy-apply",
           applyEmail: job.applyEmail || "",
           applyLink: job.applyLink || "",
+          // New fields
+          gender: job.gender || "any",
+          isIncentive: !!job.isIncentive,
+          jobTiming: job.jobTiming || "",
+          workingDays: Array.isArray(job.workingDays)
+            ? job.workingDays
+            : typeof job.workingDays === "string"
+              ? JSON.parse(job.workingDays)
+              : [],
+          screeningQuestions: Array.isArray(job.screeningQuestions)
+            ? job.screeningQuestions
+            : typeof job.screeningQuestions === "string"
+              ? JSON.parse(job.screeningQuestions)
+              : [],
         });
       } catch (err) {
         Swal.fire({
@@ -364,6 +418,18 @@ export default function PostJob() {
       applyType: "easy-apply",
       applyEmail: "",
       applyLink: "",
+      // New fields
+      gender: "any",
+      isIncentive: true,
+      jobTiming: "9:00 AM - 6:00 PM",
+      workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      screeningQuestions: [
+        {
+          question: "Do you have experience with React?",
+          type: "boolean",
+          options: ["Yes", "No"],
+        },
+      ],
     });
 
     setUseDemoData(false);
@@ -426,6 +492,37 @@ export default function PostJob() {
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].filter((i) => i !== item),
+    }));
+  };
+
+  const toggleWorkingDay = (day: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      workingDays: prev.workingDays.includes(day)
+        ? prev.workingDays.filter((d) => d !== day)
+        : [...prev.workingDays, day],
+    }));
+  };
+
+  const addScreeningQuestion = () => {
+    const trimmed = sqInput.trim();
+    if (!trimmed) return;
+    const newQ: ScreeningQuestion = {
+      question: trimmed,
+      type: "boolean",
+      options: sqOptions.filter((o) => o.trim()),
+    };
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: [...prev.screeningQuestions, newQ],
+    }));
+    setSqInput("");
+  };
+
+  const removeScreeningQuestion = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
     }));
   };
 
@@ -494,7 +591,7 @@ export default function PostJob() {
 
     try {
       let res;
-      let otpSend = false;        // ← new flag
+      let otpSend = false;
 
       if (mode === "edit" && editId) {
         res = await axios.patch(`/jobs/${editId}`, payload, {
@@ -514,23 +611,20 @@ export default function PostJob() {
 
       setJobId(returnedJobId);
 
-      // Check if backend wants OTP verification
       otpSend = !!data?.isOtpSend || !!res.data?.isOtpSend;
 
       if (mode === "create" || (mode === "edit" && otpSend)) {
-        // Show "Draft / Update with OTP" message
         await Swal.fire({
           icon: "success",
-          title: mode === "create" ? "Draft Created" : "Job Updated",
-          text: "OTP sent to your email. Please verify to publish.",
+          title: mode === "create" ? "Job Posted!" : "Job Updated",
+          text: "Your job has been created successfully.",
           timer: 2500,
           timerProgressBar: true,
           showConfirmButton: false,
         });
 
-        setShowOtpModal(true);
+        // setShowOtpModal(true);
       } else {
-        // Normal success (no OTP needed for this update)
         await Swal.fire({
           icon: "success",
           title: "Job Updated",
@@ -540,9 +634,7 @@ export default function PostJob() {
           showConfirmButton: false,
         });
 
-        // Optional: refresh or redirect
         navigate.refresh();
-        // or navigate.push("/employer/jobs");
       }
     } catch (err) {
       let msg = mode === "edit" ? "Failed to update job." : "Failed to create job.";
@@ -787,9 +879,8 @@ export default function PostJob() {
                 className="min-h-[180px] resize-y"
               />
             </div>
-
-
           </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
             {/* ================= RESPONSIBILITIES ================= */}
@@ -912,6 +1003,7 @@ export default function PostJob() {
             </div>
 
           </div>
+
           <div className="bg-white dark:bg-gray-900 border border-gray-200 
                 dark:border-gray-800 rounded-2xl  p-6">
 
@@ -1007,6 +1099,61 @@ export default function PostJob() {
               </div>
 
             </div>
+
+            {/* ================= JOB TIMING + GENDER ================= */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Job Timing</Label>
+                <Input
+                  name="jobTiming"
+                  value={formData.jobTiming}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 9:00 AM - 6:00 PM"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Gender Preference</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={handleSelectChange("gender")}
+                >
+                  <SelectTrigger className="h-11 w-full">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* ================= WORKING DAYS ================= */}
+            <div className="mt-6 space-y-3">
+              <Label className="text-sm font-medium">Working Days</Label>
+              <div className="flex flex-wrap gap-2">
+                {DAYS_OF_WEEK.map((day) => (
+                  <Badge
+                    key={day}
+                    variant={formData.workingDays.includes(day) ? "default" : "outline"}
+                    className="cursor-pointer text-sm px-3 py-1.5 select-none"
+                    onClick={() => toggleWorkingDay(day)}
+                  >
+                    {day.slice(0, 3)}
+                  </Badge>
+                ))}
+              </div>
+              {formData.workingDays.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Selected: {formData.workingDays.join(", ")}
+                </p>
+              )}
+            </div>
+
           </div>
 
           <div className="space-y-4">
@@ -1087,6 +1234,18 @@ export default function PostJob() {
                   disabled={formData.hideSalary}
                 />
                 <Label htmlFor="negotiable">Negotiable / Competitive</Label>
+              </div>
+
+              {/* ================= IS INCENTIVE ================= */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="isIncentive"
+                  checked={formData.isIncentive}
+                  onCheckedChange={(c) =>
+                    setFormData((p) => ({ ...p, isIncentive: !!c }))
+                  }
+                />
+                <Label htmlFor="isIncentive">Includes Incentive / Variable Pay</Label>
               </div>
             </div>
 
@@ -1307,6 +1466,72 @@ export default function PostJob() {
             </div>
           </div>
 
+          {/* ================= SCREENING QUESTIONS ================= */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Screening Questions</Label>
+              <p className="text-xs text-muted-foreground">
+                Add Yes/No questions to filter applicants before they apply
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Input
+                value={sqInput}
+                onChange={(e) => setSqInput(e.target.value)}
+                placeholder="e.g. Do you have experience with React?"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addScreeningQuestion();
+                  }
+                }}
+                className="flex-1 h-11"
+              />
+              <Button
+                type="button"
+                onClick={addScreeningQuestion}
+                disabled={!sqInput.trim()}
+                className="h-11 px-5"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add
+              </Button>
+            </div>
+
+            {formData.screeningQuestions.length > 0 && (
+              <div className="space-y-2 pt-1">
+                {formData.screeningQuestions.map((q, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3"
+                  >
+                    <div className="flex items-start gap-2 min-w-0">
+                      <span className="text-primary font-semibold text-sm shrink-0">
+                        Q{i + 1}.
+                      </span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
+                        {q.question}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {q.options.map((opt) => (
+                        <Badge key={opt} variant="outline" className="text-xs">
+                          {opt}
+                        </Badge>
+                      ))}
+                      <button
+                        onClick={() => removeScreeningQuestion(i)}
+                        className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition ml-1"
+                      >
+                        <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-4">
             <Label className="text-base font-semibold">
               How candidates should apply
@@ -1318,8 +1543,8 @@ export default function PostJob() {
                   label: "Easy Apply (on platform)",
                   icon: Send,
                 },
-                { id: "external-link", label: "External Link", icon: FileText },
-                { id: "email", label: "Email Application", icon: Clock },
+                // { id: "external-link", label: "External Link", icon: FileText },
+                // { id: "email", label: "Email Application", icon: Clock },
               ].map(({ id, label, icon: Icon }) => (
                 <div
                   key={id}
@@ -1378,9 +1603,9 @@ export default function PostJob() {
                   {mode === "edit" ? "Updating..." : "Creating..."}
                 </>
               ) : mode === "edit" ? (
-                "Update Job & Verify"
+                "Update Job"
               ) : (
-                "Create Job & Verify"
+                "Create Job"
               )}
             </Button>
           </div>
