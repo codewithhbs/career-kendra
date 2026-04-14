@@ -66,10 +66,28 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER,
                 allowNull: true,
             },
-            
+
             specialAccess: {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false
+            },
+
+            // ✅ Newly Added Fields
+            totalExperience: {
+                type: DataTypes.INTEGER,           // total years of totalExperience
+                allowNull: true,
+                defaultValue: null,
+            },
+
+            lastSalary: {
+                type: DataTypes.INTEGER,           // last salary
+                allowNull: true,
+                defaultValue: null,
+            },
+
+            location: {
+                type: DataTypes.STRING,
+                allowNull: true,
             },
         },
         {

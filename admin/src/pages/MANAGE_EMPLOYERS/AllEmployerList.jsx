@@ -111,13 +111,13 @@ const AllEmployerList = () => {
   };
 
   return (
-    <div className="p-6 max-w-[1500px] mx-auto">
+    <div className="p-6 max-w-375 mx-auto">
       {/* Header + Filters */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Employer Management</h1>
           <p className="mt-1 text-gray-600">
-            Manage all registered users, including deleted ones
+            Manage all registered employers, including deleted ones
           </p>
         </div>
 

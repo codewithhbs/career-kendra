@@ -52,43 +52,58 @@ async function generateUniqueSlug(jobTitle, companyName) {
 exports.createJob = async (req, res) => {
   try {
     const employerId = req.user.id;
-    const data = createJobSchema.parse({
+
+    // Parse JSON fields safely
+    const parsedBody = {
       ...req.body,
       companyId: req.body.companyId,
 
-      // ✅ ensure JSON fields are parsed
       workingDays: typeof req.body.workingDays === "string"
         ? JSON.parse(req.body.workingDays)
-        : req.body.workingDays,
+        : req.body.workingDays || [],
 
       screeningQuestions: typeof req.body.screeningQuestions === "string"
         ? JSON.parse(req.body.screeningQuestions)
-        : req.body.screeningQuestions,
-    });
+        : req.body.screeningQuestions || [],
+    };
+
+    // ✅ Zod Validation
+    const data = createJobSchema.parse(parsedBody);
+
+    // ✅ Process Screening Questions - Add missing ID safely
+    let screeningQuestions = Array.isArray(data.screeningQuestions)
+      ? data.screeningQuestions
+      : [];
+
+    // Auto-generate ID if missing (Safety Net)
+    const processedQuestions = screeningQuestions.map((q, index) => ({
+      id: q.id || `q_${Date.now()}_${index}`,
+      question: q.question,
+      type: q.type,
+      options: q.options || undefined,
+      required: q.required !== undefined ? Boolean(q.required) : true,
+    }));
 
     console.log("Creating job with data:", req.body);
+
+    // Check Company Ownership
     const company = await Company.findOne({
       where: { id: data.companyId, employerId },
     });
 
     if (!company) {
-      return sendError(
-        
-        res,
-        403,
-        "You do not own this company or company not found",
-      );
+      return sendError(res, 403, "You do not own this company or company not found");
     }
 
-     // ✅ 🔥 NEW: Employee check
-    const employee = await Employer.findByPk(employerId); // ya Employee model jo bhi hai
+    // Employee special access check
+    const employee = await Employer.findByPk(employerId);
 
     let status = "under-verification";
-
     if (employee?.specialAccess) {
       status = "active";
     }
 
+    // Generate Slug
     let slug = data.slug?.trim();
     if (!slug) {
       slug = await generateUniqueSlug(data.jobTitle, company.name);
@@ -105,31 +120,29 @@ exports.createJob = async (req, res) => {
     }
 
     const otp = GenerateOtp();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
-    // const conditionalStatus = 
-
+    // ✅ Create Job with processed data
     const job = await Job.create({
       ...data,
+      screeningQuestions: processedQuestions,   // ← Use processed questions
       slug,
       employerId,
       otp,
       otpExpiry,
       otpVerified: false,
-      status: "under-verification"
+      status: status,                          // use dynamic status
     });
 
-    console.log(`OTP for job ${job.id}: ${otp} (expires at ${otpExpiry.toISOString()})`);
-    // TODO: send email with OTP (optional - depending on your flow)
-    // await sendOtpEmail(company.email || req.user.email, otp, job.jobTitle);
+    console.log(`Job created successfully. ID: ${job.id} | OTP: ${otp}`);
 
     return sendSuccess(
       res,
       job,
-      "Job created successfully. Please verify with OTP.",
+      "Job created successfully. Please verify with OTP."
     );
-  } catch (err) {
 
+  } catch (err) {
     if (err instanceof ZodError) {
       return sendError(
         res,
@@ -141,8 +154,7 @@ exports.createJob = async (req, res) => {
       );
     }
 
-    console.error("Unexpected Error:", err);
-
+    console.error("Unexpected Error in createJob:", err);
     return sendError(res, 500, "Failed to create job");
   }
 };

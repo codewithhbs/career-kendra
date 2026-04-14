@@ -24,7 +24,7 @@ import {
   BadgeCheck,
   AlertCircle,
   Timer,
-  Apple,
+  UserPlus,
   UploadCloudIcon,
 } from "lucide-react";
 import Modal from "../../components/Model";
@@ -493,6 +493,48 @@ export const AllJobs = () => {
   const [sortBy, setSortBy] = useState("createdAt");
   const [order, setOrder] = useState("DESC");
 
+  const [showQuickApplyModal, setShowQuickApplyModal] = useState(false);
+  const [selectedJobForApply, setSelectedJobForApply] = useState(null);
+  const [quickApplyData, setQuickApplyData] = useState({
+    userName: "",
+    contactNumber: "",
+    emailAddress: "",
+    totalExperience: "",
+    lastSalary: "",
+    location: "",
+    locationCustom: ""
+  });
+
+  const [cvFile, setCvFile] = useState(null);
+  const [applying, setApplying] = useState(false);
+
+  // Quick Apply Modal Open
+  const handleQuickApplyOpen = (job) => {
+    setSelectedJobForApply(job);
+    setQuickApplyData({
+      userName: "",
+      contactNumber: "",
+      emailAddress: "",
+      totalExperience: "",
+      lastSalary: "",
+      location: "",
+    });
+    setCvFile(null);
+    setShowQuickApplyModal(true);
+  };
+
+  // Form Handle
+  const handleQuickApplyInput = (e) => {
+    const { name, value } = e.target;
+    setQuickApplyData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCvSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setCvFile(e.target.files[0]);
+    }
+  };
+
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -544,6 +586,68 @@ export const AllJobs = () => {
     sortBy,
     order,
   ]);
+
+  // Submit Quick Apply
+  const handleSubmitQuickApply = async () => {
+    if (!selectedJobForApply) return;
+
+    // Basic Validation
+    if (
+      !quickApplyData.userName ||
+      !quickApplyData.contactNumber ||
+      !quickApplyData.emailAddress ||
+      !cvFile
+    ) {
+      Swal.fire(
+        "Missing Fields",
+        "Please fill all required fields and upload CV",
+        "warning",
+      );
+      return;
+    }
+
+    setApplying(true);
+
+    const formData = new FormData();
+    formData.append("userName", quickApplyData.userName.trim());
+    formData.append("contactNumber", quickApplyData.contactNumber);
+    formData.append("emailAddress", quickApplyData.emailAddress.trim());
+    formData.append("totalExperience", quickApplyData.totalExperience);
+    formData.append("lastSalary", quickApplyData.lastSalary);
+    formData.append("location", quickApplyData.location);
+    formData.append("cv", cvFile); // multer ke hisaab se "cv" name
+
+    try {
+      const res = await api.post(
+        `/applications/apply-job-admin/${selectedJobForApply.id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: res.data.message || "Application submitted successfully",
+        timer: 2500,
+      });
+
+      setShowQuickApplyModal(false);
+      fetchJobs(); // table refresh
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text:
+          error?.message ||
+          "Something went wrong while applying",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const handle = (setter) => (e) => {
     setter(e.target.value);
@@ -1071,6 +1175,15 @@ export const AllJobs = () => {
                             <Pencil size={15} />
                           </button>
                           {job.status === "active" && (
+                            <button
+                              onClick={() => handleQuickApplyOpen(job)}
+                              title="Quick Apply by Admin"
+                              className="p-2 rounded-lg text-slate-400 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                            >
+                              <UserPlus size={15} />
+                            </button>
+                          )}
+                          {job.status === "active" && (
                             <>
                               <button
                                 onClick={() =>
@@ -1187,6 +1300,216 @@ export const AllJobs = () => {
         submitText="Assign Job"
         loading={loading}
       />
+
+      {/* Quick Apply by Admin Modal */}
+      {showQuickApplyModal && selectedJobForApply && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[95vh] overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white px-6 py-5 flex justify-between items-center">
+              <div>
+                <p className="text-xs opacity-75">QUICK APPLY</p>
+                <h3 className="font-semibold text-lg">
+                  Apply for: {selectedJobForApply.jobTitle}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowQuickApplyModal(false)}
+                className="p-2 hover:bg-white/20 rounded-xl"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <div className="p-6 space-y-5 overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="userName"
+                  value={quickApplyData.userName}
+                  onChange={handleQuickApplyInput}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Enter candidate name"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={quickApplyData.contactNumber}
+                    onChange={handleQuickApplyInput}
+                    maxLength={10}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="98765xxxxx"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    name="emailAddress"
+                    value={quickApplyData.emailAddress}
+                    onChange={handleQuickApplyInput}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="candidate@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Total Experience (Years)
+                  </label>
+                  <input
+                    type="number"
+                    name="totalExperience"
+                    value={quickApplyData.totalExperience}
+                    onChange={handleQuickApplyInput}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="3"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Last Salary (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="lastSalary"
+                    value={quickApplyData.lastSalary}
+                    onChange={handleQuickApplyInput}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="450000"
+                  />
+                </div>
+              </div>
+
+                            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Current / Preferred Location *
+                </label>
+                <select
+                  name="location"
+                  value={quickApplyData.location}
+                  onChange={handleQuickApplyInput}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="">Select Location</option>
+                  
+                  {/* Delhi NCR - Most Relevant */}
+                  <optgroup label="Delhi NCR">
+                    <option value="Faridabad">Faridabad</option>
+                    <option value="Gurgaon">Gurgaon (Gurugram)</option>
+                    <option value="Noida">Noida</option>
+                    <option value="Greater Noida">Greater Noida</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Ghaziabad">Ghaziabad</option>
+                    <option value="Sonipat">Sonipat</option>
+                    <option value="Manesar">Manesar</option>
+                  </optgroup>
+
+                  {/* Major Metro Cities */}
+                  <optgroup label="Major Cities">
+                    <option value="Bangalore">Bangalore (Bengaluru)</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Ahmedabad">Ahmedabad</option>
+                    <option value="Kolkata">Kolkata</option>
+                    <option value="Chandigarh">Chandigarh</option>
+                    <option value="Jaipur">Jaipur</option>
+                    <option value="Lucknow">Lucknow</option>
+                    <option value="Indore">Indore</option>
+                    <option value="Coimbatore">Coimbatore</option>
+                  </optgroup>
+
+                  {/* Other Popular Cities */}
+                  <optgroup label="Other Cities">
+                    <option value="Surat">Surat</option>
+                    <option value="Nagpur">Nagpur</option>
+                    <option value="Vadodara">Vadodara</option>
+                    <option value="Visakhapatnam">Visakhapatnam</option>
+                    <option value="Kochi">Kochi</option>
+                    <option value="Bhubaneswar">Bhubaneswar</option>
+                  </optgroup>
+
+                  <option value="Remote">Remote / Work From Home</option>
+                  <option value="Other">Other (Please specify below)</option>
+                </select>
+              </div>
+
+              {/* Optional: Show text input when "Other" is selected */}
+              {quickApplyData.location === "Other" && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Please specify location
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={quickApplyData.locationCustom || ""}
+                    onChange={(e) => 
+                      setQuickApplyData(prev => ({ 
+                        ...prev, 
+                        location: e.target.value 
+                      }))
+                    }
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Enter city name"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Upload CV (PDF) *
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleCvSelect}
+                  className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-6 file:rounded-2xl file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                />
+                {cvFile && (
+                  <p className="text-xs text-emerald-600 mt-1">
+                    ✓ {cvFile.name}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="border-t px-6 py-4 flex gap-3 bg-slate-50">
+              <button
+                onClick={() => setShowQuickApplyModal(false)}
+                className="flex-1 py-3 text-slate-600 font-medium rounded-2xl border border-slate-300 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitQuickApply}
+                disabled={applying}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold rounded-2xl transition flex items-center justify-center gap-2"
+              >
+                {applying ? "Applying..." : "Submit Application"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

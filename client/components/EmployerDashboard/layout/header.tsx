@@ -16,7 +16,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import axios from "axios";
 
-const DASHBOARD_API = "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
+const DASHBOARD_API = "http://localhost:9012/api/v1/auth-employer/dashboard";
 
 interface AdminHeaderProps {
   onMenuClick?: () => void;
@@ -149,7 +149,7 @@ export function AdminHeader({
 
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 bg-orange-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">P</span>
+              <span className="text-white font-bold text-xl">{companyName?.charAt(0)}</span>
             </div>
             <div className="hidden sm:block">
               <p className="font-semibold text-lg tracking-tight text-gray-900">
@@ -172,81 +172,6 @@ export function AdminHeader({
 
         {/* Right Side */}
         <div className="flex items-center gap-3">
-          {/* Notifications Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-medium text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </div>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-96 p-0">
-              <div className="p-4 border-b bg-gray-50 flex items-center justify-between sticky top-0">
-                <div>
-                  <div className="font-semibold text-lg">Notifications</div>
-                  <div className="text-xs text-gray-500">{unreadCount} unread</div>
-                </div>
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="text-orange-600 hover:text-orange-700 text-xs"
-                  >
-                    Mark all read
-                  </Button>
-                )}
-              </div>
-
-              <div className="max-h-[420px] overflow-y-auto">
-                {loading ? (
-                  <div className="p-12 text-center text-gray-500">Loading...</div>
-                ) : notifications.length === 0 ? (
-                  <div className="p-12 text-center text-gray-500">No notifications yet</div>
-                ) : (
-                  notifications.map((notif) => (
-                    <div
-                      key={notif.id}
-                      className={`p-4 border-b last:border-0 hover:bg-gray-50 transition-all cursor-pointer ${
-                        !notif.isRead ? "bg-orange-50 border-l-4 border-l-orange-500" : ""
-                      }`}
-                      onClick={() => markAsRead(notif.id)}
-                    >
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 mt-1">
-                          {!notif.isRead && (
-                            <div className="h-2 w-2 bg-orange-500 rounded-full" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className={`text-sm leading-relaxed ${!notif.isRead ? "font-medium" : ""}`}>
-                            {notif.content}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {format(new Date(notif.sentAt), "dd MMM yyyy 'at' hh:mm a")}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="p-4 border-t bg-gray-50 text-center">
-                <Link 
-                  href="/employer/messages" 
-                  className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                >
-                  View all messages →
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           {/* Profile Dropdown */}
           <DropdownMenu>

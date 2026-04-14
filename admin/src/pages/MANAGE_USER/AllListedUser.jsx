@@ -9,30 +9,45 @@ import {
   Trash2,
   RotateCcw,
   Star,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+
 const AllListedUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
     limit: 10,
     page: 1,
     accountStatus: "",
+    minExperience: "",
+    maxExperience: "",
+    minSalary: "",
+    maxSalary: "",
+    location: "",
   });
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+
       const params = {
-        search: filters.search,
+        search: filters.search || undefined,
         limit: filters.limit,
         page: filters.page,
         accountStatus: filters.accountStatus || undefined,
+        minExperience: filters.minExperience || undefined,
+        maxExperience: filters.maxExperience || undefined,
+        minSalary: filters.minSalary || undefined,
+        maxSalary: filters.maxSalary || undefined,
+        location: filters.location || undefined,
       };
 
       const res = await api.get("/ad/listed-user", { params });
@@ -64,7 +79,7 @@ const AllListedUsers = () => {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
-      page: name === "limit" || name === "search" ? 1 : prev.page,
+      page: 1, // Reset to first page on filter change
     }));
   };
 
@@ -73,6 +88,28 @@ const AllListedUsers = () => {
       setFilters((prev) => ({ ...prev, page: newPage }));
     }
   };
+
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      limit: 10,
+      page: 1,
+      accountStatus: "",
+      minExperience: "",
+      maxExperience: "",
+      minSalary: "",
+      maxSalary: "",
+      location: "",
+    });
+  };
+
+  const activeFiltersCount = [
+    filters.minExperience,
+    filters.maxExperience,
+    filters.minSalary,
+    filters.maxSalary,
+    filters.location,
+  ].filter(Boolean).length;
 
   const confirmToggleStatus = (user) => {
     if (user.isDeleted) return; // shouldn't happen but safety
@@ -222,14 +259,35 @@ const AllListedUsers = () => {
     });
   };
 
+  // Location Options (Same as we discussed earlier)
+  const locationOptions = [
+    { value: "", label: "All Locations" },
+    { value: "Faridabad", label: "Faridabad" },
+    { value: "Gurgaon", label: "Gurgaon (Gurugram)" },
+    { value: "Noida", label: "Noida" },
+    { value: "Greater Noida", label: "Greater Noida" },
+    { value: "Delhi", label: "Delhi" },
+    { value: "Ghaziabad", label: "Ghaziabad" },
+    { value: "Sonipat", label: "Sonipat" },
+    { value: "Manesar", label: "Manesar" },
+    { value: "Bangalore", label: "Bangalore" },
+    { value: "Mumbai", label: "Mumbai" },
+    { value: "Hyderabad", label: "Hyderabad" },
+    { value: "Pune", label: "Pune" },
+    { value: "Chennai", label: "Chennai" },
+    { value: "Ahmedabad", label: "Ahmedabad" },
+    { value: "Remote", label: "Remote / WFH" },
+    { value: "Other", label: "Other" },
+  ];
+
   return (
     <div className="p-6 max-w-[1500px] mx-auto">
-      {/* Header + Filters */}
+      {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="mt-1 text-gray-600">
-            Manage all registered users, including deleted ones
+            Manage all registered users with advanced filters
           </p>
         </div>
 
@@ -242,35 +300,132 @@ const AllListedUsers = () => {
               value={filters.search}
               onChange={handleFilterChange}
               placeholder="Search by name, email..."
-              className="pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-72 shadow-sm transition-all"
+              className="pl-11 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 w-72"
             />
           </div>
 
-          <select
-            name="accountStatus"
-            value={filters.accountStatus}
-            onChange={handleFilterChange}
-            className="px-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border transition ${
+              showFilters || activeFiltersCount > 0
+                ? "bg-indigo-600 text-white border-indigo-600"
+                : "bg-white border-gray-300 hover:bg-gray-50"
+            }`}
           >
-            <option value="">All Status</option>
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-          </select>
-
-          <select
-            name="limit"
-            value={filters.limit}
-            onChange={handleFilterChange}
-            className="px-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-          >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={50}>50 per page</option>
-            <option value={100}>100 per page</option>
-          </select>
+            <SlidersHorizontal size={18} />
+            Filters
+            {activeFiltersCount > 0 && (
+              <span className="bg-white text-indigo-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
+      {/* Expanded Filters */}
+      {showFilters && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Account Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Account Status
+              </label>
+              <select
+                name="accountStatus"
+                value={filters.accountStatus}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">All Status</option>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+
+            {/* Location Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <select
+                name="location"
+                value={filters.location}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+              >
+                {locationOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Experience Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Experience (Years)
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  name="minExperience"
+                  value={filters.minExperience}
+                  onChange={handleFilterChange}
+                  placeholder="Min"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                />
+                <input
+                  type="number"
+                  name="maxExperience"
+                  value={filters.maxExperience}
+                  onChange={handleFilterChange}
+                  placeholder="Max"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Salary Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Salary (₹)
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  name="minSalary"
+                  value={filters.minSalary}
+                  onChange={handleFilterChange}
+                  placeholder="Min"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                />
+                <input
+                  type="number"
+                  name="maxSalary"
+                  value={filters.maxSalary}
+                  onChange={handleFilterChange}
+                  placeholder="Max"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
+            >
+              <X size={18} /> Clear All Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Table Section */}
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-600"></div>
@@ -281,9 +436,10 @@ const AllListedUsers = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white  overflow-hidden ">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
+                {/* Table Header & Body same as before */}
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -317,6 +473,7 @@ const AllListedUsers = () => {
                         key={user.id}
                         className={`hover:bg-gray-50 transition-colors ${isDeleted ? "bg-red-50/30 opacity-80" : ""}`}
                       >
+                        {/* Rest of your table row remains exactly same as you had */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <div>
@@ -379,49 +536,27 @@ const AllListedUsers = () => {
                           )}
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {/* Your existing action buttons remain unchanged */}
                             <Link to={`/view-user/${user.id}`}>
-                              <button
-                                title="View"
-                                className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition"
-                              >
+                              <button className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg">
                                 <Eye size={18} />
                               </button>
                             </Link>
 
                             {!isDeleted && (
                               <Link to={`/edit-user/${user.id}`}>
-                                <button
-                                  title="Edit"
-                                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition"
-                                >
+                                <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                                   <Edit size={18} />
                                 </button>
                               </Link>
                             )}
 
-                            {/* <button
-                              onClick={() => confirmToggleSpecialAccess(user)}
-                              title={
-                                user.specialAccess
-                                  ? "Remove Special Access"
-                                  : "Grant Special Access"
-                              }
-                              className={`p-2 rounded-lg transition ${
-                                user.specialAccess
-                                  ? "text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                              }`}
-                            >
-                              <Star size={18} fill={user.specialAccess ? "currentColor" : "none"} />
-                            </button> */}
-
                             {isDeleted ? (
                               <button
                                 onClick={() => confirmRestore(user)}
-                                title="Restore"
-                                className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition"
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
                               >
                                 <RotateCcw size={18} />
                               </button>
@@ -429,15 +564,10 @@ const AllListedUsers = () => {
                               <>
                                 <button
                                   onClick={() => confirmToggleStatus(user)}
-                                  title={
-                                    user.accountActive
-                                      ? "Deactivate"
-                                      : "Activate"
-                                  }
                                   className={`p-2 rounded-lg transition ${
                                     user.accountActive
-                                      ? "text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-                                      : "text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50"
+                                      ? "text-amber-600 hover:bg-amber-50"
+                                      : "text-emerald-600 hover:bg-emerald-50"
                                   }`}
                                 >
                                   {user.accountActive ? (
@@ -449,8 +579,7 @@ const AllListedUsers = () => {
 
                                 <button
                                   onClick={() => confirmDelete(user)}
-                                  title="Delete"
-                                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition"
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                                 >
                                   <Trash2 size={18} />
                                 </button>
@@ -466,6 +595,7 @@ const AllListedUsers = () => {
             </div>
           </div>
 
+          {/* Pagination */}
           <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-5 px-1">
             <div className="text-sm text-gray-600">
               Showing{" "}
@@ -484,14 +614,14 @@ const AllListedUsers = () => {
               <button
                 onClick={() => handlePageChange(filters.page - 1)}
                 disabled={filters.page === 1}
-                className="px-5 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition shadow-sm"
+                className="px-5 py-2 border border-gray-300 rounded-xl text-sm font-medium disabled:opacity-50"
               >
                 Previous
               </button>
               <button
                 onClick={() => handlePageChange(filters.page + 1)}
                 disabled={filters.page === totalPages}
-                className="px-5 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition shadow-sm"
+                className="px-5 py-2 border border-gray-300 rounded-xl text-sm font-medium disabled:opacity-50"
               >
                 Next
               </button>

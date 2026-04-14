@@ -9,6 +9,7 @@ import { useEmployerAuthStore } from "@/store/employerAuth.store";
 import { useSettings } from "@/hooks/useSettings";
 
 const MENU_ITEMS = [
+  { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
@@ -173,7 +174,7 @@ export default function Header() {
                   </Link>
                   <Link href="/auth/login-employers">
                     <Button variant="destructive" size="sm">
-                      For Employers
+                      Hire Staff
                     </Button>
                   </Link>
                 </div>
@@ -260,7 +261,7 @@ export default function Header() {
                 </Link>
                 <Link href="/auth/login-employers" onClick={closeMobileMenu}>
                   <Button variant="destructive" className="w-full">
-                    For Employers
+                    Hire Staff
                   </Button>
                 </Link>
               </>

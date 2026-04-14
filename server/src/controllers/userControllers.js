@@ -1023,7 +1023,6 @@ exports.getAlluserListed = async (req, res) => {
   try {
     const adminId = req.user?.id;
 
-
     if (!adminId) {
       return res.status(403).json({
         success: false,
@@ -1036,13 +1035,19 @@ exports.getAlluserListed = async (req, res) => {
       limit = 20,
       page = 1,
       accountStatus,
+      // New Filters
+      minExperience,
+      maxExperience,
+      minSalary,
+      maxSalary,
+      location,
     } = req.query;
 
     const offset = (page - 1) * limit;
 
-    // 🔍 Search filter
     const where = {};
 
+    // 🔍 Search by name, email, or phone
     if (search) {
       where[Op.or] = [
         { userName: { [Op.like]: `%${search}%` } },
@@ -1051,9 +1056,40 @@ exports.getAlluserListed = async (req, res) => {
       ];
     }
 
-    // 🟢 Account status filter
+    // Account Status Filter
     if (accountStatus !== undefined) {
-      where.accountActive = accountStatus;
+      where.accountActive = accountStatus === "true" || accountStatus === true;
+    }
+
+    // ==================== New Filters ====================
+
+    // Experience Filter (totalExperience)
+    if (minExperience || maxExperience) {
+      where.totalExperience = {};
+      if (minExperience) {
+        where.totalExperience[Op.gte] = parseInt(minExperience);
+      }
+      if (maxExperience) {
+        where.totalExperience[Op.lte] = parseInt(maxExperience);
+      }
+    }
+
+    // Last Salary Filter
+    if (minSalary || maxSalary) {
+      where.lastSalary = {};
+      if (minSalary) {
+        where.lastSalary[Op.gte] = parseFloat(minSalary);
+      }
+      if (maxSalary) {
+        where.lastSalary[Op.lte] = parseFloat(maxSalary);
+      }
+    }
+
+    // Location Filter (partial match - case insensitive)
+    if (location) {
+      where.location = {
+        [Op.like]: `%${location}%`,
+      };
     }
 
     // 📦 Fetch users with profile
@@ -1068,23 +1104,22 @@ exports.getAlluserListed = async (req, res) => {
       attributes: {
         exclude: ["password", "otp", "otpExpireTime"],
         include: [
-          // ✅ Applied Jobs Count
+          // Applied Jobs Count
           [
             Sequelize.literal(`(
-          SELECT COUNT(*) 
-          FROM job_applications AS ja 
-          WHERE ja.userId = User.id AND ja.deletedAt IS NULL
-        )`),
+              SELECT COUNT(*) 
+              FROM job_applications AS ja 
+              WHERE ja.userId = User.id AND ja.deletedAt IS NULL
+            )`),
             "appliedJobsCount",
           ],
-
-          // ✅ Saved Jobs Count
+          // Saved Jobs Count
           [
             Sequelize.literal(`(
-          SELECT COUNT(*) 
-          FROM saved_jobs AS sj 
-          WHERE sj.userId = User.id
-        )`),
+              SELECT COUNT(*) 
+              FROM saved_jobs AS sj 
+              WHERE sj.userId = User.id
+            )`),
             "savedJobsCount",
           ],
         ],
@@ -1093,6 +1128,7 @@ exports.getAlluserListed = async (req, res) => {
       offset: Number(offset),
       order: [["id", "DESC"]],
     });
+
     return res.status(200).json({
       success: true,
       message: "Users fetched successfully",
@@ -1106,7 +1142,7 @@ exports.getAlluserListed = async (req, res) => {
     console.error("Error fetching users:", error);
     return res.status(500).json({
       success: false,
-      message: error,
+      message: "Internal server error",
       error: error.message,
     });
   }

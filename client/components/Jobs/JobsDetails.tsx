@@ -72,6 +72,88 @@ interface Job {
   isIncentive: boolean;
 }
 
+// ────────────────────────────────────────────────
+// Share Button Component
+// ────────────────────────────────────────────────
+
+function ShareButton({ jobTitle, slug }: { jobTitle: string; slug: string }) {
+  const jobUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/jobs/${slug}`
+      : `/jobs/${slug}`;
+
+  const encodedTitle = encodeURIComponent(jobTitle);
+  const encodedUrl = encodeURIComponent(jobUrl);
+
+  const shareOptions = [
+    {
+      name: "WhatsApp",
+      icon: "💬",
+      url: `https://wa.me/?text=${encodedTitle}%0A${encodedUrl}`,
+      color: "bg-green-500 hover:bg-green-600",
+    },
+    {
+      name: "LinkedIn",
+      icon: "in",
+      url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      color: "bg-blue-600 hover:bg-blue-700",
+    },
+    {
+      name: "Twitter",
+      icon: "𝕏",
+      url: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+      color: "bg-black hover:bg-zinc-800",
+    },
+    {
+      name: "Facebook",
+      icon: "f",
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      color: "bg-blue-700 hover:bg-blue-800",
+    },
+  ];
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(jobUrl);
+      alert("✅ Job link copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-medium text-muted-foreground">
+        Share this job
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        {shareOptions.map((option) => (
+          <a
+            key={option.name}
+            href={option.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex-1 min-w-[70px] flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl text-white text-xs font-medium transition-all active:scale-95 ${option.color}`}
+          >
+            <span className="text-xl">{option.icon}</span>
+            <span>{option.name}</span>
+          </a>
+        ))}
+
+        {/* Copy Link Button */}
+        <button
+          onClick={copyToClipboard}
+          className="flex-1 min-w-[70px] flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border border-dashed border-muted-foreground/50 hover:border-primary hover:text-primary transition-all active:scale-95"
+        >
+          <span className="text-xl">🔗</span>
+          <span className="text-xs">Copy Link</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function JobDetails() {
   const { company, fetchCompanyProfile } = useEmployerAuthStore();
   const { saveJob, removeSavedJob, checkAlreadySaved, isAlreadySaved } =
@@ -495,6 +577,16 @@ export default function JobDetails() {
                     <p>Size: {job.company.companySize} employees</p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* ←←← NEW: Share Card →→→ */}
+            <Card className="border shadow-sm rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg">Share Job</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ShareButton jobTitle={job.jobTitle} slug={job.slug} />
               </CardContent>
             </Card>
           </div>

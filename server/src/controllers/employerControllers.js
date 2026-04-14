@@ -645,3 +645,15 @@ exports.updateBasicDetailsOfEmployer = async (req, res) => {
     });
   }
 };
+
+exports.makeEmployerToAdminEmployer = async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.log("Internal server error",error)
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

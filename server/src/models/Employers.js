@@ -60,6 +60,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.BOOLEAN,
                 defaultValue: false
             },
+
+            role: {
+                type: DataTypes.ENUM("employer", "employer-admin"),
+                defaultValue: "employer",
+            }
         },
         {
             tableName: "employers",

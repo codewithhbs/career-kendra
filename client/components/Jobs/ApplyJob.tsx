@@ -15,15 +15,9 @@ import { API_URL, IMAGE_URL } from "@/constant/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  MapPin,
-  Upload,
-  FileText,
-  CheckCircle2,
-  X,
-  ArrowRight,
-  Eye,
-} from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { MapPin, Upload, FileText, CheckCircle2, X, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -37,6 +31,14 @@ import Confetti from "react-confetti";
 import Link from "next/link";
 
 axios.defaults.baseURL = API_URL;
+
+interface ScreeningQuestion {
+  id: string;
+  question: string;
+  type: "boolean" | "multiple-choice" | "text";
+  options?: string[];
+  required: boolean;
+}
 
 export default function ApplyJob() {
   const { id: slug } = useParams<{ id: string }>();
@@ -87,7 +89,7 @@ export default function ApplyJob() {
     };
 
     fetchJob();
-  }, [slug]);
+  }, [slug, isAuthenticated]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,14 +155,12 @@ export default function ApplyJob() {
   };
 
   const handleApply = async () => {
-  try {
     if (!token) {
-      alert("Please login to apply for jobs.");
+      alert("Please login to apply.");
       return;
     }
 
     let cvReady = !!profile?.user?.uploadedCv;
-
     if (selectedCvFile) {
       cvReady = await uploadNewCv();
     }
@@ -170,50 +170,40 @@ export default function ApplyJob() {
       return;
     }
 
-    // ✅ अगर questions हैं → popup खोलो
     if (job?.screeningQuestions?.length > 0) {
       setShowQuestionsPopup(true);
-      return;
+    } else {
+      await submitApplication({});
     }
+  };
 
-    // ✅ अगर questions नहीं हैं → direct apply
-    await submitApplication({});
-  } catch (err) {
-    console.error(err);
-  }
-};
+  const submitApplication = async (screeningAnswers: Record<string, any>) => {
+    try {
+      setApplying(true);
 
-const submitApplication = async (answersData) => {
-  try {
-    setApplying(true);
+      const res = await axios.post(
+        `/applications/apply-job/${job?.id}`,
+        { screeningAnswers },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
 
-    const res = await axios.post(
-      `${API_URL}/applications/apply-job/${job?.id}`,
-      {
-        screeningAnswers: answersData,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      setShowQuestionsPopup(false);
+      setConfettiActive(true);
+      setShowThankYou(true);
 
-    setShowQuestionsPopup(false);
+      setTimeout(() => setConfettiActive(false), 5000);
+      setTimeout(() => router.push("/jobs"), 4000);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.message || "Failed to submit application");
+    } finally {
+      setApplying(false);
+    }
+  };
 
-    setConfettiActive(true);
-    setShowThankYou(true);
-
-    setTimeout(() => setConfettiActive(false), 5000);
-    setTimeout(() => router.push("/jobs"), 3500);
-
-  } catch (error) {
-    alert("Failed to apply");
-  } finally {
-    setApplying(false);
-  }
-};
-
+  const handleAnswerChange = (questionId: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
 
   const viewCurrentCv = () => {
     if (profile?.user?.uploadedCv) {
@@ -586,65 +576,84 @@ const submitApplication = async (answersData) => {
         </Button>
       </div>
 
+      {/* ==================== SCREENING QUESTIONS DIALOG ==================== */}
       <Dialog open={showQuestionsPopup} onOpenChange={setShowQuestionsPopup}>
-  <DialogContent className="max-w-lg">
-    <DialogHeader>
-      <DialogTitle>Answer Screening Questions</DialogTitle>
-      <DialogDescription>
-        Please answer all questions before applying.
-      </DialogDescription>
-    </DialogHeader>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Screening Questions</DialogTitle>
+            <DialogDescription>
+              Please answer the following questions to complete your
+              application.
+            </DialogDescription>
+          </DialogHeader>
 
-    <div className="space-y-5 max-h-[400px] overflow-y-auto">
-      {job?.screeningQuestions?.map((q, index) => (
-        <div key={index}>
-          <p className="font-medium mb-2">{q.question}</p>
+          <div className="flex-1 overflow-y-auto py-4 space-y-8 pr-2">
+            {job?.screeningQuestions?.map((q: ScreeningQuestion) => (
+              <div key={q.id} className="space-y-3">
+                <Label className="text-base font-medium">
+                  {q.question}
+                  {q.required && <span className="text-red-500 ml-1">*</span>}
+                </Label>
 
-          {q.options?.map((opt, i) => (
-            <label key={i} className="flex items-center gap-2 mb-2">
-              <input
-                type="radio"
-                name={`q-${index}`}
-                value={opt}
-                onChange={() =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [q.question]: opt,
-                  }))
+                {q.type === "text" ? (
+                  <Textarea
+                    placeholder="Type your answer here..."
+                    value={answers[q.id] || ""}
+                    onChange={(e) => handleAnswerChange(q.id, e.target.value)}
+                    className="min-h-24"
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {q.options?.map((option, i) => (
+                      <label
+                        key={i}
+                        className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer transition"
+                      >
+                        <input
+                          type="radio"
+                          name={`question-${q.id}`}
+                          value={option}
+                          checked={answers[q.id] === option}
+                          onChange={() => handleAnswerChange(q.id, option)}
+                          className="w-4 h-4 accent-amber-600"
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setShowQuestionsPopup(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const allAnswered = job.screeningQuestions.every(
+                  (q: ScreeningQuestion) =>
+                    !q.required || answers[q.id]?.trim(),
+                );
+
+                if (!allAnswered) {
+                  alert("Please answer all required questions.");
+                  return;
                 }
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
-      ))}
-    </div>
 
-    <DialogFooter>
-      <Button variant="outline" onClick={() => setShowQuestionsPopup(false)}>
-        Cancel
-      </Button>
-
-      <Button
-        className="bg-amber-600 hover:bg-amber-700"
-        onClick={() => {
-          const isAllAnswered = job.screeningQuestions.every(
-            (q) => answers[q.question]
-          );
-
-          if (!isAllAnswered) {
-            alert("Please answer all questions");
-            return;
-          }
-
-          submitApplication(answers);
-        }}
-      >
-        Submit Application
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+                submitApplication(answers);
+              }}
+              disabled={applying}
+            >
+              {applying ? "Submitting..." : "Submit Application"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Success confetti + dialog */}
       {confettiActive && (

@@ -83,9 +83,11 @@ const DAYS_OF_WEEK = [
 ];
 
 interface ScreeningQuestion {
+  id: string; // ← Must have
   question: string;
-  type: "boolean";
-  options: string[];
+  type: "boolean" | "multiple-choice" | "text";
+  options?: string[];
+  required: boolean;
 }
 
 interface JobFormData {
@@ -152,6 +154,15 @@ export default function PostJob() {
   // Screening question input state
   const [sqInput, setSqInput] = useState("");
   const [sqOptions] = useState(["Yes", "No"]);
+
+  const [newQuestion, setNewQuestion] = useState({
+    question: "",
+    type: "boolean" as "boolean" | "multiple-choice" | "text",
+    options: ["Yes", "No"] as string[],
+    required: true,
+  });
+
+  const [optionInput, setOptionInput] = useState("");
 
   const [formData, setFormData] = useState<JobFormData>({
     jobTitle: "",
@@ -242,6 +253,13 @@ export default function PostJob() {
     setTagInput("");
     setBenefitInput("");
     setSqInput("");
+    setNewQuestion({
+      question: "",
+      type: "boolean",
+      options: ["Yes", "No"],
+      required: true,
+    });
+    setOptionInput("");
   }, []);
 
   useEffect(() => {
@@ -505,18 +523,50 @@ export default function PostJob() {
   };
 
   const addScreeningQuestion = () => {
-    const trimmed = sqInput.trim();
+    const trimmed = newQuestion.question.trim();
     if (!trimmed) return;
+
+    let finalOptions: string[] | undefined = undefined;
+
+    if (
+      newQuestion.type === "boolean" ||
+      newQuestion.type === "multiple-choice"
+    ) {
+      finalOptions = newQuestion.options
+        .map((o) => o.trim())
+        .filter((o) => o.length > 0);
+
+      if (finalOptions.length < 2) {
+        Swal.fire({
+          title: "Invalid Options",
+          text: "At least 2 options are required for Yes/No or Multiple Choice questions.",
+          icon: "warning",
+        });
+        return;
+      }
+    }
+
     const newQ: ScreeningQuestion = {
+      id: `q_${Date.now()}`, // ← Important
       question: trimmed,
-      type: "boolean",
-      options: sqOptions.filter((o) => o.trim()),
+      type: newQuestion.type,
+      options: finalOptions,
+      required: newQuestion.required,
     };
+
     setFormData((prev) => ({
       ...prev,
       screeningQuestions: [...prev.screeningQuestions, newQ],
     }));
-    setSqInput("");
+
+    // Reset
+    setNewQuestion({
+      question: "",
+      type: "boolean",
+      options: ["Yes", "No"],
+      required: true,
+    });
+    setOptionInput("");
   };
 
   const removeScreeningQuestion = (index: number) => {
@@ -584,9 +634,19 @@ export default function PostJob() {
       salaryMax: formData.salaryMax ? Number(formData.salaryMax) : undefined,
       jobResponsibilities: formData.jobResponsibilities,
       experienceMin: Number(formData.experienceMin) || 0,
-      experienceMax: formData.experienceMax ? Number(formData.experienceMax) : undefined,
+      experienceMax: formData.experienceMax
+        ? Number(formData.experienceMax)
+        : undefined,
       openings: Number(formData.openings) || 1,
       companyId: company.id,
+      // Clean screening questions before sending
+      screeningQuestions: formData.screeningQuestions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        type: q.type,
+        options: q.options || undefined,
+        required: q.required,
+      })),
     };
 
     try {
@@ -603,7 +663,7 @@ export default function PostJob() {
         });
       }
 
-      console.log(res.data)
+      console.log(res.data);
       const data = res.data?.data || res.data;
       const returnedJobId = data?.id || Number(editId);
 
@@ -637,7 +697,8 @@ export default function PostJob() {
         navigate.refresh();
       }
     } catch (err) {
-      let msg = mode === "edit" ? "Failed to update job." : "Failed to create job.";
+      let msg =
+        mode === "edit" ? "Failed to update job." : "Failed to create job.";
 
       if (isAxiosError(err) && err.response?.data) {
         const apiErr = err.response.data;
@@ -800,7 +861,6 @@ export default function PostJob() {
               </h3>
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-
                 {/* Job Title - Full Width on md */}
                 <div className="space-y-2 lg:col-span-3">
                   <Label className="flex items-center gap-1 text-gray-700 font-medium">
@@ -815,13 +875,16 @@ export default function PostJob() {
                     className="h-12 text-base border-gray-300 focus:border-blue-600 focus:ring-blue-600 placeholder:text-gray-400"
                   />
                   <p className="text-xs text-gray-500 pl-1">
-                    Be specific. Include role level and key technologies for better reach.
+                    Be specific. Include role level and key technologies for
+                    better reach.
                   </p>
                 </div>
 
                 {/* Job Category */}
                 <div className="space-y-2 w-full">
-                  <Label className="text-gray-700 font-medium">Job Category</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Job Category
+                  </Label>
                   <Select
                     value={formData.jobCategory}
                     onValueChange={handleSelectChange("jobCategory")}
@@ -841,7 +904,9 @@ export default function PostJob() {
 
                 {/* Job Industry */}
                 <div className="space-y-2 w-full">
-                  <Label className="text-gray-700 font-medium">Industry of Job</Label>
+                  <Label className="text-gray-700 font-medium">
+                    Industry of Job
+                  </Label>
                   <Select
                     value={formData.industry}
                     onValueChange={handleSelectChange("industry")}
@@ -858,7 +923,6 @@ export default function PostJob() {
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
             </div>
           </div>
@@ -882,10 +946,8 @@ export default function PostJob() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
             {/* ================= RESPONSIBILITIES ================= */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
-
               <div className="space-y-1">
                 <Label className="text-base font-semibold flex items-center gap-2">
                   Key Responsibilities
@@ -946,7 +1008,6 @@ export default function PostJob() {
 
             {/* ================= SKILLS ================= */}
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
-
               <div className="space-y-1">
                 <Label className="text-base font-semibold">
                   Required Skills & Technologies
@@ -1001,14 +1062,13 @@ export default function PostJob() {
                 ))}
               </div>
             </div>
-
           </div>
 
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 
-                dark:border-gray-800 rounded-2xl  p-6">
-
+          <div
+            className="bg-white dark:bg-gray-900 border border-gray-200 
+                dark:border-gray-800 rounded-2xl  p-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
               {/* ================= JOB TYPE ================= */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
@@ -1033,7 +1093,6 @@ export default function PostJob() {
                 </Select>
               </div>
 
-
               {/* ================= WORK MODE ================= */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
@@ -1056,12 +1115,9 @@ export default function PostJob() {
                 </Select>
               </div>
 
-
               {/* ================= SHIFT TYPE ================= */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Shift Type
-                </Label>
+                <Label className="text-sm font-medium">Shift Type</Label>
 
                 <Select
                   value={formData.shiftType}
@@ -1080,7 +1136,6 @@ export default function PostJob() {
                 </Select>
               </div>
 
-
               {/* ================= OPENINGS ================= */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
@@ -1097,7 +1152,6 @@ export default function PostJob() {
                   placeholder="Enter openings"
                 />
               </div>
-
             </div>
 
             {/* ================= JOB TIMING + GENDER ================= */}
@@ -1139,7 +1193,9 @@ export default function PostJob() {
                 {DAYS_OF_WEEK.map((day) => (
                   <Badge
                     key={day}
-                    variant={formData.workingDays.includes(day) ? "default" : "outline"}
+                    variant={
+                      formData.workingDays.includes(day) ? "default" : "outline"
+                    }
                     className="cursor-pointer text-sm px-3 py-1.5 select-none"
                     onClick={() => toggleWorkingDay(day)}
                   >
@@ -1153,7 +1209,6 @@ export default function PostJob() {
                 </p>
               )}
             </div>
-
           </div>
 
           <div className="space-y-4">
@@ -1245,7 +1300,9 @@ export default function PostJob() {
                     setFormData((p) => ({ ...p, isIncentive: !!c }))
                   }
                 />
-                <Label htmlFor="isIncentive">Includes Incentive / Variable Pay</Label>
+                <Label htmlFor="isIncentive">
+                  Includes Incentive / Variable Pay
+                </Label>
               </div>
             </div>
 
@@ -1467,65 +1524,208 @@ export default function PostJob() {
           </div>
 
           {/* ================= SCREENING QUESTIONS ================= */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-6">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Screening Questions</Label>
+              <Label className="text-base font-semibold">
+                Screening Questions
+              </Label>
               <p className="text-xs text-muted-foreground">
-                Add Yes/No questions to filter applicants before they apply
+                Filter candidates with Yes/No, Multiple Choice, or Text
+                questions
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Add New Question Form */}
+            <div className="border border-dashed border-gray-300 rounded-xl p-5 space-y-4 bg-gray-50">
               <Input
-                value={sqInput}
-                onChange={(e) => setSqInput(e.target.value)}
-                placeholder="e.g. Do you have experience with React?"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addScreeningQuestion();
-                  }
-                }}
-                className="flex-1 h-11"
+                value={newQuestion.question}
+                onChange={(e) =>
+                  setNewQuestion((prev) => ({
+                    ...prev,
+                    question: e.target.value,
+                  }))
+                }
+                placeholder="Enter your screening question"
+                className="h-11"
               />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm">Question Type</Label>
+                  <Select
+                    value={newQuestion.type}
+                    onValueChange={(
+                      value: "boolean" | "multiple-choice" | "text",
+                    ) =>
+                      setNewQuestion((prev) => ({
+                        ...prev,
+                        type: value,
+                        options:
+                          value === "text"
+                            ? []
+                            : value === "boolean"
+                              ? ["Yes", "No"]
+                              : prev.options,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="boolean">Yes / No</SelectItem>
+                      <SelectItem value="multiple-choice">
+                        Multiple Choice
+                      </SelectItem>
+                      <SelectItem value="text">
+                        Text Input (Long Answer)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2 pt-6">
+                  <Checkbox
+                    id="req"
+                    checked={newQuestion.required}
+                    onCheckedChange={(checked) =>
+                      setNewQuestion((prev) => ({
+                        ...prev,
+                        required: !!checked,
+                      }))
+                    }
+                  />
+                  <Label htmlFor="req" className="cursor-pointer">
+                    Required Question
+                  </Label>
+                </div>
+              </div>
+
+              {/* Options Input */}
+              {(newQuestion.type === "boolean" ||
+                newQuestion.type === "multiple-choice") && (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <Input
+                      value={optionInput}
+                      onChange={(e) => setOptionInput(e.target.value)}
+                      placeholder="Add an option"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const trimmed = optionInput.trim();
+                          if (
+                            trimmed &&
+                            !newQuestion.options.includes(trimmed)
+                          ) {
+                            setNewQuestion((prev) => ({
+                              ...prev,
+                              options: [...prev.options, trimmed],
+                            }));
+                            setOptionInput("");
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const trimmed = optionInput.trim();
+                        if (trimmed && !newQuestion.options.includes(trimmed)) {
+                          setNewQuestion((prev) => ({
+                            ...prev,
+                            options: [...prev.options, trimmed],
+                          }));
+                          setOptionInput("");
+                        }
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {newQuestion.options.map((opt, idx) => (
+                      <Badge key={idx} variant="secondary" className="gap-1">
+                        {opt}
+                        <button
+                          onClick={() =>
+                            setNewQuestion((prev) => ({
+                              ...prev,
+                              options: prev.options.filter((_, i) => i !== idx),
+                            }))
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <Button
-                type="button"
                 onClick={addScreeningQuestion}
-                disabled={!sqInput.trim()}
-                className="h-11 px-5"
+                disabled={!newQuestion.question.trim()}
+                className="w-full"
               >
-                <Plus className="h-4 w-4 mr-2" /> Add
+                <Plus className="mr-2 h-4 w-4" /> Add Screening Question
               </Button>
             </div>
 
+            {/* List of Added Questions */}
             {formData.screeningQuestions.length > 0 && (
-              <div className="space-y-2 pt-1">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  Added Questions ({formData.screeningQuestions.length})
+                </Label>
                 {formData.screeningQuestions.map((q, i) => (
                   <div
-                    key={i}
-                    className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3"
+                    key={q.id}
+                    className="flex items-start justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-xl"
                   >
-                    <div className="flex items-start gap-2 min-w-0">
-                      <span className="text-primary font-semibold text-sm shrink-0">
-                        Q{i + 1}.
-                      </span>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                        {q.question}
-                      </span>
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-bold">Q{i + 1}</span>
+                        <span className="font-medium">{q.question}</span>
+                        {q.required && (
+                          <Badge variant="destructive" className="text-xs ml-2">
+                            Required
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Type:{" "}
+                        {q.type === "boolean"
+                          ? "Yes/No"
+                          : q.type === "multiple-choice"
+                            ? "Multiple Choice"
+                            : "Text Answer"}
+                      </p>
+                      {q.options && q.options.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {q.options.map((opt, idx) => (
+                            <Badge
+                              key={idx}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {opt}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {q.options.map((opt) => (
-                        <Badge key={opt} variant="outline" className="text-xs">
-                          {opt}
-                        </Badge>
-                      ))}
-                      <button
-                        onClick={() => removeScreeningQuestion(i)}
-                        className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition ml-1"
-                      >
-                        <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
-                      </button>
-                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeScreeningQuestion(i)}
+                      className="text-red-500 hover:bg-red-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -1551,7 +1751,7 @@ export default function PostJob() {
                   className={cn(
                     "border rounded-xl p-5 cursor-pointer transition-all hover:border-primary/60",
                     formData.applyType === id &&
-                    "border-primary bg-primary/5 shadow-sm",
+                      "border-primary bg-primary/5 shadow-sm",
                   )}
                   onClick={() => setFormData((p) => ({ ...p, applyType: id }))}
                 >

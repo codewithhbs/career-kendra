@@ -10,6 +10,7 @@ const createUploader = require("../middlewares/upload");
 
 
 router.post('/apply-job/:jobId', auth, jobController.ApplyToJob)
+router.post('/apply-job-admin/:jobId', auth, createUploader("UserCv").single("cv"), jobController.ApplyJobByAdmin)
 router.get('/get-my-applications-for-job', auth, jobController.getMyApplications)
 
 router.get("/get-all-applications/:id", jobController.getAllApplications)

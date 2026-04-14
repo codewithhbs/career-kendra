@@ -1,6 +1,6 @@
 "use strict";
 
-const { Job, Company, Employer, JobInterview, User, JobApplication, admin_employees, Message, SavedJobs, Role, role_permissions, JobApplicationDocument, jobAssign } = require("../models");
+const { Job, Company, Employer, ProfileDetails, JobInterview, User, JobApplication, admin_employees, Message, SavedJobs, Role, role_permissions, JobApplicationDocument, jobAssign } = require("../models");
 console.log("Models imported in job.applications.js:", role_permissions)
 const { GenerateOtp } = require("../utils/generateOtp"); // assume you have these
 const { sendError, sendSuccess } = require("../utils/api");
@@ -10,6 +10,8 @@ const sendEmail = require("../utils/sendEmail");
 const { sendMessage } = require("../utils/sendMessage");
 // const webSettings = require("../models/webSettings");
 const { WebSettings } = require("../models");
+const path = require("path");
+const fs = require("fs");
 const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
   let lastError;
 
@@ -32,7 +34,7 @@ const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
 exports.ApplyToJob = async (req, res) => {
   const userId = req.user?.id;
   const { jobId } = req.params;
-  const { screeningAnswers } = req.body;
+  let { screeningAnswers } = req.body;
 
   if (!userId) {
     return sendError(res, 401, "Unauthorized access");
@@ -91,6 +93,42 @@ exports.ApplyToJob = async (req, res) => {
       return sendError(res, 409, "You have already applied for this job.");
     }
 
+    // ====================== NEW: Validate Screening Answers ======================
+    const questions = job.screeningQuestions || [];
+
+    if (questions.length > 0) {
+      if (!screeningAnswers || typeof screeningAnswers !== "object") {
+        return sendError(res, 400, "Screening answers are required for this job");
+      }
+
+      const answersToSave = {};
+
+      for (const q of questions) {
+        const answer = screeningAnswers[q.id];
+
+        if (q.required && (answer === undefined || answer === "" || answer === null)) {
+          return sendError(res, 400, `Answer is required for question: ${q.question}`);
+        }
+
+        // Optional: Auto-disqualify logic
+        if (q.disqualifyAnswer && answer === q.disqualifyAnswer) {
+          // Aap yahan application status "disqualified" bhi rakh sakte ho
+          console.log(`Candidate disqualified on question: ${q.question}`);
+        }
+
+        answersToSave[q.id] = {
+          question: q.question,
+          type: q.type,
+          answer: answer ?? null,
+          options: q.options || null
+        };
+      }
+
+      screeningAnswers = answersToSave;   // structured format mein save kar rahe hain
+    } else {
+      screeningAnswers = {};   // koi question nahi to empty object
+    }
+
     // ================================
     // 4️⃣ Create Application
     // ================================
@@ -100,7 +138,7 @@ exports.ApplyToJob = async (req, res) => {
       status: "applied",
       appliedAt: new Date(),
       resume: user.uploadedCv,
-      screeningAnswers: screeningAnswers || {}
+      screeningAnswers: screeningAnswers   // ← structured object save ho raha hai
     });
 
     // ================================
@@ -253,7 +291,7 @@ Helping professionals discover better career opportunities.
     // 7️⃣ Send Email to Admin (Async)
     // ================================
     if (adminEmail) {
-      console.log("adminEmail i am in",adminEmail)
+      console.log("adminEmail i am in", adminEmail)
       const appliedAt = new Date(application.appliedAt).toLocaleString("en-IN", {
         dateStyle: "medium",
         timeStyle: "short",
@@ -460,6 +498,188 @@ This is an automated notification from Career Kendra. No action is required on t
     });
 
     return sendError(res, 500, error);
+  }
+};
+
+exports.ApplyJobByAdmin = async (req, res) => {
+  const { jobId } = req.params;
+  const {
+    userName,
+    contactNumber,
+    emailAddress,
+    totalExperience,
+    lastSalary,
+    location
+  } = req.body;
+
+  const file = req.file;           // Multer se aaya file
+  const adminId = req.user?.id;
+
+  try {
+    if (!adminId) {
+      return sendError(res, 403, "Unauthorized access");
+    }
+
+    if (!file) {
+      return sendError(res, 400, "No CV file uploaded");
+    }
+
+    const relativePath = `/uploads/UserCv/${file.filename}`;
+
+    // ====================== Input Validation ======================
+    const cleanPhone = contactNumber?.replace(/\s+/g, "");
+    if (!cleanPhone || !/^[0-9]{10}$/.test(cleanPhone)) {
+      return sendError(res, 400, "Contact number must be a valid 10 digit number.");
+    }
+
+    const cleanEmail = emailAddress?.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      return sendError(res, 400, "Please enter a valid email address.");
+    }
+
+    if (!userName?.trim()) {
+      return sendError(res, 400, "User name is required.");
+    }
+
+    // ====================== Check if User Already Exists ======================
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { emailAddress: cleanEmail },
+          { contactNumber: cleanPhone },
+        ],
+      },
+      include: [{ model: ProfileDetails, as: "profileDetails" }]
+    });
+
+    let isNewUser = false;
+
+    if (!user) {
+      // ==================== CREATE NEW USER ====================
+      isNewUser = true;
+
+      user = await User.create({
+        userName: userName.trim(),
+        contactNumber: cleanPhone,
+        emailAddress: cleanEmail,
+        password: cleanPhone,                    // temporary password
+        accountActive: true,
+        uploadedCv: relativePath,                // ← CV save kar rahe hain
+        experience: totalExperience ? parseInt(totalExperience) : null,
+        lastSalary: lastSalary ? parseFloat(lastSalary) : null,
+        location: location ? location.trim() : null,
+      });
+
+      // Create ProfileDetails
+      const profileDetails = await ProfileDetails.create({
+        userId: user.id,
+        skills: [],
+        experience: [],
+        educations: [],
+        percentageOfAccountComplete: 40,   // CV + basic info filled
+      });
+
+      await user.update({ profileDetailsId: profileDetails.id });
+
+    } else {
+      // ==================== EXISTING USER ====================
+
+      // Delete old CV if exists
+      if (user.uploadedCv) {
+        const oldCvPath = path.join(__dirname, '..', user.uploadedCv);
+        if (fs.existsSync(oldCvPath)) {
+          try {
+            fs.unlinkSync(oldCvPath);
+            console.log(`Old CV deleted: ${oldCvPath}`);
+          } catch (unlinkErr) {
+            console.warn(`Failed to delete old CV: ${oldCvPath}`, unlinkErr);
+          }
+        }
+      }
+
+      // Update User
+      await user.update({
+        userName: userName.trim(),
+        uploadedCv: relativePath,                    // ← New CV update
+        experience: totalExperience !== undefined ? parseInt(totalExperience) : user.experience,
+        lastSalary: lastSalary !== undefined ? parseFloat(lastSalary) : user.lastSalary,
+        location: location !== undefined ? location.trim() : user.location,
+      });
+
+      // Agar ProfileDetails nahi hai to bana do
+      if (!user.profileDetails) {
+        const profileDetails = await ProfileDetails.create({
+          userId: user.id,
+          skills: [],
+          experience: [],
+          educations: [],
+          percentageOfAccountComplete: 35,
+        });
+
+        await user.update({ profileDetailsId: profileDetails.id });
+      } else {
+        // Optional: ProfileDetails ka percentage update kar sakte ho
+        await user.profileDetails.update({
+          percentageOfAccountComplete: Math.max(user.profileDetails.percentageOfAccountComplete, 40)
+        });
+      }
+    }
+
+    // ====================== Job Validation ======================
+    const job = await Job.findByPk(jobId);
+    if (!job) {
+      return sendError(res, 404, "This job does not exist or has been removed.");
+    }
+
+    const invalidStatuses = ["paused", "closed", "draft", "under-verification"];
+    if (invalidStatuses.includes(job.status)) {
+      return sendError(res, 400, "This job is currently not accepting applications.");
+    }
+
+    // ====================== Prevent Duplicate Application ======================
+    const alreadyApplied = await JobApplication.findOne({
+      where: { jobId, userId: user.id },
+    });
+
+    if (alreadyApplied) {
+      return sendError(res, 409, "This user has already applied for this job.");
+    }
+
+    // ====================== Create Job Application ======================
+    const application = await JobApplication.create({
+      jobId,
+      userId: user.id,
+      status: "applied",
+      appliedAt: new Date(),
+      resume: user.uploadedCv,           // latest uploaded CV
+      appliedByAdmin: adminId,           // track karne ke liye
+    });
+
+    // ====================== Final Response ======================
+    return sendSuccess(
+      res,
+      {
+        applicationId: application.id,
+        userId: user.id,
+        isNewUser,
+        status: application.status,
+        appliedAt: application.appliedAt,
+      },
+      isNewUser 
+        ? "New user created with CV and application submitted successfully." 
+        : "CV updated and application submitted successfully for existing user."
+    );
+
+  } catch (error) {
+    console.error("[ApplyJobByAdmin FAILED]", {
+      jobId,
+      email: emailAddress,
+      errorMessage: error.message,
+      errorStack: error.stack?.substring(0, 700),
+    });
+
+    return sendError(res, 500, "Internal server error");
   }
 };
 

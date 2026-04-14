@@ -102,9 +102,11 @@ const DAYS_OF_WEEK = [
 ];
 
 interface ScreeningQuestion {
+  id: string; // Unique ID (important for answers)
   question: string;
-  type: "boolean";
-  options: string[];
+  type: "boolean" | "multiple-choice" | "text"; // Added types
+  options?: string[]; // only for boolean & multiple-choice
+  required: boolean;
 }
 
 interface CompanyFormData {
@@ -314,9 +316,7 @@ function PreviewPanel({
       {/* Compensation */}
       <PreviewSection title="Compensation">
         <PreviewRow label="Salary" value={salaryDisplay()} />
-        {formData.isIncentive && (
-          <PreviewRow label="Incentive" value="Yes" />
-        )}
+        {formData.isIncentive && <PreviewRow label="Incentive" value="Yes" />}
       </PreviewSection>
 
       {/* Candidate */}
@@ -625,6 +625,15 @@ const page = () => {
   const [benefitInput, setBenefitInput] = useState("");
   const [useDemoData, setUseDemoData] = useState(false);
 
+  const [newQuestion, setNewQuestion] = useState({
+    question: "",
+    type: "boolean" as const,
+    options: ["Yes", "No"],
+    required: true,
+  });
+
+  const [optionInput, setOptionInput] = useState("");
+
   const resetForm = useCallback(() => {
     setCompanyData({
       companyName: "",
@@ -846,24 +855,71 @@ const page = () => {
   };
 
   const addScreeningQuestion = () => {
-    const trimmed = sqInput.trim();
-    if (!trimmed) return;
-    const newQ: ScreeningQuestion = {
-      question: trimmed,
-      type: "boolean",
-      options: sqOptions.filter((o) => o.trim()),
-    };
-    setFormData((prev) => ({
-      ...prev,
-      screeningQuestions: [...prev.screeningQuestions, newQ],
-    }));
-    setSqInput("");
+  const trimmedQuestion = newQuestion.question.trim();
+  if (!trimmedQuestion) return;
+
+  let finalOptions: string[] | undefined = undefined;
+
+  if (newQuestion.type === "boolean" || newQuestion.type === "multiple-choice") {
+    finalOptions = newQuestion.options
+      .map(opt => opt.trim())
+      .filter(opt => opt.length > 0);
+
+    if (finalOptions.length < 2) {
+      Swal.fire({
+        title: "Error",
+        text: "At least 2 options are required for this question type.",
+        icon: "warning",
+      });
+      return;
+    }
+  }
+
+  const questionObj: ScreeningQuestion = {
+    id: `q_${Date.now()}`,                    // ← Always generate id
+    question: trimmedQuestion,
+    type: newQuestion.type,
+    options: finalOptions,                    // text type ke liye undefined
+    required: newQuestion.required,
   };
+
+  setFormData((prev) => ({
+    ...prev,
+    screeningQuestions: [...prev.screeningQuestions, questionObj],
+  }));
+
+  // Reset
+  setNewQuestion({
+    question: "",
+    type: "boolean",
+    options: ["Yes", "No"],
+    required: true,
+  });
+  setOptionInput("");
+};
 
   const removeScreeningQuestion = (index: number) => {
     setFormData((prev) => ({
       ...prev,
       screeningQuestions: prev.screeningQuestions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addOption = () => {
+    const trimmed = optionInput.trim();
+    if (!trimmed || newQuestion.options.includes(trimmed)) return;
+
+    setNewQuestion((prev) => ({
+      ...prev,
+      options: [...prev.options, trimmed],
+    }));
+    setOptionInput("");
+  };
+
+  const removeOption = (index: number) => {
+    setNewQuestion((prev) => ({
+      ...prev,
+      options: prev.options.filter((_, i) => i !== index),
     }));
   };
 
@@ -1040,7 +1096,9 @@ const page = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleRedirect} className="w-full">Sign In</Button>
+            <Button onClick={handleRedirect} className="w-full">
+              Sign In
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -1068,7 +1126,8 @@ const page = () => {
               className="h-12 text-base border-gray-300 focus:border-[#F54A00] placeholder:text-gray-400"
             />
             <p className="text-xs text-gray-500 pl-1">
-              Be specific. Include role level and key technologies for better reach.
+              Be specific. Include role level and key technologies for better
+              reach.
             </p>
           </div>
 
@@ -1123,9 +1182,14 @@ const page = () => {
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
             <div className="space-y-0.5">
-              <p className="font-semibold text-gray-800">{company.companyName}</p>
+              <p className="font-semibold text-gray-800">
+                {company.companyName}
+              </p>
               <p className="text-sm text-gray-500">
-                {[company.companyCategory, company.companySize && `${company.companySize} employees`]
+                {[
+                  company.companyCategory,
+                  company.companySize && `${company.companySize} employees`,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
@@ -1161,7 +1225,9 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">Company Size</Label>
+                <Label className="text-gray-700 font-medium">
+                  Company Size
+                </Label>
                 <Select
                   value={companyData.companySize}
                   onValueChange={handleCompanySelectChange("companySize")}
@@ -1180,7 +1246,9 @@ const page = () => {
               </div>
 
               <div className="space-y-2 lg:col-span-3">
-                <Label className="text-gray-700 font-medium">Company Tagline</Label>
+                <Label className="text-gray-700 font-medium">
+                  Company Tagline
+                </Label>
                 <Input
                   name="companyTagline"
                   value={companyData.companyTagline}
@@ -1191,7 +1259,9 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">Company Sector</Label>
+                <Label className="text-gray-700 font-medium">
+                  Company Sector
+                </Label>
                 <Select
                   value={companyData.companyCategory}
                   onValueChange={handleCompanySelectChange("companyCategory")}
@@ -1210,7 +1280,9 @@ const page = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-700 font-medium">Founded Year</Label>
+                <Label className="text-gray-700 font-medium">
+                  Founded Year
+                </Label>
                 <Input
                   name="foundedYear"
                   value={companyData.foundedYear}
@@ -1349,7 +1421,9 @@ const page = () => {
             {DAYS_OF_WEEK.map((day) => (
               <Badge
                 key={day}
-                variant={formData.workingDays.includes(day) ? "default" : "outline"}
+                variant={
+                  formData.workingDays.includes(day) ? "default" : "outline"
+                }
                 className="cursor-pointer text-sm px-3 py-1.5 select-none"
                 onClick={() => toggleWorkingDay(day)}
               >
@@ -1511,7 +1585,9 @@ const page = () => {
                 setFormData((p) => ({ ...p, isIncentive: !!c }))
               }
             />
-            <Label htmlFor="isIncentive">Includes Incentive / Variable Pay</Label>
+            <Label htmlFor="isIncentive">
+              Includes Incentive / Variable Pay
+            </Label>
           </div>
         </div>
 
@@ -1673,8 +1749,8 @@ const page = () => {
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { id: "easy-apply", label: "Easy Apply (on platform)", icon: Send },
-            { id: "external-link", label: "External Link", icon: FileText },
-            { id: "email", label: "Email Application", icon: Clock },
+            // { id: "external-link", label: "External Link", icon: FileText },
+            // { id: "email", label: "Email Application", icon: Clock },
           ].map(({ id, label, icon: Icon }) => (
             <div
               key={id}
@@ -1865,7 +1941,8 @@ const page = () => {
             Add
           </Button>
         </div>
-        {formData.benefits.filter((b) => !COMMON_BENEFITS.includes(b)).length > 0 && (
+        {formData.benefits.filter((b) => !COMMON_BENEFITS.includes(b)).length >
+          0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {formData.benefits
               .filter((b) => !COMMON_BENEFITS.includes(b))
@@ -1916,64 +1993,167 @@ const page = () => {
       </div>
 
       {/* Screening Questions */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-5">
-        <div className="space-y-1">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div>
           <Label className="text-base font-semibold">Screening Questions</Label>
-          <p className="text-xs text-muted-foreground">
-            Add Yes/No questions to filter applicants before they apply
+          <p className="text-xs text-muted-foreground mt-1">
+            Add questions to filter serious candidates. Supports Yes/No,
+            Multiple Choice & Text.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Add New Question Form */}
+        <div className="border border-dashed border-gray-300 rounded-xl p-5 space-y-4">
           <Input
-            value={sqInput}
-            onChange={(e) => setSqInput(e.target.value)}
-            placeholder="e.g. Do you have experience with React?"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addScreeningQuestion();
-              }
-            }}
-            className="flex-1 h-11"
+            value={newQuestion.question}
+            onChange={(e) =>
+              setNewQuestion((prev) => ({ ...prev, question: e.target.value }))
+            }
+            placeholder="Enter screening question"
+            className="h-11"
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs">Question Type</Label>
+              <Select
+                value={newQuestion.type}
+                onValueChange={(
+                  value: "boolean" | "multiple-choice" | "text",
+                ) =>
+                  setNewQuestion((prev) => ({
+                    ...prev,
+                    type: value,
+                    options:
+                      value === "text"
+                        ? []
+                        : value === "boolean"
+                          ? ["Yes", "No"]
+                          : prev.options,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="boolean">Yes / No</SelectItem>
+                  <SelectItem value="multiple-choice">
+                    Multiple Choice
+                  </SelectItem>
+                  <SelectItem value="text">Text Input (Long Answer)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2 pt-6">
+              <Checkbox
+                id="required"
+                checked={newQuestion.required}
+                onCheckedChange={(checked) =>
+                  setNewQuestion((prev) => ({ ...prev, required: !!checked }))
+                }
+              />
+              <Label htmlFor="required" className="cursor-pointer">
+                Required
+              </Label>
+            </div>
+          </div>
+
+          {/* Options Input - only for boolean & multiple-choice */}
+          {(newQuestion.type === "boolean" ||
+            newQuestion.type === "multiple-choice") && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  value={optionInput}
+                  onChange={(e) => setOptionInput(e.target.value)}
+                  placeholder="Add option (e.g. 1-2 years, 3-5 years)"
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addOption())
+                  }
+                />
+                <Button type="button" variant="outline" onClick={addOption}>
+                  Add
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {newQuestion.options.map((opt, idx) => (
+                  <Badge
+                    key={idx}
+                    variant="secondary"
+                    className="gap-1 px-3 py-1"
+                  >
+                    {opt}
+                    <button
+                      onClick={() => removeOption(idx)}
+                      className="ml-1 text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           <Button
-            type="button"
             onClick={addScreeningQuestion}
-            disabled={!sqInput.trim()}
-            className="h-11 px-5"
+            disabled={!newQuestion.question.trim()}
+            className="w-full"
           >
-            <Plus className="h-4 w-4 mr-2" /> Add
+            <Plus className="mr-2 h-4 w-4" /> Add Screening Question
           </Button>
         </div>
 
+        {/* Added Questions List */}
         {formData.screeningQuestions.length > 0 && (
-          <div className="space-y-2 pt-1">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">
+              Added Questions ({formData.screeningQuestions.length})
+            </Label>
             {formData.screeningQuestions.map((q, i) => (
               <div
-                key={i}
-                className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-3"
+                key={q.id}
+                className="flex items-start justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-xl"
               >
-                <div className="flex items-start gap-2 min-w-0">
-                  <span className="text-[#F54A00] font-semibold text-sm shrink-0">
-                    Q{i + 1}.
-                  </span>
-                  <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                    {q.question}
-                  </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#F54A00] font-bold">Q{i + 1}</span>
+                    <span className="text-sm font-medium">{q.question}</span>
+                    {q.required && (
+                      <Badge variant="destructive" className="text-xs">
+                        Required
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Type:{" "}
+                    {q.type === "boolean"
+                      ? "Yes/No"
+                      : q.type === "multiple-choice"
+                        ? "Multiple Choice"
+                        : "Text Answer"}
+                  </div>
+                  {q.options && q.options.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {q.options.map((opt, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {opt}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {q.options.map((opt) => (
-                    <Badge key={opt} variant="outline" className="text-xs">
-                      {opt}
-                    </Badge>
-                  ))}
-                  <button
-                    onClick={() => removeScreeningQuestion(i)}
-                    className="rounded-full p-1 hover:bg-red-100 dark:hover:bg-red-900 transition ml-1"
-                  >
-                    <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-600" />
-                  </button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeScreeningQuestion(i)}
+                  className="text-red-500 hover:bg-red-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
@@ -2008,7 +2188,8 @@ const page = () => {
           <CheckCircle2 className="h-14 w-14 text-green-500 mx-auto" />
           <h2 className="text-2xl font-bold">Review & Publish</h2>
           <p className="text-muted-foreground">
-            Please review all details before publishing. You can go back to edit any section.
+            Please review all details before publishing. You can go back to edit
+            any section.
           </p>
         </div>
 

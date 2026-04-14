@@ -138,7 +138,7 @@ const DocumentUploadPage = () => {
       });
 
       await axios.post(
-        `https://api.careerkendra.com/api/v1/applications/upload-documents/${applicationId}`,
+        `http://localhost:9012/api/v1/applications/upload-documents/${applicationId}`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -158,7 +158,7 @@ const DocumentUploadPage = () => {
   const fetchUploadedDocuments = async () => {
     try {
       const res = await axios.get(
-        `https://api.careerkendra.com/api/v1/applications/documents/${applicationId}`,
+        `http://localhost:9012/api/v1/applications/documents/${applicationId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       console.log("Fetched documents:", res.data);
@@ -183,7 +183,7 @@ const DocumentUploadPage = () => {
 
     try {
       await axios.put(
-        `https://api.careerkendra.com/api/v1/applications/reupload-document/${uploadedData?.id}`,
+        `http://localhost:9012/api/v1/applications/reupload-document/${uploadedData?.id}`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } },
       );

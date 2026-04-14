@@ -66,6 +66,10 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
 
+  const handlRediret = () => {
+    window.location.href = "/";
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -86,7 +90,7 @@ export function AdminSidebar({
         <ScrollArea className="h-full">
           {/* Header */}
           <div className="flex h-16 items-center justify-between border-b border-orange-100 px-5 gap-2 sticky top-0 bg-white">
-            <h1 className="text-lg font-bold text-orange-600 flex items-center gap-2.5">
+            <h1 onClick={handlRediret} className="text-lg font-bold text-orange-600 flex items-center gap-2.5 cursor-pointer">
               <Avatar className="shadow-sm rounded-none bg-transparent border-0">
                 <AvatarImage src={image || ""} className="object-contain bg-transparent border-0" width={12} height={12} alt="Company Logo" />
                 <AvatarFallback className="bg-orange-600 text-white text-xs font-semibold">

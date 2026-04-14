@@ -1,5 +1,39 @@
 const { z } = require("zod");
 
+// ✅ FINAL FIXED Screening Questions Schema
+const screeningQuestionSchema = z.object({
+  id: z.string().min(1).optional(),                    // ← Optional now
+
+  question: z.string().min(5, "Question must be at least 5 characters"),
+
+  type: z.enum(["boolean", "multiple-choice", "text"]),
+
+  options: z.array(z.string().min(1))
+    .min(2, "At least 2 options are required")
+    .optional()
+    .nullable(),
+
+  required: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if ((data.type === "boolean" || data.type === "multiple-choice")) {
+    if (!data.options || data.options.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `At least 2 options are required for ${data.type} type`,
+        path: ["options"],
+      });
+    }
+  }
+
+  if (data.type === "text" && data.options && data.options.length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Text type questions should not have options",
+      path: ["options"],
+    });
+  }
+});
+
 const jobShape = {
   jobTitle: z.string().min(3, "Job title must be at least 3 characters"),
   slug: z
@@ -53,13 +87,9 @@ const jobShape = {
   isIncentive: z.boolean().default(false),
 
   // ✅ Screening Questions
-  screeningQuestions: z.array(
-    z.object({
-      question: z.string().min(5, "Question must be at least 5 characters"),
-      type: z.enum(["boolean"]).default("boolean"),
-      options: z.array(z.string()).min(2, "At least 2 options required")
-    })
-  ).optional().default([]),
+  screeningQuestions: z.array(screeningQuestionSchema)
+    .optional()
+    .default([]),
 };
 
 const jobBaseSchema = z
