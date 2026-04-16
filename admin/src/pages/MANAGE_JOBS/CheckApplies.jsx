@@ -448,7 +448,7 @@ const CheckApplies = () => {
                         <td className="px-5 py-4">
                           {app.resume ? (
                             <a
-                              href={`http://localhost:9012${app.resume}`}
+                              href={`https://api.careerkendra.com${app.resume}`}
                               target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-100 rounded-lg hover:bg-violet-100 transition-colors"
                             >

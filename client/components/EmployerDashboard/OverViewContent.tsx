@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const API_URL = "http://localhost:9012/api/v1/auth-employer/dashboard";
+const API_URL = "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
 
 interface DashboardData {
   stats: {
