@@ -4,6 +4,7 @@ import {
   Search,
   Eye,
   Star,
+  UserCog
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
@@ -68,6 +69,49 @@ const AllEmployerList = () => {
     if (newPage >= 1 && newPage <= totalPages) {
       setFilters((prev) => ({ ...prev, page: newPage }));
     }
+  };
+
+  // ==================== NEW: Toggle Role Function ====================
+  const confirmToggleRole = (user) => {
+    const isAdmin = user.role === "employer-admin";
+    const newRole = isAdmin ? "employer" : "employer-admin";
+    const action = isAdmin ? "remove admin privileges" : "make admin";
+
+    Swal.fire({
+      title: "Are you sure?",
+      text: `You want to ${action} for ${user.employerName || user.userName}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: isAdmin ? "#ef4444" : "#6366f1",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, ${action}!`,
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.put("/auth-employer/toggle-role", {
+            employerId: user.id,
+          });
+
+          if (res.data.success) {
+            Swal.fire({
+              icon: "success",
+              title: "Success!",
+              text: res.data.message || `Role updated to ${newRole}`,
+              timer: 2000,
+            });
+
+            // Refresh the list to show updated role
+            fetchUsers();
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: err.response?.data?.message || "Failed to update role",
+          });
+        }
+      }
+    });
   };
 
   const confirmToggleSpecialAccess = (user) => {
@@ -190,6 +234,7 @@ const AllEmployerList = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {users.map((user) => {
+                    const isAdmin = user.role === "employer-admin";
                     return (
                       <tr
                         key={user.id}
@@ -228,6 +273,19 @@ const AllEmployerList = () => {
                           </span>
                         </td>
 
+                        {/* NEW: Role Column */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                              isAdmin
+                                ? "bg-violet-100 text-violet-700 border border-violet-200"
+                                : "bg-blue-100 text-blue-700 border border-blue-200"
+                            }`}
+                          >
+                            {isAdmin ? "Employer Admin" : "Employer"}
+                          </span>
+                        </td>
+
                         {/* Actions */}
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex items-center justify-end gap-2">
@@ -258,6 +316,19 @@ const AllEmployerList = () => {
                                   user.specialAccess ? "currentColor" : "none"
                                 }
                               />
+                            </button>
+
+                            {/* NEW: Toggle Role Button */}
+                            <button
+                              onClick={() => confirmToggleRole(user)}
+                              title={isAdmin ? "Remove Admin Role" : "Make Employer Admin"}
+                              className={`p-2 rounded-lg transition ${
+                                isAdmin
+                                  ? "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
+                                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                              }`}
+                            >
+                              <UserCog size={18} />
                             </button>
                           </div>
                         </td>

@@ -19,44 +19,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useEmployerAuthStore } from "@/store/employerAuth.store";
+
 interface AdminSidebarProps {
   open?: boolean;
   image?: string;
   companyName?: string;
   onClose?: () => void;
 }
-
-const navigationItems = [
-  {
-    title: "Overview",
-    items: [{ icon: LayoutDashboard, label: "Dashboard", href: "/employer/profile" }],
-  },
-  {
-    title: "Company",
-    items: [
-      { icon: Building2, label: "Company Profile", href: "/employer/profile?tab=company" },
-    ],
-  },
-  {
-    title: "Jobs",
-    items: [
-      { icon: Briefcase, label: "Post a Job", href: "/employer/profile?tab=post-jobs" },
-      { icon: FileText, label: "My Jobs", href: "/employer/profile?tab=my-jobs" },
-      { icon: Users, label: "Applications", href: "/employer/profile?tab=applications" },
-    ],
-  },
-  {
-    title: "Communication",
-    items: [
-      { icon: MessageSquare, label: "Messages", href: "/employer/profile?tab=messages" },
-      { icon: Bell, label: "Interviews", href: "/employer/profile?tab=interviews" },
-    ],
-  },
-  {
-    title: "Account",
-    items: [{ icon: Settings, label: "Settings", href: "/employer/profile?tab=settings" }],
-  },
-];
 
 export function AdminSidebar({
   open = true,
@@ -65,6 +35,60 @@ export function AdminSidebar({
   companyName,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  const { company } = useEmployerAuthStore();
+
+  if (!company) return null;
+
+  const employerRole = company?.employer?.role || "employer";
+
+  // ✅ Filter navigation items based on role
+  const filteredNavigationItems = [
+    {
+      title: "Overview",
+      items: [{ icon: LayoutDashboard, label: "Dashboard", href: "/employer/profile" }],
+    },
+    {
+      title: "Company",
+      items: [
+        // Only show "Create Company" if user is employer-admin
+        ...(employerRole === "employer-admin"
+          ? [{ icon: Building2, label: "Create Company", href: "/employer/profile?tab=create-company" }]
+          : []),
+        ...(employerRole === "employer-admin"
+          ? [{ icon: Building2, label: "Manage Companies", href: "/employer/profile?tab=manage-companies" }]
+          : []),
+        ...(employerRole === "employer"
+          ? [{ icon: Building2, label: "Company Profile", href: "/employer/profile?tab=company" }]
+          : []),
+        
+        // { icon: Building2, label: "Company Profile", href: "/employer/profile?tab=company" },
+      ],
+    },
+    {
+      title: "Jobs",
+      items: [
+        { icon: Briefcase, label: "Post a Job", href: "/employer/profile?tab=post-jobs" },
+        { icon: FileText, label: "My Jobs", href: "/employer/profile?tab=my-jobs" },
+        { icon: Users, label: "Applications", href: "/employer/profile?tab=applications" },
+      ],
+    },
+    {
+      title: "Communication",
+      items: [
+        { icon: MessageSquare, label: "Messages", href: "/employer/profile?tab=messages" },
+        { icon: Bell, label: "Interviews", href: "/employer/profile?tab=interviews" },
+      ],
+    },
+    {
+      title: "Account",
+      items: [{ icon: Settings, label: "Settings", href: "/employer/profile?tab=settings" }],
+    },
+  ];
+
+  // const { company } = useEmployerAuthStore();
+
+  console.log("company",company)
 
   const handlRediret = () => {
     window.location.href = "/";
@@ -90,15 +114,22 @@ export function AdminSidebar({
         <ScrollArea className="h-full">
           {/* Header */}
           <div className="flex h-16 items-center justify-between border-b border-orange-100 px-5 gap-2 sticky top-0 bg-white">
-            <h1 onClick={handlRediret} className="text-lg font-bold text-orange-600 flex items-center gap-2.5 cursor-pointer">
+            <h1 
+              onClick={handlRediret} 
+              className="text-lg font-bold text-orange-600 flex items-center gap-2.5 cursor-pointer"
+            >
               <Avatar className="shadow-sm rounded-none bg-transparent border-0">
-                <AvatarImage src={image || ""} className="object-contain bg-transparent border-0" width={12} height={12} alt="Company Logo" />
+                <AvatarImage 
+                  src={image || ""} 
+                  className="object-contain bg-transparent border-0" 
+                  alt="Company Logo" 
+                />
                 <AvatarFallback className="bg-orange-600 text-white text-xs font-semibold">
-                  {companyName?.charAt(0)?.toUpperCase() || "E"}
+                  {company?.employer?.employerName?.charAt(0)?.toUpperCase() || "E"}
                 </AvatarFallback>
               </Avatar>
 
-              <span className="hidden sm:inline">{companyName}</span>
+              <span className="hidden sm:inline">{company?.employer?.employerName}</span>
             </h1>
             <Button
               variant="ghost"
@@ -112,7 +143,7 @@ export function AdminSidebar({
 
           {/* Navigation */}
           <nav className="space-y-6 px-3 py-6">
-            {navigationItems.map((section) => (
+            {filteredNavigationItems.map((section) => (
               <div key={section.title}>
                 <p className="px-3 text-xs font-semibold text-orange-600/80 uppercase tracking-wider mb-2">
                   {section.title}
@@ -138,9 +169,7 @@ export function AdminSidebar({
                             <Icon
                               className={cn(
                                 "h-4.5 w-4.5 flex-shrink-0",
-                                isActive
-                                  ? "text-orange-600"
-                                  : "text-orange-500/80",
+                                isActive ? "text-orange-600" : "text-orange-500/80",
                               )}
                             />
                             <span className="flex-1 text-left">

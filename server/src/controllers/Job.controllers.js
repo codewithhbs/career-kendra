@@ -353,6 +353,8 @@ exports.updateJob = async (req, res) => {
 
     const data = updateJobSchema.parse(req.body);
     console.log("Updating job with data:", req.body);
+    const company = data.companyId
+    console.log("company",company)
     /* ================= FIND JOB ================= */
 
     let whereCondition = { id };
@@ -409,6 +411,8 @@ exports.updateJob = async (req, res) => {
     }
 
     /* ================= UPDATE ================= */
+
+    // job.companyId = data.companyId || job.companyId;
 
     await job.update(data);
 

@@ -131,10 +131,24 @@ interface JobFormData {
 }
 
 export default function PostJob() {
-  const { token, isAuthenticated, fetchCompanyProfile, company } =
-    useEmployerAuthStore();
+  const {
+    token,
+    isAuthenticated,
+    fetchCompanyProfile,
+    company,
+    fetchCompanyList,
+  } = useEmployerAuthStore();
+  const role = company?.employer?.role || "employer";
+  // console.log("role",role)
   const searchParams = useSearchParams();
   const navigate = useRouter();
+  // 👇 Admin ke liye company list
+  const [companyList, setCompanyList] = useState<
+    { id: number; companyName: string }[]
+  >([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(
+    null,
+  );
 
   const editId = searchParams.get("edit");
 
@@ -261,6 +275,58 @@ export default function PostJob() {
     });
     setOptionInput("");
   }, []);
+
+  const fetchCompanies = useCallback(async () => {
+    if (role !== "employer-admin") return;
+
+    try {
+      const res = await fetchCompanyList();
+      console.log("fetchCompanyList response:", res);
+
+      // Important: Yeh check karo ki response kaisa aa raha hai
+      if (res && Array.isArray(res)) {
+        setCompanyList(res);
+      } else if (res?.data && Array.isArray(res.data)) {
+        setCompanyList(res.data);
+      } else {
+        console.warn("Unexpected response format from fetchCompanyList", res);
+        setCompanyList([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch companies:", error);
+      setCompanyList([]);
+    }
+  }, [role, fetchCompanyList]); // ← fetchCompanyList bhi dependency mein add karo
+
+  // 👇 Single useEffect for fetching companies + profile (Better)
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+
+    fetchCompanyProfile();
+
+    // Admin ke liye company list fetch karo
+    if (role === "employer-admin") {
+      fetchCompanies();
+    }
+  }, [isAuthenticated, token, role, fetchCompanyProfile, fetchCompanies]);
+
+  // Edit mode mein company select karne ke liye
+  useEffect(() => {
+    if (mode === "edit" && role === "employer-admin") {
+      // Wait until companyList is loaded
+      if (companyList.length > 0 && company?.id) {
+        const companyExists = companyList.some((c) => c.id === company.id);
+
+        if (companyExists) {
+          setSelectedCompanyId(company.id);
+        } else {
+          console.warn("Company from profile not found in companyList");
+          // Optional: Agar company list mein nahi hai toh bhi set kar do
+          setSelectedCompanyId(company.id);
+        }
+      }
+    }
+  }, [mode, role, companyList, company?.id]);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -513,6 +579,8 @@ export default function PostJob() {
     }));
   };
 
+  // console.log("companyList",companyList)
+
   const toggleWorkingDay = (day: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -628,6 +696,26 @@ export default function PostJob() {
 
     setLoading(true);
 
+    // Admin ke liye selectedCompanyId, employer ke liye company?.id
+    const resolvedCompanyId =
+      role === "employer-admin" ? selectedCompanyId : company?.id;
+
+    if (!resolvedCompanyId) {
+      await Swal.fire({
+        title: "Error",
+        text:
+          role === "employer-admin"
+            ? "Please select a company"
+            : "Company profile missing",
+        icon: "error",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    setLoading(true);
+
     const payload = {
       ...formData,
       salaryMin: formData.salaryMin ? Number(formData.salaryMin) : undefined,
@@ -638,7 +726,7 @@ export default function PostJob() {
         ? Number(formData.experienceMax)
         : undefined,
       openings: Number(formData.openings) || 1,
-      companyId: company.id,
+      companyId: resolvedCompanyId,
       // Clean screening questions before sending
       screeningQuestions: formData.screeningQuestions.map((q) => ({
         id: q.id,
@@ -923,6 +1011,35 @@ export default function PostJob() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {role === "employer-admin" && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+                    <Label className="text-sm font-semibold text-amber-800 flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Select Company
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <p className="text-xs text-amber-700">
+                      You are posting as admin. Choose which company this job
+                      belongs to.
+                    </p>
+                    <Select
+                      value={selectedCompanyId ? String(selectedCompanyId) : ""}
+                      onValueChange={(val) => setSelectedCompanyId(Number(val))}
+                    >
+                      <SelectTrigger className="h-11 w-full max-w-md bg-white border-amber-300 focus:border-amber-500">
+                        <SelectValue placeholder="Select a company..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companyList.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.companyName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           </div>

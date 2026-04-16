@@ -34,14 +34,14 @@ exports.createCompanyStep1 = async (req, res) => {
     }
 
     // Check already exists
-    const existing = await Company.findOne({ where: { employerId } });
+    // const existing = await Company.findOne({ where: { employerId } });
 
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "Company already created. Please update instead.",
-      });
-    }
+    // if (existing) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Company already created. Please update instead.",
+    //   });
+    // }
 
     const company = await Company.create({
       employerId,
@@ -82,7 +82,13 @@ exports.updateCompanyStep2 = async (req, res) => {
     const employerId = req.user.id;
     const file = req.file;
 
-    const company = await Company.findOne({ where: { employerId } });
+    // companyId frontend se aaya hai toh pehle usse try karo,
+    // warna employerId se fallback
+    const { companyId, ...restBody } = req.body;
+
+    const company = companyId
+      ? await Company.findOne({ where: { id: companyId, employerId } }) // ✅ security: employerId bhi match karo
+      : await Company.findOne({ where: { employerId } });
 
     if (!company) {
       return res.status(404).json({
@@ -91,13 +97,10 @@ exports.updateCompanyStep2 = async (req, res) => {
       });
     }
 
-    let updateData = { ...req.body };
-    console.log("updateCompanyStep2 called with body:", req.body);
+    let updateData = { ...restBody };
 
-    // If new logo uploaded
     if (file) {
-      const relativePath = `/uploads/companyDocuments/${file.filename}`;
-      updateData.companyLogo = relativePath;
+      updateData.companyLogo = `/uploads/companyDocuments/${file.filename}`;
     }
 
     await company.update(updateData);
@@ -110,12 +113,74 @@ exports.updateCompanyStep2 = async (req, res) => {
 
   } catch (error) {
     console.log("updateCompanyStep2 error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+exports.getAllCompaniesList = async (req, res) => {
+  try {
+    console.log("req.user",req.user)
+    const employerId = req.user.id;
+
+    const companies = await Company.findAll({
+      where: { employerId },
+      include: [
+        {
+          model: Employer,
+          as: "employer",
+        },
+      ],
+    });
+
+    if (companies.length === 0) {
+      return res.status(200).json({
+        success: true,
+        notFound: true,
+        message: "Company profile not found Please add it first",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: companies,
+    });
+  } catch (error) {
+    console.log("Internal server error", error)
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.getCompanyById = async (req, res) => {
+  try {
+    const {id} = req.params;
+
+    const company = await Company.findOne({
+      where: { id },
+      include: [
+        {
+          model: Employer,
+          as: "employer",
+        },
+      ],
+    });
+
+    if (!company) {
+      return res.status(200).json({
+        success: true,
+        notFound: true,
+        message: "Company profile not found Please add it first",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: company,
+    })
+  } catch (error) {
+    console.log("Internal server error", error)
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
 
 // =============================================
 // ✅ Get Company Profile

@@ -645,12 +645,57 @@ exports.updateBasicDetailsOfEmployer = async (req, res) => {
     });
   }
 };
-
-exports.makeEmployerToAdminEmployer = async (req, res) => {
+exports.toggleEmployerRole = async (req, res) => {
   try {
-    
+    const { employerId } = req.body;
+
+    if (!employerId) {
+      return res.status(400).json({
+        success: false,
+        message: "employerId is required",
+      });
+    }
+
+    // 🔍 Find employer
+    const employer = await Employer.findOne({
+      where: { id: employerId },
+    });
+
+    if (!employer) {
+      return res.status(404).json({
+        success: false,
+        message: "Employer not found",
+      });
+    }
+
+    // 🔄 Toggle logic
+    let newRole;
+    if (employer.role === "employer") {
+      newRole = "employer-admin";
+    } else if (employer.role === "employer-admin") {
+      newRole = "employer";
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role found for employer",
+      });
+    }
+
+    // ✅ Update role
+    employer.role = newRole;
+    await employer.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Role updated to ${newRole}`,
+      data: {
+        id: employer.id,
+        role: newRole,
+      },
+    });
+
   } catch (error) {
-    console.log("Internal server error",error)
+    console.log("Internal server error", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

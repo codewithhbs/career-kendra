@@ -13,6 +13,9 @@ import AllInterviews from "./Applications/AllInterviews";
 import { API_URL } from "@/constant/api";
 import axios from "axios";
 import OverviewContent from "./OverViewContent";
+import CreateCompany from "./CreateCompany";
+import ManageCompaines from "./ManageCompaines";
+import UpdateCompany from "./UpdateCompany";
 axios.defaults.baseURL = API_URL;
 
 
@@ -39,6 +42,12 @@ export default function MainScreen() {
         return <Messages/>;
       case "interviews":
         return <AllInterviews/>;
+      case "create-company":
+        return <CreateCompany/>;
+      case "manage-companies":
+        return <ManageCompaines/>;
+      case "update-company":
+        return <UpdateCompany/>;
       case "settings":
         return <div className="text-gray-600">Settings – coming soon...</div>;
       default:

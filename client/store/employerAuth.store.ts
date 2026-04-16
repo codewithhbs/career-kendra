@@ -424,6 +424,7 @@ export const useEmployerAuthStore = create<StoreState>()((set, get) => ({
     try {
       const res = await api.post("/company/create-step1", data);
       set({ company: res.data.data ?? res.data, error: null });
+      return res.data;
     } catch (err) {
       const msg = handleApiError(
         err,
@@ -463,7 +464,7 @@ export const useEmployerAuthStore = create<StoreState>()((set, get) => ({
     set({ loading: true, error: null });
     try {
       const res = await api.get("/company/profile");
-      console.log("Fetched company profile:", res.data);
+      // console.log("Fetched company profile:", res.data);
       if (res.data?.notFound === false && typeof window !== "undefined") {
         // window.location.href = "/company/onboarding/step1";
       }
@@ -476,4 +477,37 @@ export const useEmployerAuthStore = create<StoreState>()((set, get) => ({
       set({ loading: false });
     }
   },
+
+  fetchCompanyList: async () => {
+    set({ loading: true, error: null });
+    try {
+      const res = await api.get(`/company/companies-list`);
+      return res.data.data ?? res.data;
+    } catch (err) {
+      const msg = handleApiError(err, "Failed to fetch company list.");
+      set({ error: msg });
+      throw new Error(msg);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // employerAuth.store.ts mein add karo
+
+fetchCompanyById: async (id: string) => {
+  set({ loading: true });
+  try {
+    const res = await axios.get(`${API_URL}/company/company/${id}`, {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${get().token}` },
+    });
+    console.log("res",res)
+    // set({ company: res.data?.data, loading: false });
+    return res.data?.data;
+  } catch (err) {
+    console.error("fetchCompanyById error:", err);
+    set({ loading: false });
+  }
+},
+
 }));

@@ -26,6 +26,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     fetchCompanyProfile,
   } = useEmployerAuthStore();
 
+  // console.log("company",company)
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
