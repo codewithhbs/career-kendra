@@ -363,7 +363,7 @@ const ViewApplications = () => {
                 <div className="mt-8">
                   <p className="text-gray-600 mb-4">Offer Letter:</p>
                   <a
-                    href={`https://api.careerkendra.com${application.coverLetter}`}
+                    href={`https://api.careerkendra.com/${application.coverLetter}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
@@ -476,7 +476,7 @@ const ViewApplications = () => {
                         <div className="flex gap-3">
                           {/* View PDF Button */}
                           <a
-                            href={`https://api.careerkendra.com${doc.filePath}`}
+                            href={`https://api.careerkendra.com/${doc.filePath}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white py-3 rounded-xl text-sm font-medium transition"

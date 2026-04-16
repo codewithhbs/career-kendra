@@ -6,7 +6,7 @@ import {
     Briefcase, GraduationCap, Award
 } from "lucide-react";
 
-const BASE_URL = "https://api.careerkendra.com";
+const BASE_URL = "https://api.careerkendra.com/";
 
 const ViewUser = () => {
     const { id } = useParams();
