@@ -54,7 +54,7 @@ const MyInterView = () => {
     const fetchInterviews = useCallback(async (page: number) => {
         setLoading(true);
         try {
-            const res = await axios.get("https://api.careerkendra.com//api/v1/auth/my-interviews", {
+            const res = await axios.get("https://api.careerkendra.com/api/v1/auth/my-interviews", {
                 headers: { Authorization: `Bearer ${token}` },
                 params: { page, limit },
             });

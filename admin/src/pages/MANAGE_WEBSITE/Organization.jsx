@@ -67,7 +67,7 @@ const Organization = () => {
 
   // Open Edit Modal
   const openEdit = (item) => {
-    const cleanImage = item.image?.replace("https://api.careerkendra.com/https://", "https://") || "";
+    const cleanImage = item.image?.replace("https://api.careerkendra.comhttps://", "https://") || "";
 
     setModalMode("edit");
     setFormData({
@@ -208,7 +208,7 @@ const Organization = () => {
               </tr>
             ) : filteredData.length > 0 ? (
               filteredData.map((item) => {
-                const cleanImage = item.image?.replace("https://api.careerkendra.com/https://", "https://") || "";
+                const cleanImage = item.image?.replace("https://api.careerkendra.comhttps://", "https://") || "";
 
                 return (
                   <tr key={item.id} className="hover:bg-gray-50 transition">
