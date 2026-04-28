@@ -17,7 +17,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import axios from "axios";
 
-const DASHBOARD_API = "http://localhost:9012/api/v1/auth-employer/dashboard";
+const DASHBOARD_API = "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
 
 interface AdminHeaderProps {
   onMenuClick?: () => void;
