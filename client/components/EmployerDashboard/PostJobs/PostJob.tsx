@@ -137,8 +137,9 @@ export default function PostJob() {
     fetchCompanyProfile,
     company,
     fetchCompanyList,
+    user
   } = useEmployerAuthStore();
-  const role = company?.employer?.role || "employer";
+  const role = user?.role || "employer";
   // console.log("role",role)
   const searchParams = useSearchParams();
   const navigate = useRouter();

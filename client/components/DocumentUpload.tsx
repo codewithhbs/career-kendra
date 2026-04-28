@@ -144,7 +144,7 @@ const DocumentUploadPage = () => {
       );
 
 
-      
+
 
       setUploadSuccess(true);
       setTimeout(() => router.push("/auth/profile?tab=interviews"), 1800);

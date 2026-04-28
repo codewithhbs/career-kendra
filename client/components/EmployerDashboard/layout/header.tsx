@@ -50,7 +50,7 @@ export function AdminHeader({
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const { company } = useEmployerAuthStore();
+  const { company, user } = useEmployerAuthStore();
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -152,11 +152,11 @@ export function AdminHeader({
 
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 bg-orange-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">{company?.employer?.employerName?.charAt(0)}</span>
+              <span className="text-white font-bold text-xl">{company?.employer?.employerName?.charAt(0) || user?.employerName?.charAt(0) || "E"}</span>
             </div>
             <div className="hidden sm:block">
               <p className="font-semibold text-lg tracking-tight text-gray-900">
-                {company?.employer?.employerName || "Pooja Enterprises"}
+                {company?.employer?.employerName || user?.employerName || "Employer"}
               </p>
             </div>
           </div>

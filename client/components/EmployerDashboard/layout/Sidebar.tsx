@@ -36,11 +36,12 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
 
-  const { company } = useEmployerAuthStore();
+  const { company, user } = useEmployerAuthStore();
 
   if (!company) return null;
+  console.log("company",user)
 
-  const employerRole = company?.employer?.role || "employer";
+  const employerRole = user?.role || "employer";
 
   // ✅ Filter navigation items based on role
   const filteredNavigationItems = [
@@ -88,7 +89,7 @@ export function AdminSidebar({
 
   // const { company } = useEmployerAuthStore();
 
-  console.log("company",company)
+  // console.log("company",company)
 
   const handlRediret = () => {
     window.location.href = "/";
@@ -125,11 +126,11 @@ export function AdminSidebar({
                   alt="Company Logo" 
                 />
                 <AvatarFallback className="bg-orange-600 text-white text-xs font-semibold">
-                  {company?.employer?.employerName?.charAt(0)?.toUpperCase() || "E"}
+                  {company?.employer?.employerName?.charAt(0)?.toUpperCase() || user?.employerName?.charAt(0)?.toUpperCase() || "E"}
                 </AvatarFallback>
               </Avatar>
 
-              <span className="hidden sm:inline">{company?.employer?.employerName}</span>
+              <span className="hidden sm:inline">{company?.employer?.employerName || user?.employerName || "Employer"}</span>
             </h1>
             <Button
               variant="ghost"
