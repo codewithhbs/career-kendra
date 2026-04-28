@@ -86,8 +86,8 @@ const CreateAndEditService = () => {
         // Fix broken image URL
         if (data.image) {
           let cleanUrl = data.image;
-          if (cleanUrl.includes("https://api.careerkendra.comhttps://")) {
-            cleanUrl = cleanUrl.replace("https://api.careerkendra.com", "");
+          if (cleanUrl.includes("http://localhost:9012https://")) {
+            cleanUrl = cleanUrl.replace("http://localhost:9012", "");
           }
           setImagePreview(cleanUrl);
         }

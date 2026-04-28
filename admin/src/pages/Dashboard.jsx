@@ -20,7 +20,7 @@ import {
   UserCheck, Award, TrendingUp, Clock 
 } from "lucide-react";
 
-const API_URL = "https://api.careerkendra.com/api/v1/ad/admin-dashboard";
+const API_URL = "http://localhost:9012/api/v1/ad/admin-dashboard";
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
