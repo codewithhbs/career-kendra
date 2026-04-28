@@ -143,6 +143,9 @@ const DocumentUploadPage = () => {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
+
+      
+
       setUploadSuccess(true);
       setTimeout(() => router.push("/auth/profile?tab=interviews"), 1800);
     } catch (error: any) {
