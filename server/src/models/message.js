@@ -1,5 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
-  const Message = sequelize.define("message", {
+  const Message = sequelize.define("Message"
+    
+    , {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -61,7 +63,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
-  });
+  },
+{
+  tableName: "messages", 
+});
 
   Message.associate = (models) => {
     console.log(models)
