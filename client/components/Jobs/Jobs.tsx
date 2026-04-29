@@ -62,15 +62,15 @@ const STYLES = `
   }
 
   /* ── Dot grid background ── */
-  .cw-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(circle, rgba(99,102,241,0.15) 1px, transparent 1px);
-    background-size: 28px 28px;
-    pointer-events: none;
-    z-index: 0;
-  }
+  // .cw-section::before {
+  //   content: '';
+  //   position: absolute;
+  //   inset: 0;
+  //   background-image: radial-gradient(circle, rgba(99,102,241,0.15) 1px, transparent 1px);
+  //   background-size: 28px 28px;
+  //   pointer-events: none;
+  //   z-index: 0;
+  // }
 
   /* ── Ambient blobs ── */
   .cw-blob {

@@ -130,10 +130,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+  // @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
   .gp-wrap {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    // font-family: 'Plus Jakarta Sans', sans-serif;
     background: #ffffff;
     color: #1c1007;
     min-height: 100vh;
@@ -194,7 +194,7 @@ const STYLES = `
     50%      { opacity:0.5; transform:scale(0.8); }
   }
   .gp-h1 {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: clamp(30px, 4vw, 50px);
     font-weight: 900; color: #1c1007;
     line-height: 1.1; margin-bottom: 14px;
@@ -224,7 +224,7 @@ const STYLES = `
   .gp-filter-btn {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 14px 20px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    // font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 13px; font-weight: 600;
     color: #8a6e3e; background: transparent;
     border: none; border-bottom: 3px solid transparent;
@@ -440,7 +440,7 @@ const STYLES = `
     text-transform: uppercase; color: #fe9a00; margin-bottom: 6px;
   }
   .gp-lb-title {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: 20px; font-weight: 700; color: #fff8ec;
   }
   .gp-lb-counter {

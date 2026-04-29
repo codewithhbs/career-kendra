@@ -37,7 +37,7 @@ const Hero = () => {
       />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-8 py-20 md:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.6fr] gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_0.3fr] gap-12 items-center">
           <div>
             {/* Orange highlight tag */}
             <div
@@ -285,7 +285,7 @@ const Hero = () => {
                       d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
                     />
                   </svg>
-                  Search {jobs.length || 148} Jobs
+                  Search Jobs
                 </button>
               </div>
             </form>

@@ -13,7 +13,7 @@ const MENU_ITEMS = [
   { label: "About", href: "/about" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
-  { label: "Jobs", href: "/jobs" },
+  { label: "Jobs", href: "/jobs", highlight: true },
 ] as const;
 
 export default function Header() {
@@ -100,8 +100,6 @@ export default function Header() {
         </div>
       )}
 
-      {/* Announcement Bar */}
-
       {/* Main Navbar */}
       <nav className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -114,7 +112,6 @@ export default function Header() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "",
                 }}
               >
                 <img
@@ -125,6 +122,9 @@ export default function Header() {
                   height={60}
                 />
               </div>
+              <span className="text-xl font-bold text-gray-900 tracking-tight">
+                {siteName}
+              </span>
             </Link>
 
             {/* Desktop Menu */}
@@ -136,7 +136,11 @@ export default function Header() {
                     key={item.label}
                     href={item.href}
                     onClick={(e) => handleHashScroll(e, item.href)}
-                    className="text-gray-700 hover:text-red-600 font-medium transition-colors"
+                    className={
+                      "highlight" in item && item.highlight
+                        ? "bg-red-600 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-red-700 transition-colors"
+                        : "text-gray-700 hover:text-red-600 font-medium transition-colors"
+                    }
                   >
                     {item.label}
                   </Link>
@@ -226,7 +230,11 @@ export default function Header() {
                     handleHashScroll(e, item.href);
                     closeMobileMenu();
                   }}
-                  className="block px-5 py-3.5 text-gray-800 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium transition-all"
+                  className={
+                    "highlight" in item && item.highlight
+                      ? "block px-5 py-3.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all"
+                      : "block px-5 py-3.5 text-gray-800 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium transition-all"
+                  }
                 >
                   {item.label}
                 </Link>

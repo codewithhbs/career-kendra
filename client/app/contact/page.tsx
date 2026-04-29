@@ -96,7 +96,7 @@ const STYLES = `
     50% { opacity: 0.6; transform: scale(0.85); }
   }
   .cp-hero-h1 {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: clamp(32px, 4vw, 52px);
     font-weight: 900;
     color: #1c1007;
@@ -121,7 +121,7 @@ const STYLES = `
   .cp-hstat { flex: 1; text-align: center; padding: 0 20px; }
   .cp-hstat + .cp-hstat { border-left: 1px solid #ffe0a8; }
   .cp-hstat-n {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: 22px; font-weight: 700; color: #fe9a00;
   }
   .cp-hstat-l { font-size: 11px; color: #9c7a4a; font-weight: 500; margin-top: 3px; }
@@ -173,7 +173,7 @@ const STYLES = `
     text-transform: uppercase; margin-bottom: 6px;
   }
   .cp-card-title {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: 22px; font-weight: 700;
     color: #1c1007; margin-bottom: 28px;
     line-height: 1.2;
@@ -264,7 +264,7 @@ const STYLES = `
     border-radius: 12px;
     border: 1px solid #ffe0a8;
     background: #fff8ec;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    // font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 14px;
     color: #1c1007;
     font-weight: 400;
@@ -344,7 +344,7 @@ const STYLES = `
   }
   .cp-success-icon svg { width: 30px; height: 30px; stroke: #fe9a00; fill: none; stroke-width: 2; }
   .cp-success-title {
-    font-family: 'Playfair Display', serif;
+    // font-family: 'Playfair Display', serif;
     font-size: 22px; font-weight: 700; color: #1c1007;
   }
   .cp-success-sub {
@@ -357,7 +357,7 @@ const STYLES = `
     border-radius: 100px;
     background: #fe9a00;
     color: #ffffff;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    // font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 13px; font-weight: 700;
     border: none; cursor: pointer;
     transition: opacity 0.2s;
