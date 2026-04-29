@@ -72,7 +72,7 @@ export default function OverviewContent() {
     const fetchDashboard = async () => {
       try {
         const res = await fetch(API_URL, { credentials: "include" });
-
+        
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
 
         const result = await res.json();
@@ -82,6 +82,7 @@ export default function OverviewContent() {
           throw new Error("API returned unsuccessful response");
         }
       } catch (err: any) {
+        console.log("Internal server error", err)
         setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);

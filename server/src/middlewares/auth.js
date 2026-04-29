@@ -1,46 +1,81 @@
 const { verify } = require("../utils/generateToken");
 
 module.exports = async (req, res, next) => {
+  const debug = process.env.AUTH_DEBUG === "false";
+
   try {
+    if (debug) {
+      console.log("\n🔐 ===== AUTH DEBUG START =====");
+      console.log("👉 URL:", req.originalUrl);
+      console.log("👉 Method:", req.method);
+      console.log("👉 Headers:", req.headers);
+      console.log("👉 Cookies:", req.cookies);
+    }
+
+    let token = null;
+    let source = null;
+
+    // ✅ 1. Check Authorization Header
     const authHeader = req.headers.authorization;
 
-    // ✅ 1. Check header exists
-    if (!authHeader) {
-      return res.status(401).json({
-        success: false,
-        error: "Authorization header missing",
-      });
+    if (authHeader) {
+      if (authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+        source = "header (Bearer)";
+      } else {
+        if (debug) console.log("❌ Invalid header format:", authHeader);
+        return res.status(401).json({
+          success: false,
+          error: "Invalid authorization format (Use: Bearer token)",
+        });
+      }
     }
 
-    // ✅ 2. Check Bearer format
-    if (!authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid authorization format (Use: Bearer token)",
-      });
+    // ✅ 2. Check Cookies (fallback)
+    if (!token && req.cookies?.employer_token) {
+      token = req.cookies.employer_token;
+      source = "cookie (employer_token)";
     }
 
-    // ✅ 3. Extract token
-    const token = authHeader.split(" ")[1];
+    if (!token && req.cookies?.apto_token) {
+      token = req.cookies.apto_token;
+      source = "cookie (apto_token)";
+    }
 
-    if (!token || token.trim() === "") {
+    // ❌ 3. No token anywhere
+    if (!token) {
+      if (debug) console.log("❌ No token found in header or cookies");
       return res.status(401).json({
         success: false,
         error: "Token not provided",
       });
     }
 
-    // ✅ 4. Verify token
+    // ❌ 4. Empty token
+    if (!token.trim()) {
+      if (debug) console.log("❌ Empty token string");
+      return res.status(401).json({
+        success: false,
+        error: "Empty token",
+      });
+    }
+
+    if (debug) {
+      console.log("✅ Token source:", source);
+      console.log("✅ Token preview:", token.slice(0, 25) + "...");
+    }
+
+    // ✅ 5. Verify token
     const payload = verify(token);
 
-    // 🔥 5. Handle BOTH token structures
-    // Case 1: New format (admin inside payload)
-    // Case 2: Old format (flat payload)
+    if (debug) {
+      console.log("✅ Decoded Payload:", payload);
+    }
 
+    // ✅ 6. Normalize user data
     let userData = {};
 
     if (payload.admin) {
-      // ✅ NEW TOKEN STRUCTURE
       userData = {
         id: payload.admin.id,
         email: payload.admin.email,
@@ -49,8 +84,8 @@ module.exports = async (req, res, next) => {
         level: payload.admin.level,
         type: payload.type || "admin",
       };
+      if (debug) console.log("🆕 Admin token detected");
     } else {
-      // ✅ OLD TOKEN STRUCTURE (fallback)
       userData = {
         id: payload.id,
         email: payload.email,
@@ -59,35 +94,33 @@ module.exports = async (req, res, next) => {
         level: payload.level,
         type: payload.type || "user",
       };
+      if (debug) console.log("📦 User token detected");
     }
 
-    // ✅ Attach to request
+    // ✅ 7. Attach user
     req.user = userData;
 
-    // ✅ Dev logs
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `[AUTH] ${userData.type.toUpperCase()} authenticated → ID: ${userData.id}, Role: ${userData.role}`
-      );
+    if (debug) {
+      console.log("👤 Attached user:", userData);
+      console.log("🔐 ===== AUTH DEBUG END =====\n");
     }
 
     next();
   } catch (error) {
-    let status = 401;
     let message = "Invalid or expired token";
 
-    // ✅ Detailed error handling
+    console.log("\n❌ ===== AUTH ERROR =====");
+    console.error(error);
+
     if (error.name === "TokenExpiredError") {
       message = "Token expired. Please login again.";
     } else if (error.name === "JsonWebTokenError") {
       message = "Invalid token";
     } else if (error.name === "NotBeforeError") {
       message = "Token not active yet";
-    } else {
-      console.error("[AUTH ERROR]", error);
     }
 
-    return res.status(status).json({
+    return res.status(401).json({
       success: false,
       error: message,
     });

@@ -666,8 +666,8 @@ exports.ApplyJobByAdmin = async (req, res) => {
         status: application.status,
         appliedAt: application.appliedAt,
       },
-      isNewUser 
-        ? "New user created with CV and application submitted successfully." 
+      isNewUser
+        ? "New user created with CV and application submitted successfully."
         : "CV updated and application submitted successfully for existing user."
     );
 
@@ -2468,10 +2468,12 @@ exports.uploadCoverLetter = async (req, res) => {
 };
 
 exports.getEmployerDashboard = async (req, res) => {
+
+  
   try {
 
-    const employerId = 9;
-
+    const employerId = req.user?.id;
+    console.log("Employer ID for Dashboard:", req.user);
     /* ================= DASHBOARD STATS ================= */
 
     const jobsPosted = await Job.count({
