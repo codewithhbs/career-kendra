@@ -134,8 +134,8 @@ const ServiceDetails = () => {
           typeof data.reviews === "string"
             ? JSON.parse(data.reviews)
             : data.reviews;
-        if (data.image?.includes("http://localhost:9012http")) {
-          data.image = data.image.replace("http://localhost:9012", "");
+        if (data.image?.includes("https://api.careerkendra.comhttp")) {
+          data.image = data.image.replace("https://api.careerkendra.com", "");
         }
         setService(data);
       } catch (err: any) {
