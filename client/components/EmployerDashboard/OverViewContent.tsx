@@ -17,13 +17,18 @@ import {
   Legend,
 } from "recharts";
 import { format } from "date-fns";
-import { 
-  Users, Briefcase, Calendar, Clock, 
-  TrendingUp, Award, MessageSquare, 
-  ArrowRight
+import {
+  Users,
+  Briefcase,
+  Calendar,
+  Clock,
+  TrendingUp,
+  Award,
+  MessageSquare,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
-
+import Cookies from "js-cookie";
 const API_URL = "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
 
 interface DashboardData {
@@ -69,10 +74,19 @@ export default function OverviewContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = Cookies.get("employer_token"); // Assuming you have a way to get the token from cookies
     const fetchDashboard = async () => {
       try {
-        const res = await fetch(API_URL, { credentials: "include" });
-        
+        const res = await fetch(API_URL, {
+          method: "GET",
+          credentials: "include", // ✅ sends cookies
+          headers: {
+            "Content-Type": "application/json",
+            // OPTIONAL (only if you also want token manually)
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
 
         const result = await res.json();
@@ -82,7 +96,7 @@ export default function OverviewContent() {
           throw new Error("API returned unsuccessful response");
         }
       } catch (err: any) {
-        console.log("Internal server error", err)
+        console.log("Internal server error", err);
         setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
@@ -111,29 +125,29 @@ export default function OverviewContent() {
   const stats = data.stats;
 
   const kpiData = [
-    { 
-      name: "Jobs Posted", 
-      value: stats.jobsPosted, 
-      icon: Briefcase, 
-      color: "indigo" 
+    {
+      name: "Jobs Posted",
+      value: stats.jobsPosted,
+      icon: Briefcase,
+      color: "indigo",
     },
-    { 
-      name: "Applications", 
-      value: stats.applicationsReceived, 
-      icon: Users, 
-      color: "teal" 
+    {
+      name: "Applications",
+      value: stats.applicationsReceived,
+      icon: Users,
+      color: "teal",
     },
-    { 
-      name: "Total Interviews", 
-      value: stats.totalInterviewsScheduled, 
-      icon: Calendar, 
-      color: "cyan" 
+    {
+      name: "Total Interviews",
+      value: stats.totalInterviewsScheduled,
+      icon: Calendar,
+      color: "cyan",
     },
-    { 
-      name: "Pending Round 2", 
-      value: stats.round2PendingInterviews, 
-      icon: Clock, 
-      color: "violet" 
+    {
+      name: "Pending Round 2",
+      value: stats.round2PendingInterviews,
+      icon: Clock,
+      color: "violet",
     },
   ];
 
@@ -141,19 +155,23 @@ export default function OverviewContent() {
   const trendData = [
     { month: "Feb", applications: 18, interviews: 7 },
     { month: "Mar", applications: 34, interviews: 19 },
-    { month: "Apr", applications: stats.applicationsReceived, interviews: stats.totalInterviewsScheduled },
+    {
+      month: "Apr",
+      applications: stats.applicationsReceived,
+      interviews: stats.totalInterviewsScheduled,
+    },
   ];
 
   const interviewStatusData = [
-    { 
-      name: "Scheduled", 
-      value: stats.totalInterviewsScheduled - stats.round2PendingInterviews, 
-      fill: "#6366f1" 
+    {
+      name: "Scheduled",
+      value: stats.totalInterviewsScheduled - stats.round2PendingInterviews,
+      fill: "#6366f1",
     },
-    { 
-      name: "Pending Round 2", 
-      value: stats.round2PendingInterviews, 
-      fill: "#14b8a6" 
+    {
+      name: "Pending Round 2",
+      value: stats.round2PendingInterviews,
+      fill: "#14b8a6",
     },
   ];
 
@@ -173,11 +191,14 @@ export default function OverviewContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpiData.map((item, idx) => {
           const Icon = item.icon;
-          const colorClass = 
-            item.color === "indigo" ? "text-indigo-600 bg-indigo-100" :
-            item.color === "teal" ? "text-teal-600 bg-teal-100" :
-            item.color === "cyan" ? "text-cyan-600 bg-cyan-100" : 
-            "text-violet-600 bg-violet-100";
+          const colorClass =
+            item.color === "indigo"
+              ? "text-indigo-600 bg-indigo-100"
+              : item.color === "teal"
+                ? "text-teal-600 bg-teal-100"
+                : item.color === "cyan"
+                  ? "text-cyan-600 bg-cyan-100"
+                  : "text-violet-600 bg-violet-100";
 
           return (
             <div
@@ -186,12 +207,16 @@ export default function OverviewContent() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">{item.name}</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    {item.name}
+                  </p>
                   <p className="text-5xl font-semibold text-gray-900 mt-4 tracking-tighter">
                     {item.value}
                   </p>
                 </div>
-                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${colorClass} group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`h-14 w-14 rounded-2xl flex items-center justify-center ${colorClass} group-hover:scale-110 transition-transform`}
+                >
                   <Icon className="h-7 w-7" />
                 </div>
               </div>
@@ -209,7 +234,9 @@ export default function OverviewContent() {
         {/* Hiring Trend - Line Chart */}
         <div className="xl:col-span-8 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-2xl font-semibold text-gray-900">Hiring Activity Trend</h3>
+            <h3 className="text-2xl font-semibold text-gray-900">
+              Hiring Activity Trend
+            </h3>
             <div className="text-sm text-gray-500">Last 3 months</div>
           </div>
           <ResponsiveContainer width="100%" height={360}>
@@ -241,8 +268,10 @@ export default function OverviewContent() {
 
         {/* Interview Breakdown - Pie Chart */}
         <div className="xl:col-span-4 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-8">Interview Status</h3>
-          
+          <h3 className="text-2xl font-semibold text-gray-900 mb-8">
+            Interview Status
+          </h3>
+
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -265,13 +294,17 @@ export default function OverviewContent() {
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mt-6">
             {interviewStatusData.map((item, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div 
-                  className="w-4 h-4 rounded-lg" 
+                <div
+                  className="w-4 h-4 rounded-lg"
                   style={{ backgroundColor: item.fill }}
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-700">{item.name}</p>
-                  <p className="text-xl font-semibold text-gray-900">{item.value}</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {item.name}
+                  </p>
+                  <p className="text-xl font-semibold text-gray-900">
+                    {item.value}
+                  </p>
                 </div>
               </div>
             ))}
@@ -289,18 +322,23 @@ export default function OverviewContent() {
               Recent Jobs
             </h3>
             <Link href="/employer/profile?tab=my-jobs" passHref>
-<span className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-sm font-medium transition">
-  View all jobs
-  <ArrowRight size={16} />
-</span>
+              <span className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer text-sm font-medium transition">
+                View all jobs
+                <ArrowRight size={16} />
+              </span>
             </Link>
           </div>
 
           <div className="space-y-6">
             {data.recentJobs.map((job) => (
-              <div key={job.id} className="flex justify-between items-center border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+              <div
+                key={job.id}
+                className="flex justify-between items-center border-b border-gray-100 pb-6 last:border-0 last:pb-0"
+              >
                 <div>
-                  <p className="font-semibold text-gray-900 text-lg">{job.jobTitle}</p>
+                  <p className="font-semibold text-gray-900 text-lg">
+                    {job.jobTitle}
+                  </p>
                   <p className="text-sm text-gray-500 mt-1">
                     Posted {format(new Date(job.createdAt), "dd MMMM yyyy")}
                   </p>
@@ -335,14 +373,19 @@ export default function OverviewContent() {
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
                 {data.recentInterviews.map((interview) => (
-                  <tr key={interview.id} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={interview.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
                     <td className="py-5 font-medium text-gray-900">
                       {interview.application?.candidate?.userName}
                     </td>
                     <td className="py-5 text-gray-600">
                       {interview.application?.job?.jobTitle}
                     </td>
-                    <td className="py-5 font-medium">Round {interview.round}</td>
+                    <td className="py-5 font-medium">
+                      Round {interview.round}
+                    </td>
                     <td className="py-5 text-gray-500">
                       {format(new Date(interview.scheduledAt), "dd MMM, HH:mm")}
                     </td>
@@ -374,11 +417,13 @@ export default function OverviewContent() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {data.tips.map((tip, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="bg-white rounded-2xl p-7 shadow-sm flex gap-5 hover:shadow-md transition-all"
             >
-              <div className="text-3xl text-indigo-500 mt-1"><ArrowRight size={18}/></div>
+              <div className="text-3xl text-indigo-500 mt-1">
+                <ArrowRight size={18} />
+              </div>
               <p className="text-gray-700 leading-relaxed">{tip}</p>
             </div>
           ))}

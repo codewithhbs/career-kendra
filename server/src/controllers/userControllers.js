@@ -297,7 +297,7 @@ exports.verifyOtpController = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      domain: ".careerkendra.com",
+        path: "/",
     });
     return res.json({
       success: true,
@@ -435,7 +435,7 @@ exports.login = async (req, res) => {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-        domain: ".careerkendra.com",
+          path: "/",
       });
       // Save session in redis
       try {
@@ -534,7 +534,7 @@ exports.verifyLoginOtp = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      domain: ".careerkendra.com",
+        path: "/",
     });
     // Save session in redis
     try {
