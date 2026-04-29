@@ -13,7 +13,7 @@ const MENU_ITEMS = [
   { label: "About", href: "/about" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
-  { label: "Jobs", href: "/jobs", highlight: true },
+  { label: "Find Jobs", href: "/jobs", highlight: true },
 ] as const;
 
 export default function Header() {
