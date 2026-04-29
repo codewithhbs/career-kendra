@@ -15,7 +15,7 @@ const inter = Inter({
 async function getSettings() {
   try {
     const res = await fetch(
-      "https://api.careerkendra.com/api/v1/ad/get-web-settings",
+      "http://localhost:9012/api/v1/ad/get-web-settings",
       { cache: "no-store" }
     );
 

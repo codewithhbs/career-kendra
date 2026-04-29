@@ -4,13 +4,11 @@ module.exports = async (req, res, next) => {
   const debug = process.env.AUTH_DEBUG === "false";
 
   try {
-    if (debug) {
       console.log("\n🔐 ===== AUTH DEBUG START =====");
       console.log("👉 URL:", req.originalUrl);
       console.log("👉 Method:", req.method);
       console.log("👉 Headers:", req.headers);
       console.log("👉 Cookies:", req.cookies);
-    }
 
     let token = null;
     let source = null;
