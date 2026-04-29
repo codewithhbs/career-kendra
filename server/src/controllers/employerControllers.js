@@ -101,7 +101,7 @@ exports.registerEmployer = async (req, res) => {
       const key = `otp:employer:${user?.id}`;
       await redis.set(key, otp, "EX", 600);
       console.log("Otp save in redis")
-    } catch ( vvc) {
+    } catch (vvc) {
       console.log("Otp Not save in redis")
 
     }
@@ -237,7 +237,12 @@ exports.verifyOtpController = async (req, res) => {
     };
 
     const token = sign(payload);
-
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      domain: ".careerkendra.com",
+    });
     return res.json({
       success: true,
       message: "Account verified successfully 🎉",
@@ -308,7 +313,7 @@ exports.login = async (req, res) => {
       const otpExpireTime = new Date(Date.now() + 10 * 60 * 1000);
 
 
-      console.log("Otp For Login",otp)
+      console.log("Otp For Login", otp)
       await LoginOtp.create({
         userId: user.id,
         contactNumber: cleanPhone,
@@ -328,7 +333,7 @@ exports.login = async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        otpsend:true,
+        otpsend: true,
         message: "OTP sent successfully to your contact number.",
         data: {
           userId: user.id,
@@ -368,7 +373,12 @@ exports.login = async (req, res) => {
       };
 
       const token = sign(payload);
-
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        domain: ".careerkendra.com",
+      });
       // Save session in redis
       try {
         await redis.set(`session:employer:${user.id}`, token, "EX", 60 * 60 * 24);
@@ -447,7 +457,7 @@ exports.verifyLoginOtp = async (req, res) => {
       { where: { id: latestOtp.id } }
     );
 
-  
+
     const payload = {
       id: user.id,
       employerName: user.employerName,
@@ -457,7 +467,13 @@ exports.verifyLoginOtp = async (req, res) => {
     };
 
     const token = sign(payload);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      domain: ".careerkendra.com",
 
+    });
     // Save session in redis
     try {
       await redis.set(`session:employer:${user.id}`, token, "EX", 60 * 60 * 24);
@@ -465,7 +481,7 @@ exports.verifyLoginOtp = async (req, res) => {
       console.log("Redis session not saved (otp login):", err.message);
     }
 
-    console.log("Login Success",payload,token)
+    console.log("Login Success", payload, token)
     return res.json({
       success: true,
       message: "Login successful 🎉",
@@ -516,7 +532,7 @@ exports.getEmployerProfile = async (req, res) => {
     }
 
     const findProfile = await Employer.findOne({
-      where: { id:userId },   // ✅ correct
+      where: { id: userId },   // ✅ correct
     });
 
     if (!findProfile) {

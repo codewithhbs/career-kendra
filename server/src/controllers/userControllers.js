@@ -293,7 +293,12 @@ exports.verifyOtpController = async (req, res) => {
     };
 
     const token = sign(payload);
-
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      domain: ".careerkendra.com",
+    });
     return res.json({
       success: true,
       message: "Account verified successfully 🎉",
@@ -426,7 +431,12 @@ exports.login = async (req, res) => {
       };
 
       const token = sign(payload);
-
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        domain: ".careerkendra.com",
+      });
       // Save session in redis
       try {
         await redis.set(`session:user:${user.id}`, token, "EX", 60 * 60 * 24);
@@ -520,7 +530,12 @@ exports.verifyLoginOtp = async (req, res) => {
     };
 
     const token = sign(payload);
-
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      domain: ".careerkendra.com",
+    });
     // Save session in redis
     try {
       await redis.set(`session:user:${user.id}`, token, "EX", 60 * 60 * 24);

@@ -4,11 +4,11 @@ module.exports = async (req, res, next) => {
   const debug = process.env.AUTH_DEBUG === "false";
 
   try {
-      console.log("\n🔐 ===== AUTH DEBUG START =====");
-      console.log("👉 URL:", req.originalUrl);
-      console.log("👉 Method:", req.method);
-      console.log("👉 Headers:", req.headers);
-      console.log("👉 Cookies:", req.cookies);
+    console.log("\n🔐 ===== AUTH DEBUG START =====");
+    console.log("👉 URL:", req.originalUrl);
+    console.log("👉 Method:", req.method);
+    console.log("👉 Headers:", req.headers);
+    console.log("👉 Cookies:", req.cookies);
 
     let token = null;
     let source = null;
@@ -38,6 +38,10 @@ module.exports = async (req, res, next) => {
     if (!token && req.cookies?.apto_token) {
       token = req.cookies.apto_token;
       source = "cookie (apto_token)";
+    }
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+      source = "cookie (token)";
     }
 
     // ❌ 3. No token anywhere
