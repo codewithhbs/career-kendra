@@ -59,12 +59,12 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             holdReason: {
-                type: DataTypes.TEXT(2000),
+                type: DataTypes.TEXT(200),
                 allowNull: true,
             },
 
             cancelReason: {
-                type: DataTypes.TEXT(2000),
+                type: DataTypes.TEXT(200),
                 allowNull: true,
             },
 

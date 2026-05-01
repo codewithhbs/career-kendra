@@ -48,16 +48,33 @@ const ViewApplications = () => {
   const fileInputRef = useRef(null);
 
   const parsedAnswers = (() => {
-    try {
-      if (!application?.screeningAnswers) return null;
+  try {
+    if (!application?.screeningAnswers) return [];
 
-      return typeof application.screeningAnswers === "string"
+    const raw =
+      typeof application.screeningAnswers === "string"
         ? JSON.parse(application.screeningAnswers)
         : application.screeningAnswers;
-    } catch {
-      return null;
+
+    // Already array hai
+    if (Array.isArray(raw)) return raw;
+
+    // { q_xxx: "{...}" } format — values bhi JSON strings ho sakti hain
+    if (typeof raw === "object" && raw !== null) {
+      return Object.values(raw).map((val) => {
+        try {
+          return typeof val === "string" ? JSON.parse(val) : val;
+        } catch {
+          return val;
+        }
+      });
     }
-  })();
+
+    return [];
+  } catch {
+    return [];
+  }
+})();
 
   const joditConfig = {
     readonly: false,
@@ -394,29 +411,56 @@ const ViewApplications = () => {
               )}
             </div>
 
-            {parsedAnswers && Object.keys(parsedAnswers).length > 0 && (
-              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                  Screening Answers
-                </h2>
-
-                <div className="space-y-4">
-                  {Object.entries(parsedAnswers).map(
-                    ([question, answer], index) => (
-                      <div
-                        key={index}
-                        className="border rounded-xl p-4 bg-gray-50"
-                      >
-                        <p className="font-medium text-gray-800">{question}</p>
-                        <p className="text-amber-600 font-semibold mt-1">
-                          {answer}
-                        </p>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
+            {parsedAnswers.length > 0 && (
+  <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+    <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+      Screening Answers
+    </h2>
+    <div className="space-y-4">
+      {parsedAnswers.map((item, index) => (
+        <div key={index} className="border rounded-xl p-4 bg-gray-50">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <p className="font-medium text-gray-800">
+              Q{index + 1}. {item.question}
+            </p>
+            {item.type && (
+              <span className="shrink-0 text-xs bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full capitalize">
+                {item.type}
+              </span>
             )}
+          </div>
+
+          {/* Multiple choice options */}
+          {Array.isArray(item.options) && item.options.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {item.options.map((opt, oIdx) => (
+                <span
+                  key={oIdx}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                    opt === item.answer
+                      ? "bg-teal-600 text-white border-teal-600"
+                      : "bg-white text-gray-500 border-gray-200"
+                  }`}
+                >
+                  {opt === item.answer && "✓ "}
+                  {opt}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Answer */}
+          <p className="text-amber-600 font-semibold text-sm">
+            Answer:{" "}
+            {typeof item.answer === "boolean"
+              ? item.answer ? "Yes" : "No"
+              : String(item.answer ?? "—")}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
             {/* Uploaded Documents Section - NEW */}
             {/* <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
