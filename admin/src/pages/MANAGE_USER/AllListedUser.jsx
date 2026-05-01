@@ -23,32 +23,38 @@ const AllListedUsers = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const [filters, setFilters] = useState({
-    search: "",
-    limit: 10,
-    page: 1,
-    accountStatus: "",
-    minExperience: "",
-    maxExperience: "",
-    minSalary: "",
-    maxSalary: "",
-    location: "",
-  });
+  search: "",
+  limit: 10,
+  page: 1,
+  accountStatus: "",
+  minExperience: "",
+  maxExperience: "",
+  minSalary: "",
+  maxSalary: "",
+  location: "",
+  area: "",          // ADD
+  isDeleted: "",     // ADD - deleted users bhi filter kar sako
+  specialAccess: "", // ADD
+});
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
 
       const params = {
-        search: filters.search || undefined,
-        limit: filters.limit,
-        page: filters.page,
-        accountStatus: filters.accountStatus || undefined,
-        minExperience: filters.minExperience || undefined,
-        maxExperience: filters.maxExperience || undefined,
-        minSalary: filters.minSalary || undefined,
-        maxSalary: filters.maxSalary || undefined,
-        location: filters.location || undefined,
-      };
+  search: filters.search || undefined,
+  limit: filters.limit,
+  page: filters.page,
+  accountStatus: filters.accountStatus || undefined,
+  minExperience: filters.minExperience || undefined,
+  maxExperience: filters.maxExperience || undefined,
+  minSalary: filters.minSalary || undefined,
+  maxSalary: filters.maxSalary || undefined,
+  location: filters.location || undefined,
+  area: filters.area || undefined,           // ADD
+  isDeleted: filters.isDeleted || undefined, // ADD
+  specialAccess: filters.specialAccess || undefined, // ADD
+};
 
       const res = await api.get("/ad/listed-user", { params });
 
@@ -90,26 +96,20 @@ const AllListedUsers = () => {
   };
 
   const clearFilters = () => {
-    setFilters({
-      search: "",
-      limit: 10,
-      page: 1,
-      accountStatus: "",
-      minExperience: "",
-      maxExperience: "",
-      minSalary: "",
-      maxSalary: "",
-      location: "",
-    });
-  };
+  setFilters({
+    search: "", limit: 10, page: 1,
+    accountStatus: "", minExperience: "", maxExperience: "",
+    minSalary: "", maxSalary: "", location: "",
+    area: "", isDeleted: "", specialAccess: "",
+  });
+};
 
   const activeFiltersCount = [
-    filters.minExperience,
-    filters.maxExperience,
-    filters.minSalary,
-    filters.maxSalary,
-    filters.location,
-  ].filter(Boolean).length;
+  filters.minExperience, filters.maxExperience,
+  filters.minSalary, filters.maxSalary,
+  filters.location, filters.area,
+  filters.isDeleted, filters.specialAccess,
+].filter(Boolean).length;
 
   const confirmToggleStatus = (user) => {
     if (user.isDeleted) return; // shouldn't happen but safety
@@ -363,6 +363,49 @@ const AllListedUsers = () => {
               </select>
             </div>
 
+            {/* Area */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Area / Locality</label>
+  <input
+    type="text"
+    name="area"
+    value={filters.area}
+    onChange={handleFilterChange}
+    placeholder="e.g. Sector 15, Andheri..."
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+  />
+</div>
+
+{/* Special Access */}
+{/* <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Special Access</label>
+  <select
+    name="specialAccess"
+    value={filters.specialAccess}
+    onChange={handleFilterChange}
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="">All</option>
+    <option value="true">Granted</option>
+    <option value="false">Not Granted</option>
+  </select>
+</div> */}
+
+{/* Show Deleted */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Account State</label>
+  <select
+    name="isDeleted"
+    value={filters.isDeleted}
+    onChange={handleFilterChange}
+    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="">All Users</option>
+    <option value="false">Active Only</option>
+    <option value="true">Deleted Only</option>
+  </select>
+</div>
+
             {/* Experience Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -460,6 +503,7 @@ const AllListedUsers = () => {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Skills
                     </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
@@ -535,6 +579,16 @@ const AllListedUsers = () => {
                             <span className="text-gray-400">...</span>
                           )}
                         </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+  {user.location
+    ? <div>
+        <div>{user.location}</div>
+        {user.area && <div className="text-xs text-gray-400">{user.area}</div>}
+      </div>
+    : "—"
+  }
+</td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">

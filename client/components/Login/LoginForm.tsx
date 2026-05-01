@@ -64,7 +64,7 @@ const LoginForm = () => {
 
       if (loginVia === "password") {
         toast.success("Login successful 🎉");
-        router.push("/");
+        redirectAfterLogin();
       }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Login failed");
@@ -89,7 +89,7 @@ const LoginForm = () => {
       });
 
       toast.success("Login successful 🎉");
-     redirectAfterLogin()
+      redirectAfterLogin();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Invalid OTP");
     }
@@ -104,9 +104,10 @@ const LoginForm = () => {
   };
   React.useEffect(() => {
     if (token) {
-      router.replace("/");
+      const destination = returnTo && returnTo.startsWith("/") ? returnTo : "/";
+      router.replace(destination);
     }
-  }, [token, router]);
+  }, [token, returnTo, router]);
   return (
     <div className="min-h-dvh bg-white flex flex-col lg:flex-row">
       {/* Left Panel (unchanged UI) */}
@@ -265,7 +266,10 @@ const LoginForm = () => {
 
           <p className="mt-6 text-sm text-center">
             Don't have an account?{" "}
-            <Link href="/auth/register" className="text-amber-700">
+            <Link
+              href={`/auth/register${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
+              className="text-amber-700"
+            >
               Sign up
             </Link>
           </p>

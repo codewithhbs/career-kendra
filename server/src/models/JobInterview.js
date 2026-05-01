@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             interviewType: {
-                type: DataTypes.ENUM("online", "offline"),
+                type: DataTypes.ENUM("online", "offline", "phone"),
                 allowNull: false,
             },
 
@@ -52,9 +52,20 @@ module.exports = (sequelize, DataTypes) => {
                     "in_progress",
                     "cancelled",
                     "rescheduled",
+                    "hold",
                     "no_show"
                 ),
                 defaultValue: "scheduled",
+            },
+
+            holdReason: {
+                type: DataTypes.TEXT(2000),
+                allowNull: true,
+            },
+
+            cancelReason: {
+                type: DataTypes.TEXT(2000),
+                allowNull: true,
             },
 
             feedback: {

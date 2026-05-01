@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../utils/api";
-import {
-  Search,
-  Eye,
-  Star,
-  UserCog
-} from "lucide-react";
+import { Search, Trash2, Star, UserCog } from "lucide-react";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 
@@ -154,12 +149,40 @@ const AllEmployerList = () => {
     });
   };
 
+  const confirmDeleteEmployer = (user) => {
+    Swal.fire({
+      title: "Delete Employer?",
+      text: `"${user.employerName}" ko permanently delete karna chahte ho?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Haan, delete karo!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/auth-employer/delete/${user.id}`);
+          Swal.fire({ icon: "success", title: "Deleted!", timer: 2000 });
+          fetchUsers();
+        } catch (err) {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: err.response?.data?.message || "Failed to delete",
+          });
+        }
+      }
+    });
+  };
+
   return (
     <div className="p-6 max-w-375 mx-auto">
       {/* Header + Filters */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employer Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Employer Management
+          </h1>
           <p className="mt-1 text-gray-600">
             Manage all registered employers, including deleted ones
           </p>
@@ -289,14 +312,8 @@ const AllEmployerList = () => {
                         {/* Actions */}
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex items-center justify-end gap-2">
-                            {/* View */}
-                            <Link to={`/view-employer/${user.id}`}>
-                              <button className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition">
-                                <Eye size={18} />
-                              </button>
-                            </Link>
+                            {/* Eye HATA DIYA */}
 
-                            {/* ⭐ Special Access (IMPORTANT - kept) */}
                             <button
                               onClick={() => confirmToggleSpecialAccess(user)}
                               title={
@@ -318,10 +335,13 @@ const AllEmployerList = () => {
                               />
                             </button>
 
-                            {/* NEW: Toggle Role Button */}
                             <button
                               onClick={() => confirmToggleRole(user)}
-                              title={isAdmin ? "Remove Admin Role" : "Make Employer Admin"}
+                              title={
+                                isAdmin
+                                  ? "Remove Admin Role"
+                                  : "Make Employer Admin"
+                              }
                               className={`p-2 rounded-lg transition ${
                                 isAdmin
                                   ? "text-violet-600 hover:text-violet-800 hover:bg-violet-50"
@@ -329,6 +349,15 @@ const AllEmployerList = () => {
                               }`}
                             >
                               <UserCog size={18} />
+                            </button>
+
+                            {/* DELETE BUTTON */}
+                            <button
+                              onClick={() => confirmDeleteEmployer(user)}
+                              title="Delete Employer"
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                            >
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </td>

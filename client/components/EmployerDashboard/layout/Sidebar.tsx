@@ -39,7 +39,7 @@ export function AdminSidebar({
   const { company, user } = useEmployerAuthStore();
 
   if (!company) return null;
-  console.log("company",user)
+  // console.log("company",user)
 
   const employerRole = user?.role || "employer";
 

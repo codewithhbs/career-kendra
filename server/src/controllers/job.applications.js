@@ -509,7 +509,8 @@ exports.ApplyJobByAdmin = async (req, res) => {
     emailAddress,
     totalExperience,
     lastSalary,
-    location
+    location,
+    area
   } = req.body;
 
   const file = req.file;           // Multer se aaya file
@@ -569,6 +570,7 @@ exports.ApplyJobByAdmin = async (req, res) => {
         experience: totalExperience ? parseInt(totalExperience) : null,
         lastSalary: lastSalary ? parseFloat(lastSalary) : null,
         location: location ? location.trim() : null,
+        area: area ? area.trim() : null,
       });
 
       // Create ProfileDetails
@@ -605,6 +607,7 @@ exports.ApplyJobByAdmin = async (req, res) => {
         experience: totalExperience !== undefined ? parseInt(totalExperience) : user.experience,
         lastSalary: lastSalary !== undefined ? parseFloat(lastSalary) : user.lastSalary,
         location: location !== undefined ? location.trim() : user.location,
+        area: area !== undefined ? area.trim() : user.area,
       });
 
       // Agar ProfileDetails nahi hai to bana do
@@ -746,12 +749,10 @@ exports.getAllApplications = async (req, res) => {
     const { id: jobId } = req.params;
 
     const {
-      page = 1,
-      limit = 10,
-      status,
-      search,
-      sortBy = "createdAt",
-      order = "DESC",
+      page = 1, limit = 10, status, search,
+      sortBy = "createdAt", order = "DESC",
+      dateFrom, dateTo, interviewStatus, interviewResult,
+      candidateLocation, candidateArea, // ADD
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -762,21 +763,38 @@ exports.getAllApplications = async (req, res) => {
       whereCondition.status = status;
     }
 
+    // Date range filter (appliedAt pe)
+    if (dateFrom || dateTo) {
+      whereCondition.appliedAt = {};
+      if (dateFrom) whereCondition.appliedAt[Op.gte] = new Date(dateFrom);
+      if (dateTo) whereCondition.appliedAt[Op.lte] = new Date(dateTo + "T23:59:59.999Z");
+    }
+
+    // Interview filter ke liye where condition
+    const interviewWhere = {};
+    if (interviewStatus) interviewWhere.status = interviewStatus;
+    if (interviewResult) interviewWhere.result = interviewResult;
+    const hasInterviewFilter = Object.keys(interviewWhere).length > 0;
+
+    // User include mein where build karo:
+    const candidateWhere = {};
+    if (search) {
+      candidateWhere[Op.or] = [
+        { userName: { [Op.like]: `%${search}%` } },
+        { emailAddress: { [Op.like]: `%${search}%` } },
+        { contactNumber: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    if (candidateLocation) candidateWhere.location = { [Op.like]: `%${candidateLocation}%` };
+    if (candidateArea) candidateWhere.area = { [Op.like]: `%${candidateArea}%` };
+
     const include = [
       {
         model: User,
         as: "candidate",
-        attributes: ["id", "userName", "emailAddress", "contactNumber"],
-        where: search
-          ? {
-            [Op.or]: [
-              { userName: { [Op.like]: `%${search}%` } },
-              { emailAddress: { [Op.like]: `%${search}%` } },
-              { contactNumber: { [Op.like]: `%${search}%` } },
-            ],
-          }
-          : undefined,
-        required: !!search,
+        attributes: ["id", "userName", "emailAddress", "contactNumber", "location", "area"], // location, area ADD
+        where: Object.keys(candidateWhere).length > 0 ? candidateWhere : undefined,
+        required: !!(search || candidateLocation || candidateArea), // koi bhi ho to INNER JOIN
       },
       {
         model: User,
@@ -793,8 +811,6 @@ exports.getAllApplications = async (req, res) => {
         as: "decidedByEmployer",
         attributes: ["id", "employerName"],
       },
-
-      // 👇 ADD THIS
       {
         model: JobInterview,
         as: "interviews",
@@ -810,8 +826,12 @@ exports.getAllApplications = async (req, res) => {
           "status",
           "result",
           "completedAt",
+          "holdReason",
+          "cancelReason",
+          "rescheduleReason",
         ],
-        required: false, // important (LEFT JOIN)
+        where: hasInterviewFilter ? interviewWhere : undefined,
+        required: hasInterviewFilter, // filter laga ho to INNER JOIN, warna LEFT JOIN
         order: [["round", "ASC"]],
       },
     ];
@@ -822,6 +842,7 @@ exports.getAllApplications = async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset),
       order: [[sortBy, order]],
+      distinct: true, // interviews join se count duplicate na ho
     });
 
     return res.status(200).json({
@@ -906,6 +927,9 @@ exports.getAllApplicationsForEmpoyer = async (req, res) => {
           "location",
           "meetingPerson",
           "status",
+          "holdReason",
+          "rescheduleReason",
+          "cancelReason",
           "result",
           "completedAt",
         ],
@@ -1000,6 +1024,9 @@ exports.getApplicationById = async (req, res) => {
             "meetingPerson",
             "status",
             "result",
+            "rescheduleReason",
+            "holdReason",
+            "cancelReason",
             "completedAt",
           ],
           required: false, // important (LEFT JOIN)
@@ -1426,7 +1453,8 @@ exports.updateInterview = async (req, res) => {
       feedback,
       result,
       cancelReason,
-      rescheduleReason
+      rescheduleReason,
+      holdReason
     } = req.body;
 
     const interview = await JobInterview.findByPk(id);
@@ -1458,7 +1486,8 @@ exports.updateInterview = async (req, res) => {
         return sendError(res, 400, "Cancel reason is required");
       }
 
-      updateData.feedback = cancelReason;
+
+      updateData.cancelReason = cancelReason;
     }
 
     /* ================= RESCHEDULE ================= */
@@ -1481,6 +1510,12 @@ exports.updateInterview = async (req, res) => {
 
     if (status === "completed") {
       updateData.completedAt = new Date();
+    }
+
+    /* ================= HOLD ================= */
+
+    if (status === "hold") {
+      updateData.holdReason = holdReason;
     }
 
     /* ================= UPDATE INTERVIEW ================= */
@@ -2338,6 +2373,25 @@ exports.myInterViews = async (req, res) => {
   }
 };
 
+exports.updateLeaveDate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { leavingDate } = req.body;
+    const application = await JobApplication.findByPk(id);
+
+    if (!application) {
+      return sendError(res, 404, "Application not found");
+    }
+    await application.update({
+      leavingDate,
+    });
+
+    return sendSuccess(res, application, "Leave date updated successfully");
+  } catch (error) {
+    console.log("Internal server error", error);
+    return sendError(res, 500, "Failed to update leave date");
+  }
+}
 
 exports.uploadCoverLetter = async (req, res) => {
   try {
@@ -2469,7 +2523,7 @@ exports.uploadCoverLetter = async (req, res) => {
 
 exports.getEmployerDashboard = async (req, res) => {
 
-  
+
   try {
 
     const employerId = req.user?.id;

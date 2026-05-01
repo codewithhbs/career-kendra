@@ -718,3 +718,74 @@ exports.toggleEmployerRole = async (req, res) => {
     });
   }
 };
+
+exports.deleteEmployer = async (req, res) => {
+  try {
+    const { id } = req.params; // employerId → id
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "id is required" });
+    }
+
+    const employer = await Employer.findOne({ where: { id } });
+
+    if (!employer) {
+      return res.status(404).json({ success: false, message: "Employer not found" });
+    }
+
+    await Employer.destroy({ where: { id } });
+
+    return res.status(200).json({ success: true, message: "Employer deleted successfully" });
+
+  } catch (error) {
+    console.log("Internal server error", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.updateBasicDetailsOfEmployer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { employerName, employerEmail, employerContactNumber } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: "id is required" });
+    }
+
+    const employer = await Employer.findOne({ where: { id } });
+    if (!employer) {
+      return res.status(404).json({ success: false, message: "Employer not found" });
+    }
+
+    // Email duplicate check
+    if (employerEmail && employerEmail !== employer.employerEmail) {
+      const emailExists = await Employer.findOne({
+        where: { employerEmail, id: { [Op.ne]: id } },
+      });
+      if (emailExists) {
+        return res.status(409).json({ success: false, message: "Email already in use by another employer" });
+      }
+    }
+
+    // Contact number duplicate check
+    if (employerContactNumber && employerContactNumber !== employer.employerContactNumber) {
+      const contactExists = await Employer.findOne({
+        where: { employerContactNumber, id: { [Op.ne]: id } },
+      });
+      if (contactExists) {
+        return res.status(409).json({ success: false, message: "Contact number already in use by another employer" });
+      }
+    }
+
+    await Employer.update(
+      { employerName, employerEmail, employerContactNumber },
+      { where: { id } }
+    );
+
+    return res.status(200).json({ success: true, message: "Employer details updated successfully" });
+
+  } catch (error) {
+    console.log("Internal server error", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

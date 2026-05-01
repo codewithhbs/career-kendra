@@ -17,6 +17,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   FileText,
+  Users,
+  LinkIcon,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 
@@ -301,7 +303,7 @@ const ViewApply = () => {
               </div>
               {/* Upload Offer Letter Button */}
 
-              {isSelected && (
+              {isSelected && !application?.coverLetter ? (
                 <div className="mt-8">
                   <button
                     onClick={() => fileInputRef.current.click()}
@@ -322,7 +324,7 @@ const ViewApply = () => {
                       const formData = new FormData();
                       formData.append("offer-letter", file);
 
-                      api
+                      axios
                         .post(
                           `/applications/upload-cover-letter/${application?.id}`,
                           formData,
@@ -354,7 +356,19 @@ const ViewApply = () => {
                     }}
                   />
                 </div>
-              )}
+              ) : isSelected && application?.coverLetter ? (
+                <div className="mt-8">
+                  <p className="text-gray-600 mb-4">Offer Letter:</p>
+                  <a
+                    href={`https://api.careerkendra.com${application.coverLetter}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    View Offer Letter
+                  </a>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -400,107 +414,105 @@ const ViewApply = () => {
             )}
 
             {/* Uploaded Documents Section - NEW */}
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
-                  <FileText className="w-7 h-7" />
-                  Uploaded Documents
-                </h2>
-                <span className="text-sm text-gray-500">
-                  {documents.length} documents
-                </span>
-              </div>
-
-              {documents.length === 0 ? (
-                <p className="text-center py-12 text-gray-500">
-                  No documents uploaded yet.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {documents.map((doc) => {
-                    const isPending = doc.status === "pending";
-                    const isApproved = doc.status === "approved";
-                    const isRejected = doc.status === "rejected";
-
-                    return (
-                      <div
-                        key={doc.type}
-                        className="border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition-all"
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <p className="font-medium text-gray-900 capitalize">
-                              {doc.type.replace(/_/g, " ")}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1 truncate">
-                              {doc.fileName}
-                            </p>
-                          </div>
-
-                          <div
-                            className={`px-4 py-1 text-xs font-medium rounded-full ${
-                              isApproved
-                                ? "bg-emerald-100 text-emerald-700"
-                                : isRejected
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {doc.status.toUpperCase()}
-                          </div>
-                        </div>
-
-                        {isRejected && doc.rejectionReason && (
-                          <p className="text-red-600 text-sm bg-red-50 p-3 rounded-xl mb-4">
-                            <strong>Reason:</strong> {doc.rejectionReason}
-                          </p>
-                        )}
-
-                        <div className="flex gap-3">
-                          {/* View PDF Button */}
-                          <a
-                            href={`https://api.careerkendra.com${doc.filePath}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white py-3 rounded-xl text-sm font-medium transition"
-                          >
-                            <Eye size={18} /> View PDF
-                          </a>
-
-                          {/* Action Buttons */}
-                          {isPending && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleVerifyDocument(
-                                    application?.applicationDocuments?.id,
-                                    doc.type,
-                                    "approved",
-                                  )
-                                }
-                                disabled={
-                                  verifyingDocId === (doc.id || doc.type)
-                                }
-                                className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-3 rounded-xl text-sm font-medium transition"
-                              >
-                                <ThumbsUp size={18} /> Approve
-                              </button>
-
-                              <button
-                                onClick={() => openRejectModal(doc)}
-                                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-sm font-medium transition"
-                              >
-                                <ThumbsDown size={18} /> Reject
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+            {/* <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-3">
+                    <FileText className="w-7 h-7" />
+                    Uploaded Documents
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    {documents.length} documents
+                  </span>
                 </div>
-              )}
-            </div>
+  
+                {documents.length === 0 ? (
+                  <p className="text-center py-12 text-gray-500">
+                    No documents uploaded yet.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {documents.map((doc) => {
+                      const isPending = doc.status === "pending";
+                      const isApproved = doc.status === "approved";
+                      const isRejected = doc.status === "rejected";
+  
+                      return (
+                        <div
+                          key={doc.type}
+                          className="border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition-all"
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <p className="font-medium text-gray-900 capitalize">
+                                {doc.type.replace(/_/g, " ")}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-1 truncate">
+                                {doc.fileName}
+                              </p>
+                            </div>
+  
+                            <div
+                              className={`px-4 py-1 text-xs font-medium rounded-full ${
+                                isApproved
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : isRejected
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                              }`}
+                            >
+                              {doc.status.toUpperCase()}
+                            </div>
+                          </div>
+  
+                          {isRejected && doc.rejectionReason && (
+                            <p className="text-red-600 text-sm bg-red-50 p-3 rounded-xl mb-4">
+                              <strong>Reason:</strong> {doc.rejectionReason}
+                            </p>
+                          )}
+  
+                          <div className="flex gap-3">
+                            <a
+                              href={`https://api.careerkendra.com${doc.filePath}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white py-3 rounded-xl text-sm font-medium transition"
+                            >
+                              <Eye size={18} /> View PDF
+                            </a>
+  
+                            {isPending && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleVerifyDocument(
+                                      application?.applicationDocuments?.id,
+                                      doc.type,
+                                      "approved",
+                                    )
+                                  }
+                                  disabled={
+                                    verifyingDocId === (doc.id || doc.type)
+                                  }
+                                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-3 rounded-xl text-sm font-medium transition"
+                                >
+                                  <ThumbsUp size={18} /> Approve
+                                </button>
+  
+                                <button
+                                  onClick={() => openRejectModal(doc)}
+                                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-sm font-medium transition"
+                                >
+                                  <ThumbsDown size={18} /> Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div> */}
 
             {/* Final Offer Details */}
             {isSelected && (
@@ -538,6 +550,25 @@ const ViewApply = () => {
                         : "Not Specified"}
                     </p>
                   </div>
+                  {/* {console.log("application",application)} */}
+                  {application.leavingDate && (
+                    <div>
+                      <p className="text-emerald-700 text-sm font-medium tracking-widest">
+                        LEAVING DATE
+                      </p>
+                      <p className="text-2xl font-semibold text-gray-800 mt-3">
+                        {application.leavingDate
+                          ? new Date(
+                              application.leavingDate,
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "Not Specified"}
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-emerald-700 text-sm font-medium tracking-widest">
                       DECIDED BY
@@ -555,51 +586,230 @@ const ViewApply = () => {
               <h2 className="text-2xl font-semibold text-gray-900 mb-8">
                 Interview History
               </h2>
+
               {application.interviews && application.interviews.length > 0 ? (
-                <div className="space-y-12">
+                <div className="space-y-0">
                   {application.interviews
                     .sort((a, b) => a.round - b.round)
-                    .map((interview) => (
-                      <div
-                        key={interview.id}
-                        className="relative pl-10 border-l-2 border-indigo-200 last:border-none"
-                      >
-                        <div className="absolute -left-[7px] top-2 w-5 h-5 bg-white border-4 border-indigo-500 rounded-full" />
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div>
-                            <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 px-5 py-1.5 rounded-full text-sm font-semibold">
-                              Round {interview.round}
+                    .map((interview, index) => {
+                      const isLast =
+                        index === application.interviews.length - 1;
+
+                      const statusConfig = {
+                        scheduled: {
+                          label: "Scheduled",
+                          cls: "bg-blue-100 text-blue-800",
+                        },
+                        completed: {
+                          label: "Completed",
+                          cls: "bg-emerald-100 text-emerald-800",
+                        },
+                        in_progress: {
+                          label: "In Progress",
+                          cls: "bg-indigo-100 text-indigo-800",
+                        },
+                        cancelled: {
+                          label: "Cancelled",
+                          cls: "bg-red-100 text-red-800",
+                        },
+                        rescheduled: {
+                          label: "Rescheduled",
+                          cls: "bg-amber-100 text-amber-800",
+                        },
+                        hold: {
+                          label: "On Hold",
+                          cls: "bg-amber-100 text-amber-800",
+                        },
+                        no_show: {
+                          label: "No Show",
+                          cls: "bg-gray-100 text-gray-700",
+                        },
+                      };
+
+                      const resultConfig = {
+                        pass: {
+                          label: "Passed",
+                          cls: "bg-emerald-100 text-emerald-800",
+                        },
+                        fail: {
+                          label: "Failed",
+                          cls: "bg-red-100 text-red-800",
+                        },
+                        next_round: {
+                          label: "Next Round",
+                          cls: "bg-indigo-100 text-indigo-800",
+                        },
+                      };
+
+                      const st =
+                        statusConfig[interview.status] ??
+                        statusConfig.scheduled;
+                      const rs = interview.result
+                        ? resultConfig[interview.result]
+                        : null;
+
+                      return (
+                        <div
+                          key={interview.id}
+                          className={`relative pl-10 pb-10 ${!isLast ? "border-l-2 border-indigo-200" : ""}`}
+                        >
+                          {/* Timeline dot */}
+                          <div className="absolute -left-[7px] top-2 w-5 h-5 bg-white border-4 border-indigo-500 rounded-full" />
+
+                          {/* Header Row */}
+                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                            <div>
+                              <span className="inline-flex items-center bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full text-sm font-semibold">
+                                Round {interview.round}
+                              </span>
+                              <p className="text-xl font-medium text-gray-900 mt-3">
+                                {interview.interviewType?.toUpperCase()}{" "}
+                                Interview
+                              </p>
                             </div>
-                            <p className="text-xl font-medium text-gray-900 mt-4">
-                              {interview.interviewType.toUpperCase()} Interview
-                            </p>
+
+                            {/* Badges */}
+                            <div className="flex flex-wrap gap-2 items-center">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${st.cls}`}
+                              >
+                                {st.label}
+                              </span>
+                              {rs && (
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${rs.cls}`}
+                                >
+                                  {rs.label}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-right text-sm">
-                            <p className="text-gray-500">
+
+                          {/* Meta info */}
+                          <div className="mt-4 space-y-2 text-sm text-gray-500">
+                            {/* Date */}
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 shrink-0" />
                               {new Date(interview.scheduledAt).toLocaleString(
                                 "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
                               )}
-                            </p>
+                            </div>
+
+                            {/* Completed at */}
                             {interview.completedAt && (
-                              <p className="text-emerald-600 mt-1 font-medium">
-                                ✓ Completed
-                              </p>
+                              <div className="flex items-center gap-2 text-emerald-600">
+                                <CheckCircle className="w-4 h-4 shrink-0" />
+                                Completed on{" "}
+                                {new Date(interview.completedAt).toLocaleString(
+                                  "en-IN",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )}
+                              </div>
+                            )}
+
+                            {/* Online — meeting link */}
+                            {interview.interviewType === "online" &&
+                              interview.meetingLink && (
+                                <div className="flex items-center gap-2">
+                                  <LinkIcon className="w-4 h-4 shrink-0" />
+                                  <a
+                                    href={interview.meetingLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-indigo-600 hover:underline truncate"
+                                  >
+                                    {interview.meetingLink}
+                                  </a>
+                                </div>
+                              )}
+
+                            {/* Offline — location */}
+                            {interview.interviewType === "offline" &&
+                              interview.location && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-4 h-4 shrink-0" />
+                                  {interview.location}
+                                </div>
+                              )}
+
+                            {/* Interviewer name */}
+                            {interview.meetingPerson && (
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 shrink-0" />
+                                Interviewer: {interview.meetingPerson}
+                              </div>
                             )}
                           </div>
-                        </div>
 
-                        {interview.feedback && (
-                          <div className="mt-8 bg-gray-50 border border-gray-100 p-7 rounded-2xl">
-                            <p className="uppercase text-xs tracking-widest text-gray-500 mb-3">
-                              FEEDBACK
-                            </p>
-                            <p className="text-gray-700">
-                              {interview.feedback}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                          {/* ---- Reason boxes ---- */}
+
+                          {/* Hold reason */}
+                          {interview.status === "hold" &&
+                            interview.holdReason && (
+                              <div className="mt-5 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                                <p className="text-xs font-semibold tracking-widest text-amber-700 mb-2">
+                                  HOLD REASON
+                                </p>
+                                <p className="text-sm text-amber-900">
+                                  {interview.holdReason}
+                                </p>
+                              </div>
+                            )}
+
+
+                          {/* Cancel reason */}
+                          {interview.status === "cancelled" &&
+                            interview.cancelReason && (
+                              <div className="mt-5 bg-red-50 border border-red-200 rounded-2xl p-5">
+                                <p className="text-xs font-semibold tracking-widest text-red-700 mb-2">
+                                  CANCELLATION REASON
+                                </p>
+                                <p className="text-sm text-red-900">
+                                  {interview.cancelReason}
+                                </p>
+                              </div>
+                            )}
+
+                          {/* Reschedule reason */}
+                          {interview.status === "rescheduled" &&
+                            interview.rescheduleReason && (
+                              <div className="mt-5 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                                <p className="text-xs font-semibold tracking-widest text-amber-700 mb-2">
+                                  RESCHEDULE REASON
+                                </p>
+                                <p className="text-sm text-amber-900">
+                                  {interview.rescheduleReason}
+                                </p>
+                              </div>
+                            )}
+
+                          {/* Feedback */}
+                          {interview.feedback && (
+                            <div className="mt-5 bg-gray-50 border border-gray-100 rounded-2xl p-5">
+                              <p className="text-xs font-semibold tracking-widest text-gray-500 mb-2">
+                                FEEDBACK
+                              </p>
+                              <p className="text-sm text-gray-700">
+                                {interview.feedback}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               ) : (
                 <p className="text-center py-20 text-gray-400">

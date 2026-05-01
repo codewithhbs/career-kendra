@@ -61,11 +61,11 @@ const navItems = [
         path: "/jobs/rejected",
         icon: <XCircle size={18} />
       },
-      {
-        label: "Applications",
-        path: "/applications",
-        icon: <FileText size={18} />
-      }
+      // {
+      //   label: "Applications",
+      //   path: "/applications",
+      //   icon: <FileText size={18} />
+      // }
     ],
   },
 

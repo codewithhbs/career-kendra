@@ -43,7 +43,8 @@ router.put("/verify-document/:id", auth, verifyApplicationDocument);
 router.delete("/delete-document/:id", auth, deleteDocument);
 router.put("/reupload-document/:id", auth, createUploader("document").any(), reuploadDocument);
 
-router.post("/upload-cover-letter/:id",auth,createUploader("offer-letter").single("offer-letter"), jobController.uploadCoverLetter);
+router.post("/upload-cover-letter/:id",createUploader("offer-letter").single("offer-letter"), jobController.uploadCoverLetter);
+router.put("/update-leave-date/:id", auth, jobController.updateLeaveDate);
 
 
 

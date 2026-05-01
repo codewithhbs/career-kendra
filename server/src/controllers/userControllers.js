@@ -297,7 +297,7 @@ exports.verifyOtpController = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-        path: "/",
+      path: "/",
     });
     return res.json({
       success: true,
@@ -435,7 +435,7 @@ exports.login = async (req, res) => {
         httpOnly: true,
         secure: true,
         sameSite: "none",
-          path: "/",
+        path: "/",
       });
       // Save session in redis
       try {
@@ -534,7 +534,7 @@ exports.verifyLoginOtp = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-        path: "/",
+      path: "/",
     });
     // Save session in redis
     try {
@@ -583,8 +583,12 @@ exports.logout = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { userName, contactNumber, emailAddress } = req.body;
 
+    const { userName, contactNumber, emailAddress, area, location } = req.body;
+
+    console.log("req.body:", req.body);
+
+    // 🔍 Find user
     const user = await User.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -594,12 +598,14 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // Clean inputs
-    const cleanPhone = contactNumber ? contactNumber.replace(/\s+/g, "") : null;
-    const cleanEmail = emailAddress ? emailAddress.toLowerCase().trim() : null;
-    const cleanName = userName ? userName.trim() : null;
+    // 🧹 Clean inputs
+    const cleanName = userName?.trim();
+    const cleanPhone = contactNumber?.replace(/\s+/g, "");
+    const cleanEmail = emailAddress?.toLowerCase().trim();
+    const cleanArea = area?.trim();
+    const cleanLocation = location?.trim();
 
-    // ✅ Validate phone if provided
+    // ✅ Phone validation
     if (cleanPhone && !/^[0-9]{10}$/.test(cleanPhone)) {
       return res.status(400).json({
         success: false,
@@ -607,7 +613,7 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // ✅ Validate email if provided
+    // ✅ Email validation
     if (cleanEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(cleanEmail)) {
@@ -618,25 +624,38 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // ✅ Check if anything changed
-    const isNameChanged = cleanName && cleanName !== user.userName;
-    const isPhoneChanged = cleanPhone && cleanPhone !== user.contactNumber;
-    const isEmailChanged = cleanEmail && cleanEmail !== user.emailAddress;
+    // 🔍 Change detection (IMPORTANT FIX)
+    const isNameChanged =
+      cleanName !== undefined && cleanName !== user.userName;
 
-    if (!isNameChanged && !isPhoneChanged && !isEmailChanged) {
+    const isPhoneChanged =
+      cleanPhone !== undefined && cleanPhone !== user.contactNumber;
+
+    const isEmailChanged =
+      cleanEmail !== undefined && cleanEmail !== user.emailAddress;
+
+    const isAreaChanged =
+      cleanArea !== undefined && cleanArea !== user.area;
+
+    const isLocationChanged =
+      cleanLocation !== undefined && cleanLocation !== user.location;
+
+    // 🛑 No changes
+    if (
+      !isNameChanged &&
+      !isPhoneChanged &&
+      !isEmailChanged &&
+      !isAreaChanged &&
+      !isLocationChanged
+    ) {
       return res.status(200).json({
         success: true,
         message: "No changes detected.",
-        data: {
-          id: user.id,
-          userName: user.userName,
-          contactNumber: user.contactNumber,
-          emailAddress: user.emailAddress,
-        },
+        data: user,
       });
     }
 
-    // ✅ Unique check only if phone/email changed
+    // 🔒 Unique check (only if needed)
     if (isPhoneChanged || isEmailChanged) {
       const existing = await User.findOne({
         where: {
@@ -649,14 +668,14 @@ exports.updateProfile = async (req, res) => {
       });
 
       if (existing) {
-        if (existing.emailAddress === cleanEmail) {
+        if (isEmailChanged && existing.emailAddress === cleanEmail) {
           return res.status(409).json({
             success: false,
             message: "This email is already in use.",
           });
         }
 
-        if (existing.contactNumber === cleanPhone) {
+        if (isPhoneChanged && existing.contactNumber === cleanPhone) {
           return res.status(409).json({
             success: false,
             message: "This contact number is already in use.",
@@ -665,20 +684,33 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    // ✅ Update only changed fields
-    await User.update(
-      {
-        userName: isNameChanged ? cleanName : user.userName,
-        contactNumber: isPhoneChanged ? cleanPhone : user.contactNumber,
-        emailAddress: isEmailChanged ? cleanEmail : user.emailAddress,
-      },
-      { where: { id: userId } }
-    );
+    // 🧠 Dynamic update object (BEST PRACTICE)
+    const updateData = {};
 
+    if (isNameChanged) updateData.userName = cleanName;
+    if (isPhoneChanged) updateData.contactNumber = cleanPhone;
+    if (isEmailChanged) updateData.emailAddress = cleanEmail;
+    if (isAreaChanged) updateData.area = cleanArea;
+    if (isLocationChanged) updateData.location = cleanLocation;
 
+    console.log("updateData:", updateData);
+
+    // ✅ Update
+    await User.update(updateData, {
+      where: { id: userId },
+    });
+
+    // 🔄 Fetch updated user
     const updatedUser = await User.findOne({
       where: { id: userId },
-      attributes: ["id", "userName", "contactNumber", "emailAddress"],
+      attributes: [
+        "id",
+        "userName",
+        "contactNumber",
+        "emailAddress",
+        "area",
+        "location",
+      ],
     });
 
     return res.json({
@@ -687,14 +719,13 @@ exports.updateProfile = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.log("updateProfile error:", error);
+    console.error("updateProfile error:", error);
     return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
-
 
 exports.getuserProfile = async (req, res) => {
   try {
@@ -720,6 +751,8 @@ exports.getuserProfile = async (req, res) => {
             "contactNumber",
             "uploadedCv",
             "accountActive",
+            "area",
+            "location",
           ],
         },
       ],
@@ -1056,6 +1089,9 @@ exports.getAlluserListed = async (req, res) => {
       minSalary,
       maxSalary,
       location,
+      area,           // ADD
+      isDeleted,      // ADD
+      specialAccess,  // ADD
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -1074,6 +1110,21 @@ exports.getAlluserListed = async (req, res) => {
     // Account Status Filter
     if (accountStatus !== undefined) {
       where.accountActive = accountStatus === "true" || accountStatus === true;
+    }
+
+    // area filter
+    if (area) {
+      where.area = { [Op.like]: `%${area}%` };
+    }
+
+    // isDeleted filter (currently hardcoded nahi tha)
+    if (isDeleted !== undefined && isDeleted !== "") {
+      where.isDeleted = isDeleted === "true";
+    }
+
+    // specialAccess filter
+    if (specialAccess !== undefined && specialAccess !== "") {
+      where.specialAccess = specialAccess === "true";
     }
 
     // ==================== New Filters ====================

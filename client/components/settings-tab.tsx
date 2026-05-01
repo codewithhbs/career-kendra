@@ -69,6 +69,8 @@ export default function ProfileSettings() {
     userName: "",
     emailAddress: "",
     contactNumber: "",
+    area: "", // add this
+    location: "", // add this
   });
 
   const [pro, setPro] = useState<ProfessionalFormData>({
@@ -83,7 +85,9 @@ export default function ProfileSettings() {
   const [saving, setSaving] = useState(false);
 
   // Profile Image
-  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null,
+  );
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,6 +109,8 @@ export default function ProfileSettings() {
       userName: profile.user?.userName || "",
       emailAddress: profile.user?.emailAddress || "",
       contactNumber: profile.user?.contactNumber || "",
+      area: profile.user?.area || "", // add this
+      location: profile.user?.location || "", // add this
     });
 
     if (profile?.profileImage) {
@@ -194,7 +200,9 @@ export default function ProfileSettings() {
           "Content-Type": "multipart/form-data",
         },
       });
-      Swal.fire("Success", "CV uploaded successfully", "success", { timer: 1800 });
+      Swal.fire("Success", "CV uploaded successfully", "success", {
+        timer: 1800,
+      });
       setSelectedCvFile(null);
       getProfile(); // refresh to show new uploadedCv
     } catch {
@@ -212,7 +220,9 @@ export default function ProfileSettings() {
 
   // Other handlers (experience, education, etc.) remain unchanged...
   // ────────────────────────────────────────────────────────────────
-  const handleProChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleProChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setPro((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -239,7 +249,10 @@ export default function ProfileSettings() {
   const addExperience = () => {
     setPro((p) => ({
       ...p,
-      experience: [...p.experience, { position: "", company: "", startDate: "", endDate: "" }],
+      experience: [
+        ...p.experience,
+        { position: "", company: "", startDate: "", endDate: "" },
+      ],
     }));
     setIsExperienceOpen(true);
   };
@@ -252,12 +265,18 @@ export default function ProfileSettings() {
     });
 
   const removeExp = (idx: number) =>
-    setPro((p) => ({ ...p, experience: p.experience.filter((_, i) => i !== idx) }));
+    setPro((p) => ({
+      ...p,
+      experience: p.experience.filter((_, i) => i !== idx),
+    }));
 
   const addEducation = () => {
     setPro((p) => ({
       ...p,
-      educations: [...p.educations, { degree: "", institute: "", startYear: "", endYear: "" }],
+      educations: [
+        ...p.educations,
+        { degree: "", institute: "", startYear: "", endYear: "" },
+      ],
     }));
     setIsEducationOpen(true);
   };
@@ -270,7 +289,10 @@ export default function ProfileSettings() {
     });
 
   const removeEdu = (idx: number) =>
-    setPro((p) => ({ ...p, educations: p.educations.filter((_, i) => i !== idx) }));
+    setPro((p) => ({
+      ...p,
+      educations: p.educations.filter((_, i) => i !== idx),
+    }));
 
   const saveBasic = async () => {
     if (!token || !basic.userName.trim() || !basic.emailAddress.trim()) {
@@ -278,11 +300,17 @@ export default function ProfileSettings() {
       return;
     }
     setSaving(true);
+    // console.log("basic",basic)
     try {
       await axios.put(`${API_URL}/auth/update-details`, basic, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      Swal.fire({ title: "Saved", icon: "success", timer: 1600, showConfirmButton: false });
+      Swal.fire({
+        title: "Saved",
+        icon: "success",
+        timer: 1600,
+        showConfirmButton: false,
+      });
       getProfile();
     } catch {
       Swal.fire("Error", "Could not save", "error");
@@ -302,13 +330,22 @@ export default function ProfileSettings() {
         educations: pro.educations,
         noExperience: pro.noExperience ? 1 : 0,
       };
-      const res = await axios.put(`${API_URL}/auth/update-profile-details`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.put(
+        `${API_URL}/auth/update-profile-details`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.data?.data?.percentageOfAccountComplete !== undefined) {
         setCompletion(res.data.data.percentageOfAccountComplete);
       }
-      Swal.fire({ title: "Updated", icon: "success", timer: 1600, showConfirmButton: false });
+      Swal.fire({
+        title: "Updated",
+        icon: "success",
+        timer: 1600,
+        showConfirmButton: false,
+      });
       getProfile();
     } catch {
       Swal.fire("Error", "Failed to save", "error");
@@ -330,7 +367,9 @@ export default function ProfileSettings() {
         >
           <div className="flex items-center gap-2.5">
             <User size={20} className="text-amber-600" />
-            <span className="font-semibold text-gray-800">Basic Information</span>
+            <span className="font-semibold text-gray-800">
+              Basic Information
+            </span>
           </div>
           {isBasicOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
@@ -345,7 +384,9 @@ export default function ProfileSettings() {
             <div className="grid sm:grid-cols-2 gap-6 pb-6 border-b">
               {/* Profile Photo */}
               <div>
-                <label className="block text-sm font-medium text-gray-800 mb-2">Profile Photo</label>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  Profile Photo
+                </label>
                 <div className="flex items-center gap-5">
                   <div className="relative group">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 shadow-sm">
@@ -396,88 +437,94 @@ export default function ProfileSettings() {
               </div>
 
               {/* CV Upload */}
-         {/* CV Upload */}
-<div>
-  <label className="block text-sm font-medium text-gray-800 mb-2">Resume / CV</label>
-  <div className="flex items-center gap-5">
-    <div className="p-4 bg-amber-50 rounded-lg">
-      <FileText className="w-8 h-8 text-amber-600" />
-    </div>
+              {/* CV Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">
+                  Resume / CV
+                </label>
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-amber-50 rounded-lg">
+                    <FileText className="w-8 h-8 text-amber-600" />
+                  </div>
 
-    <div className="flex-1">
-      {profile?.user?.uploadedCv ? (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-green-700">
-              <CheckCircle2 size={18} />
-              <span className="font-medium">CV Uploaded</span>
-            </div>
-            <button
-              onClick={viewCv}
-              className="text-amber-600 hover:text-amber-800 text-sm flex items-center gap-1"
-            >
-              <Eye size={16} />
-              View CV
-            </button>
-          </div>
+                  <div className="flex-1">
+                    {profile?.user?.uploadedCv ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 text-green-700">
+                            <CheckCircle2 size={18} />
+                            <span className="font-medium">CV Uploaded</span>
+                          </div>
+                          <button
+                            onClick={viewCv}
+                            className="text-amber-600 hover:text-amber-800 text-sm flex items-center gap-1"
+                          >
+                            <Eye size={16} />
+                            View CV
+                          </button>
+                        </div>
 
-          {/* Update CV option */}
-          <button
-            onClick={triggerCvInput}
-            disabled={saving || cvUploading}
-            className="text-sm text-amber-700 hover:text-amber-900 flex items-center gap-1.5"
-          >
-            <Upload size={14} />
-            Update / Replace CV
-          </button>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-600">Upload PDF • Max 5MB</p>
-      )}
+                        {/* Update CV option */}
+                        <button
+                          onClick={triggerCvInput}
+                          disabled={saving || cvUploading}
+                          className="text-sm text-amber-700 hover:text-amber-900 flex items-center gap-1.5"
+                        >
+                          <Upload size={14} />
+                          Update / Replace CV
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">
+                        Upload PDF • Max 5MB
+                      </p>
+                    )}
 
-      <input
-        ref={cvInputRef}
-        type="file"
-        accept="application/pdf"
-        onChange={handleCvChange}
-        className="hidden"
-      />
+                    <input
+                      ref={cvInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleCvChange}
+                      className="hidden"
+                    />
 
-      {selectedCvFile && (
-        <div className="mt-3 flex flex-col sm:flex-row items-center gap-3">
-          <span className="text-sm text-gray-700 truncate max-w-[220px]">
-            {selectedCvFile.name}
-          </span>
-          <button
-            onClick={uploadCv}
-            disabled={cvUploading || saving}
-            className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md flex items-center gap-2 disabled:opacity-60"
-          >
-            <Upload size={14} />
-            {cvUploading ? "Uploading..." : "Upload CV"}
-          </button>
-        </div>
-      )}
+                    {selectedCvFile && (
+                      <div className="mt-3 flex flex-col sm:flex-row items-center gap-3">
+                        <span className="text-sm text-gray-700 truncate max-w-[220px]">
+                          {selectedCvFile.name}
+                        </span>
+                        <button
+                          onClick={uploadCv}
+                          disabled={cvUploading || saving}
+                          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md flex items-center gap-2 disabled:opacity-60"
+                        >
+                          <Upload size={14} />
+                          {cvUploading ? "Uploading..." : "Upload CV"}
+                        </button>
+                      </div>
+                    )}
 
-      {!profile?.user?.uploadedCv && !selectedCvFile && (
-        <button
-          onClick={triggerCvInput}
-          disabled={saving || cvUploading}
-          className="mt-3 px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-md flex items-center gap-2 disabled:opacity-60"
-        >
-          <Upload size={14} />
-          Upload CV
-        </button>
-      )}
-    </div>
-  </div>
-</div>
+                    {!profile?.user?.uploadedCv && !selectedCvFile && (
+                      <button
+                        onClick={triggerCvInput}
+                        disabled={saving || cvUploading}
+                        className="mt-3 px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-md flex items-center gap-2 disabled:opacity-60"
+                      >
+                        <Upload size={14} />
+                        Upload CV
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Name, Email, Phone */}
             <div className="grid sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Full Name *</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Full Name *
+                </label>
                 <input
                   name="userName"
                   value={basic.userName}
@@ -487,7 +534,9 @@ export default function ProfileSettings() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Email Address *</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Email Address *
+                </label>
                 <input
                   type="email"
                   name="emailAddress"
@@ -497,8 +546,10 @@ export default function ProfileSettings() {
                   placeholder="name@example.com"
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Phone Number *</label>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Phone Number *
+                </label>
                 <input
                   type="tel"
                   name="contactNumber"
@@ -506,6 +557,30 @@ export default function ProfileSettings() {
                   onChange={handleBasicChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
                   placeholder="+91 99999 99999"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Area
+                </label>
+                <input
+                  name="area"
+                  value={basic.area}
+                  onChange={handleBasicChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                  placeholder="e.g. Connaught Place, Dwarka"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  Location
+                </label>
+                <input
+                  name="location"
+                  value={basic.location}
+                  onChange={handleBasicChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                  placeholder="e.g. New Delhi, Mumbai"
                 />
               </div>
             </div>

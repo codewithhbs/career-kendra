@@ -122,7 +122,7 @@ export default function Header() {
                   height={60}
                 />
               </div>
-              <span className="text-xl font-bold text-gray-900 tracking-tight">
+              <span className="text-2xl font-bold text-gray-900 tracking-tight">
                 {siteName}
               </span>
             </Link>

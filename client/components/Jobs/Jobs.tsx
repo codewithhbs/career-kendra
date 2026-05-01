@@ -770,7 +770,7 @@ export default function CareerWithUs({
               </Select>
 
               {/* Experience */}
-              <Select
+              {/* <Select
                 value={selectedExperience}
                 onValueChange={setSelectedExperience}
               >
@@ -784,7 +784,7 @@ export default function CareerWithUs({
                   <SelectItem value="6-10">6–10 years</SelectItem>
                   <SelectItem value="10+">10+ years</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
 
               {/* Job Type */}
               <Select

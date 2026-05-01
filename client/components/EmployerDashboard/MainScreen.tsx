@@ -16,6 +16,7 @@ import OverviewContent from "./OverViewContent";
 import CreateCompany from "./CreateCompany";
 import ManageCompaines from "./ManageCompaines";
 import UpdateCompany from "./UpdateCompany";
+import EmployerProfileUpdate from "./Setting";
 axios.defaults.baseURL = API_URL;
 
 
@@ -49,7 +50,7 @@ export default function MainScreen() {
       case "update-company":
         return <UpdateCompany/>;
       case "settings":
-        return <div className="text-gray-600">Settings – coming soon...</div>;
+        return <EmployerProfileUpdate/>;
       default:
         return <OverviewContent />;
     }

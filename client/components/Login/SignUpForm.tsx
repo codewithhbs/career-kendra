@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import loginImg from "@/assets/images/work/login.png";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 
 const SignUpForm = () => {
@@ -28,6 +29,9 @@ const SignUpForm = () => {
   const [otp, setOtp] = useState("");
   const [otpDialogOpen, setOtpDialogOpen] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   // ============================
   // Validate
@@ -131,7 +135,9 @@ const SignUpForm = () => {
       toast.success(res?.message || "Account verified 🎉");
 
       setTimeout(() => {
-        window.location.href = "/";
+        const destination =
+          returnTo && returnTo.startsWith("/") ? returnTo : "/";
+        window.location.replace(destination);
       }, 900);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Invalid OTP");
@@ -328,7 +334,7 @@ const SignUpForm = () => {
               <p className="mt-10 text-center text-slate-600">
                 Already have an account?{" "}
                 <Link
-                  href="/auth/login"
+                  href={`/auth/login${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}
                   className="font-semibold text-[#C8641B] hover:underline"
                 >
                   Log in
@@ -378,7 +384,7 @@ const SignUpForm = () => {
 
                       if (val && i < 5) {
                         const next = document.querySelector(
-                          `input[data-otp-index="${i + 1}"]`
+                          `input[data-otp-index="${i + 1}"]`,
                         ) as HTMLInputElement;
                         next?.focus();
                       }

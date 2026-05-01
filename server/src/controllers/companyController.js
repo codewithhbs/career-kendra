@@ -643,3 +643,22 @@ exports.AdminUpdateCompany = async (req, res) => {
     });
   }
 };
+
+exports.deleteCompanyById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const company = await Company.findByPk(id);
+
+    if (!company) {
+      return res.status(404).json({ success: false, message: "Company not found" });
+    }
+
+    await company.destroy();
+
+    return res.status(200).json({ success: true, message: "Company deleted successfully" });
+  } catch (error) {
+    console.log("Internal server error")
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}

@@ -269,7 +269,29 @@ export default function ApplyJob() {
                 asChild
               >
                 <a
-                  href={`/auth/login?returnTo=${encodeURIComponent(
+                  href={`/auth/register?returnTo=${encodeURIComponent(
+                    pathname +
+                      (searchParams.toString()
+                        ? `?${searchParams.toString()}`
+                        : ""),
+                  )}`}
+                >
+                  Create a free account →
+                </a>
+              </Button>
+
+              {/* Secondary action */}
+              <p className="text-sm text-gray-500 mb-2">
+                {/* Don't have an account yet? */}
+                Do you already have an account?
+              </p>
+              <Button
+                variant="link"
+                className="text-amber-700 hover:text-amber-800 font-medium"
+                asChild
+              >
+                <a
+                   href={`/auth/login?returnTo=${encodeURIComponent(
                     pathname +
                       (searchParams.toString()
                         ? `?${searchParams.toString()}`
@@ -278,18 +300,6 @@ export default function ApplyJob() {
                 >
                   Sign in to Apply
                 </a>
-              </Button>
-
-              {/* Secondary action */}
-              <p className="text-sm text-gray-500 mb-2">
-                Don't have an account yet?
-              </p>
-              <Button
-                variant="link"
-                className="text-amber-700 hover:text-amber-800 font-medium"
-                asChild
-              >
-                <a href="/auth/register">Create a free account →</a>
               </Button>
 
               {/* Browse link */}

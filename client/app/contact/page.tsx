@@ -690,6 +690,7 @@ const ContactPage = () => {
                           <option value="" disabled>Select your role…</option>
                           <option value="job_seeker">Job Seeker</option>
                           <option value="employer">Employer / Recruiter</option>
+                          <option value="looking_staff">Looking To Hire Staff</option>
                           <option value="partner">Business Partner</option>
                           <option value="other">Other</option>
                         </select>

@@ -12,5 +12,6 @@ router.post("/submit", auth, companyController.submitCompanyForApproval);
 router.delete("/delete", auth, companyController.deleteCompany);
 router.get("/companies-list", auth, companyController.getAllCompaniesList);
 router.get("/company/:id", auth, companyController.getCompanyById);
+router.delete("/delete-company/:id", auth, companyController.deleteCompanyById);
 
 module.exports = router;

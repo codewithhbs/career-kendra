@@ -502,7 +502,8 @@ export const AllJobs = () => {
     totalExperience: "",
     lastSalary: "",
     location: "",
-    locationCustom: ""
+    locationCustom: "",
+    area: "",
   });
 
   const [cvFile, setCvFile] = useState(null);
@@ -518,6 +519,7 @@ export const AllJobs = () => {
       totalExperience: "",
       lastSalary: "",
       location: "",
+      area: "",
     });
     setCvFile(null);
     setShowQuickApplyModal(true);
@@ -615,6 +617,7 @@ export const AllJobs = () => {
     formData.append("totalExperience", quickApplyData.totalExperience);
     formData.append("lastSalary", quickApplyData.lastSalary);
     formData.append("location", quickApplyData.location);
+    formData.append("area", quickApplyData.area);
     formData.append("cv", cvFile); // multer ke hisaab se "cv" name
 
     try {
@@ -640,9 +643,7 @@ export const AllJobs = () => {
       Swal.fire({
         icon: "error",
         title: "Failed",
-        text:
-          error?.message ||
-          "Something went wrong while applying",
+        text: error?.message || "Something went wrong while applying",
       });
     } finally {
       setApplying(false);
@@ -1306,7 +1307,7 @@ export const AllJobs = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[95vh] overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white px-6 py-5 flex justify-between items-center">
+            <div className="bg-linear-to-r from-purple-700 to-indigo-700 text-white px-6 py-5 flex justify-between items-center">
               <div>
                 <p className="text-xs opacity-75">QUICK APPLY</p>
                 <h3 className="font-semibold text-lg">
@@ -1395,8 +1396,21 @@ export const AllJobs = () => {
                   />
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Area (e.g. Rohini, Dwarka, etc.)
+                </label>
+                <input
+                  type="text"
+                  name="area"
+                  value={quickApplyData.area}
+                  onChange={handleQuickApplyInput}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g. Rohini, Dwarka, etc."
+                />
+              </div>
 
-                            <div>
+              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Current / Preferred Location *
                 </label>
@@ -1407,7 +1421,7 @@ export const AllJobs = () => {
                   className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
                 >
                   <option value="">Select Location</option>
-                  
+
                   {/* Delhi NCR - Most Relevant */}
                   <optgroup label="Delhi NCR">
                     <option value="Faridabad">Faridabad</option>
@@ -1446,8 +1460,8 @@ export const AllJobs = () => {
                     <option value="Bhubaneswar">Bhubaneswar</option>
                   </optgroup>
 
-                  <option value="Remote">Remote / Work From Home</option>
-                  <option value="Other">Other (Please specify below)</option>
+                  {/* <option value="Remote">Remote / Work From Home</option>
+                  <option value="Other">Other (Please specify below)</option> */}
                 </select>
               </div>
 
@@ -1461,10 +1475,10 @@ export const AllJobs = () => {
                     type="text"
                     name="location"
                     value={quickApplyData.locationCustom || ""}
-                    onChange={(e) => 
-                      setQuickApplyData(prev => ({ 
-                        ...prev, 
-                        location: e.target.value 
+                    onChange={(e) =>
+                      setQuickApplyData((prev) => ({
+                        ...prev,
+                        location: e.target.value,
                       }))
                     }
                     className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"

@@ -49,6 +49,8 @@ import {
   Building2,
   Mail,
   CalendarDays,
+  Phone,
+  IndianRupee,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -57,7 +59,7 @@ axios.defaults.baseURL = API_URL;
 /* ============================================================
    TYPES
    ============================================================ */
-type InterviewType = "online" | "offline";
+type InterviewType = "online" | "offline" | "phone";
 type InterviewStatus = "scheduled" | "completed" | "cancelled" | "rescheduled";
 type InterviewResult = "pass" | "fail" | "";
 
@@ -85,14 +87,44 @@ interface UpdateForm {
   rescheduleReason: string;
 }
 
+interface FinalDecisionForm {
+  finalSalaryOffered: string;
+  joiningDate: string;
+  comment: string;
+}
+
 /* ============================================================
    STATUS CONFIG
    ============================================================ */
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  scheduled: { label: "Scheduled", color: "bg-blue-100 text-blue-700", icon: Clock },
-  completed: { label: "Completed", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700", icon: XCircle },
-  rescheduled: { label: "Rescheduled", color: "bg-amber-100 text-amber-700", icon: RefreshCw },
+const statusConfig: Record<
+  string,
+  { label: string; color: string; icon: any }
+> = {
+  scheduled: {
+    label: "Scheduled",
+    color: "bg-blue-100 text-blue-700",
+    icon: Clock,
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-emerald-100 text-emerald-700",
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-red-100 text-red-700",
+    icon: XCircle,
+  },
+  rescheduled: {
+    label: "Rescheduled",
+    color: "bg-amber-100 text-amber-700",
+    icon: RefreshCw,
+  },
+  hold: {
+    label: "On Hold",
+    color: "bg-amber-100 text-amber-700",
+    icon: Clock,
+  },
 };
 
 const resultConfig: Record<string, { label: string; color: string }> = {
@@ -115,9 +147,20 @@ const AllApplications = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const [showFinalDecisionModal, setShowFinalDecisionModal] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null);
   const [selectedAppForView, setSelectedAppForView] = useState<any>(null);
-  const [selectedInterviewForUpdate, setSelectedInterviewForUpdate] = useState<any>(null);
+  const [selectedInterviewForUpdate, setSelectedInterviewForUpdate] =
+    useState<any>(null);
+  const [pendingFinalAppId, setPendingFinalAppId] = useState<string | null>(
+    null,
+  );
+
+  const [showLeavingDateModal, setShowLeavingDateModal] = useState(false);
+  const [leavingDateAppId, setLeavingDateAppId] = useState<string | null>(null);
+  const [leavingDate, setLeavingDate] = useState("");
 
   // Forms
   const [scheduleForm, setScheduleForm] = useState<ScheduleForm>({
@@ -142,7 +185,16 @@ const AllApplications = () => {
     result: "",
     cancelReason: "",
     rescheduleReason: "",
+    holdReason: "",
   });
+
+  const [finalDecisionForm, setFinalDecisionForm] = useState<FinalDecisionForm>(
+    {
+      finalSalaryOffered: "",
+      joiningDate: "",
+      comment: "",
+    },
+  );
 
   /* ---- FETCH ---- */
   const fetchJobs = async () => {
@@ -167,9 +219,8 @@ const AllApplications = () => {
     try {
       const res = await axios.get(
         `/applications/get-all-applications-for-employer/${selectedJobId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-      console.log("Applications fetched:", res.data);
       setApplications(res.data?.applications || []);
     } catch {
       Swal.fire("Error", "Failed to fetch applications", "error");
@@ -178,7 +229,31 @@ const AllApplications = () => {
     }
   };
 
-  const hasRound2 = (app: any) => app.interviews?.some((i: any) => i.round === 2);
+  const handleUpdateLeavingDate = async () => {
+    if (!leavingDateAppId || !leavingDate) {
+      Swal.fire("Warning", "Please select a leaving date", "warning");
+      return;
+    }
+    try {
+      await axios.put(
+        `/applications/update-leave-date/${leavingDateAppId}`,
+        { leavingDate },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      Swal.fire("Success", "Leaving date updated successfully!", "success");
+      setShowLeavingDateModal(false);
+      fetchApplications();
+    } catch (error: any) {
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to update",
+        "error",
+      );
+    }
+  };
+
+  const hasRound2 = (app: any) =>
+    app.interviews?.some((i: any) => i.round === 2);
 
   /* ---- SCHEDULE ---- */
   const openScheduleModal = (applicationId: string) => {
@@ -211,14 +286,18 @@ const AllApplications = () => {
           location: scheduleForm.location || null,
           meetingPerson: scheduleForm.meetingPerson || null,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       Swal.fire("Success", "Round 2 interview scheduled!", "success");
       setShowScheduleModal(false);
       fetchApplications();
     } catch (error: any) {
-      Swal.fire("Error", error.response?.data?.message || "Failed to schedule", "error");
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to schedule",
+        "error",
+      );
     }
   };
 
@@ -240,6 +319,7 @@ const AllApplications = () => {
       result: interview.result || "",
       cancelReason: "",
       rescheduleReason: "",
+      holdReason: "",
     });
     setShowUpdateModal(true);
   };
@@ -252,11 +332,19 @@ const AllApplications = () => {
       return;
     }
     if (updateForm.status === "rescheduled" && !updateForm.scheduledAt) {
-      Swal.fire("Warning", "New date/time is required for rescheduling", "warning");
+      Swal.fire(
+        "Warning",
+        "New date/time is required for rescheduling",
+        "warning",
+      );
       return;
     }
     if (updateForm.status === "rescheduled" && !updateForm.rescheduleReason) {
       Swal.fire("Warning", "Reschedule reason is required", "warning");
+      return;
+    }
+    if (updateForm.status === "hold" && !updateForm.holdReason) {
+      Swal.fire("Warning", "Hold reason is required", "warning");
       return;
     }
 
@@ -274,20 +362,28 @@ const AllApplications = () => {
         result: updateForm.result || null,
       };
 
-      if (updateForm.status === "cancelled") payload.cancelReason = updateForm.cancelReason;
-      if (updateForm.status === "rescheduled") payload.rescheduleReason = updateForm.rescheduleReason;
+      if (updateForm.status === "cancelled")
+        payload.cancelReason = updateForm.cancelReason;
+      if (updateForm.status === "rescheduled")
+        payload.rescheduleReason = updateForm.rescheduleReason;
+      if (updateForm.status === "hold")
+        payload.holdReason = updateForm.holdReason;
 
       await axios.put(
         `/applications/update-interview/${selectedInterviewForUpdate.id}`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       Swal.fire("Success", "Interview updated successfully!", "success");
       setShowUpdateModal(false);
       fetchApplications();
     } catch (error: any) {
-      Swal.fire("Error", error.response?.data?.message || "Failed to update", "error");
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to update",
+        "error",
+      );
     }
   };
 
@@ -298,35 +394,32 @@ const AllApplications = () => {
   };
 
   /* ---- FINAL DECISION ---- */
-  const handleFinalDecision = async (applicationId: string) => {
-    const { value: formValues } = await Swal.fire({
-      title: "Final Selection",
-      html: `
-        <input id="salary" class="swal2-input" placeholder="Final Salary Offered" type="number">
-        <input id="joining" class="swal2-input" placeholder="Joining Date" type="date">
-        <textarea id="comment" class="swal2-textarea" placeholder="Comment / Notes"></textarea>
-      `,
-      focusConfirm: false,
-      preConfirm: () => ({
-        finalSalaryOffered: (document.getElementById("salary") as HTMLInputElement)?.value || null,
-        joiningDate: (document.getElementById("joining") as HTMLInputElement)?.value || null,
-        comment: (document.getElementById("comment") as HTMLTextAreaElement)?.value || null,
-      }),
-      showCancelButton: true,
+  const handleFinalDecision = (applicationId: string) => {
+    setPendingFinalAppId(applicationId);
+    setFinalDecisionForm({
+      finalSalaryOffered: "",
+      joiningDate: "",
+      comment: "",
     });
+    setShowFinalDecisionModal(true);
+  };
 
-    if (!formValues) return;
+  const handleConfirmFinalDecision = async () => {
+    if (!pendingFinalAppId) return;
+    setShowFinalDecisionModal(false);
 
     try {
       await axios.put(
-        `/applications/final-decision/${applicationId}`,
+        `/applications/final-decision/${pendingFinalAppId}`,
         {
           decision: "selected",
-          finalSalaryOffered: formValues.finalSalaryOffered ? Number(formValues.finalSalaryOffered) : null,
-          joiningDate: formValues.joiningDate,
-          comment: formValues.comment,
+          finalSalaryOffered: finalDecisionForm.finalSalaryOffered
+            ? Number(finalDecisionForm.finalSalaryOffered)
+            : null,
+          joiningDate: finalDecisionForm.joiningDate || null,
+          comment: finalDecisionForm.comment || null,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       Swal.fire("Success", "Candidate selected successfully!", "success");
@@ -351,9 +444,12 @@ const AllApplications = () => {
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-medium text-gray-500 tracking-wide">HIRING PIPELINE</p>
+            <p className="text-sm font-medium text-gray-500 tracking-wide">
+              HIRING PIPELINE
+            </p>
             <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-              Final Shortlisted <span className="text-indigo-600">Candidates</span>
+              Final Shortlisted{" "}
+              <span className="text-indigo-600">Candidates</span>
             </h1>
             <p className="text-gray-600 mt-2">
               Manage interviews and make final hiring decisions
@@ -362,7 +458,10 @@ const AllApplications = () => {
 
           {/* Job Selector */}
           <div className="w-full sm:w-80">
-            <Select value={selectedJobId || ""} onValueChange={setSelectedJobId}>
+            <Select
+              value={selectedJobId || ""}
+              onValueChange={setSelectedJobId}
+            >
               <SelectTrigger className="bg-white border-gray-200">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-indigo-600" />
@@ -384,16 +483,32 @@ const AllApplications = () => {
         {!loading && applications.length > 0 && (
           <div className="flex flex-wrap gap-4">
             {[
-              { label: "Total Candidates", value: applications.length, color: "text-indigo-600" },
-              { label: "With Round 2", value: applications.filter(a => hasRound2(a)).length, color: "text-emerald-600" },
-              { label: "Pending Round 2", value: applications.filter(a => !hasRound2(a)).length, color: "text-amber-600" },
+              {
+                label: "Total Candidates",
+                value: applications.length,
+                color: "text-indigo-600",
+              },
+              {
+                label: "With Round 2",
+                value: applications.filter((a) => hasRound2(a)).length,
+                color: "text-emerald-600",
+              },
+              {
+                label: "Pending Round 2",
+                value: applications.filter((a) => !hasRound2(a)).length,
+                color: "text-amber-600",
+              },
             ].map((stat) => (
               <Card key={stat.label} className="flex-1 min-w-[180px]">
                 <CardContent className="p-5 flex items-center gap-4">
-                  <div className={`w-3 h-3 rounded-full ${stat.color.replace("text", "bg")}`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${stat.color.replace("text", "bg")}`}
+                  />
                   <div>
                     <p className="text-sm text-gray-500">{stat.label}</p>
-                    <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+                    <p className={`text-2xl font-semibold ${stat.color}`}>
+                      {stat.value}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -412,9 +527,12 @@ const AllApplications = () => {
           <Card className="py-24 text-center">
             <CardContent>
               <Users className="w-16 h-16 mx-auto text-gray-300 mb-6" />
-              <h3 className="text-2xl font-semibold text-gray-700">No Candidates Yet</h3>
+              <h3 className="text-2xl font-semibold text-gray-700">
+                No Candidates Yet
+              </h3>
               <p className="text-gray-500 mt-3 max-w-md mx-auto">
-                Candidates in the final shortlist for this position will appear here.
+                Candidates in the final shortlist for this position will appear
+                here.
               </p>
             </CardContent>
           </Card>
@@ -425,8 +543,10 @@ const AllApplications = () => {
               const totalInterviews = app.interviews?.length || 0;
 
               return (
-                <Card key={app.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200">
-
+                <Card
+                  key={app.id}
+                  className="hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200"
+                >
                   <CardContent className="p-4 space-y-2">
                     {/* Candidate Info */}
                     <div className="flex items-start justify-between">
@@ -435,13 +555,19 @@ const AllApplications = () => {
                           {app.candidate?.userName?.charAt(0)?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-lg text-gray-900">{app.candidate?.userName}</p>
+                          <p className="font-semibold text-lg text-gray-900">
+                            {app.candidate?.userName}
+                          </p>
                           <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5" /> {app.candidate?.emailAddress}
+                            <Mail className="w-3.5 h-3.5" />{" "}
+                            {app.candidate?.emailAddress}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 font-medium">
+                      <Badge
+                        variant="secondary"
+                        className="bg-indigo-100 text-indigo-700 font-medium"
+                      >
                         {app.isSelected ? "Selected" : app?.status}
                       </Badge>
                     </div>
@@ -457,25 +583,57 @@ const AllApplications = () => {
                         Offer Email Sent
                         <p>
                           {app.offerEmailSentAt
-                            ? new Date(app.offerEmailSentAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
+                            ? new Date(app.offerEmailSentAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )
                             : "—"}
                         </p>
+                      </div>
+                    )}
+
+                    {app.joiningDate && (
+                      <div className="flex items-center gap-2 text-gray-600 text-sm">
+                        <Calendar className="w-4 h-4" />
+                        Joining Date:{" "}
+                        {new Date(app.joiningDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </div>
+                    )}
+
+                    {app.leavingDate && (
+                      <div className="flex items-center gap-2 text-gray-600 text-sm">
+                        <Calendar className="w-4 h-4" />
+                        Leaving Date:{" "}
+                        {new Date(app.leavingDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </div>
                     )}
 
                     {/* Interview Summary */}
                     <div className="bg-gray-50 rounded-xl p-4 flex gap-6">
                       <div className="text-center">
-                        <p className="text-3xl font-bold text-indigo-600">{totalInterviews}</p>
-                        <p className="text-xs text-gray-500 tracking-widest">ROUNDS</p>
+                        <p className="text-3xl font-bold text-indigo-600">
+                          {totalInterviews}
+                        </p>
+                        <p className="text-xs text-gray-500 tracking-widest">
+                          ROUNDS
+                        </p>
                       </div>
                       <div className="flex-1 flex flex-wrap gap-2 items-center">
                         {app.interviews?.slice(0, 3).map((iv: any) => {
-                          const cfg = statusConfig[iv.status] || statusConfig.scheduled;
+                          const cfg =
+                            statusConfig[iv.status] || statusConfig.scheduled;
                           return (
                             <Badge key={iv.id} className={cfg.color}>
                               R{iv.round}
@@ -483,7 +641,9 @@ const AllApplications = () => {
                           );
                         })}
                         {!totalInterviews && (
-                          <p className="text-sm text-gray-400">No interviews scheduled</p>
+                          <p className="text-sm text-gray-400">
+                            No interviews scheduled
+                          </p>
                         )}
                       </div>
                     </div>
@@ -523,12 +683,37 @@ const AllApplications = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => router.push(`/employer/profile?tab=view-applications&id=${app.id}`)}
+                      onClick={() =>
+                        router.push(
+                          `/employer/profile?tab=view-applications&id=${app.id}`,
+                        )
+                      }
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       View Complete Details
                     </Button>
-
+                    {app.isSelected && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                        onClick={() => {
+                          setLeavingDateAppId(app.id);
+                          setLeavingDate(
+                            app.leavingDate
+                              ? new Date(app.leavingDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : "",
+                          );
+                          setShowLeavingDateModal(true);
+                        }}
+                      >
+                        <CalendarDays className="w-4 h-4 mr-2" />
+                        {app.leavingDate
+                          ? "Update Leaving Date"
+                          : "Set Leaving Date"}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -548,20 +733,30 @@ const AllApplications = () => {
             <div>
               <Label>Interview Mode</Label>
               <div className="flex gap-3 mt-2">
-                {(["online", "offline"] as const).map((mode) => (
+                {(["online", "offline", "phone"] as const).map((mode) => (
                   <Button
                     key={mode}
-                    variant={scheduleForm.interviewType === mode ? "default" : "outline"}
+                    variant={
+                      scheduleForm.interviewType === mode
+                        ? "default"
+                        : "outline"
+                    }
                     className="flex-1"
-                    onClick={() => setScheduleForm({ ...scheduleForm, interviewType: mode })}
+                    onClick={() =>
+                      setScheduleForm({ ...scheduleForm, interviewType: mode })
+                    }
                   >
                     {mode === "online" ? (
                       <>
                         <Video className="w-4 h-4 mr-2" /> Online
                       </>
-                    ) : (
+                    ) : mode === "offline" ? (
                       <>
                         <MapPin className="w-4 h-4 mr-2" /> Offline
+                      </>
+                    ) : (
+                      <>
+                        <Phone className="w-4 h-4 mr-2" /> Phone
                       </>
                     )}
                   </Button>
@@ -574,7 +769,12 @@ const AllApplications = () => {
               <Input
                 type="datetime-local"
                 value={scheduleForm.scheduledAt}
-                onChange={(e) => setScheduleForm({ ...scheduleForm, scheduledAt: e.target.value })}
+                onChange={(e) =>
+                  setScheduleForm({
+                    ...scheduleForm,
+                    scheduledAt: e.target.value,
+                  })
+                }
               />
             </div>
 
@@ -585,7 +785,12 @@ const AllApplications = () => {
                   type="url"
                   placeholder="https://meet.google.com/..."
                   value={scheduleForm.meetingLink}
-                  onChange={(e) => setScheduleForm({ ...scheduleForm, meetingLink: e.target.value })}
+                  onChange={(e) =>
+                    setScheduleForm({
+                      ...scheduleForm,
+                      meetingLink: e.target.value,
+                    })
+                  }
                 />
               </div>
             )}
@@ -597,7 +802,12 @@ const AllApplications = () => {
                   <Input
                     placeholder="Office / Floor"
                     value={scheduleForm.location}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })}
+                    onChange={(e) =>
+                      setScheduleForm({
+                        ...scheduleForm,
+                        location: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -605,15 +815,40 @@ const AllApplications = () => {
                   <Input
                     placeholder="Name"
                     value={scheduleForm.meetingPerson}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, meetingPerson: e.target.value })}
+                    onChange={(e) =>
+                      setScheduleForm({
+                        ...scheduleForm,
+                        meetingPerson: e.target.value,
+                      })
+                    }
                   />
                 </div>
+              </div>
+            )}
+
+            {scheduleForm.interviewType === "phone" && (
+              <div>
+                <Label>Interviewer Name (optional)</Label>
+                <Input
+                  placeholder="Who will call?"
+                  value={scheduleForm.meetingPerson}
+                  onChange={(e) =>
+                    setScheduleForm({
+                      ...scheduleForm,
+                      meetingPerson: e.target.value,
+                    })
+                  }
+                />
               </div>
             )}
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setShowScheduleModal(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowScheduleModal(false)}
+            >
               Cancel
             </Button>
             <Button className="flex-1" onClick={handleCreateInterview}>
@@ -629,34 +864,50 @@ const AllApplications = () => {
           <DialogHeader>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-xl">
-                {selectedAppForView?.candidate?.userName?.charAt(0)?.toUpperCase()}
+                {selectedAppForView?.candidate?.userName
+                  ?.charAt(0)
+                  ?.toUpperCase()}
               </div>
               <div>
-                <DialogTitle className="text-xl">{selectedAppForView?.candidate?.userName}</DialogTitle>
-                <p className="text-sm text-gray-500">{selectedAppForView?.candidate?.emailAddress}</p>
+                <DialogTitle className="text-xl">
+                  {selectedAppForView?.candidate?.userName}
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  {selectedAppForView?.candidate?.emailAddress}
+                </p>
               </div>
             </div>
           </DialogHeader>
 
           <div className="py-6">
-            <h3 className="font-medium text-gray-700 mb-4">Interview Timeline</h3>
+            <h3 className="font-medium text-gray-700 mb-4">
+              Interview Timeline
+            </h3>
 
             {selectedAppForView?.interviews?.length > 0 ? (
               selectedAppForView.interviews
                 .sort((a: any, b: any) => a.round - b.round)
                 .map((interview: any) => {
-                  const cfg = statusConfig[interview.status] || statusConfig.scheduled;
+                  const cfg =
+                    statusConfig[interview.status] || statusConfig.scheduled;
                   const StatusIcon = cfg.icon;
 
                   return (
-                    <div key={interview.id} className="border-l-4 border-gray-200 pl-6 mb-8 relative">
+                    <div
+                      key={interview.id}
+                      className="border-l-4 border-gray-200 pl-6 mb-8 relative"
+                    >
                       <div className="absolute -left-2 top-2 w-4 h-4 rounded-full bg-white border-4 border-gray-300" />
 
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="flex items-center gap-3">
-                            <Badge className={cfg.color}>Round {interview.round}</Badge>
-                            <span className="capitalize text-sm text-gray-500">{interview.interviewType}</span>
+                            <Badge className={cfg.color}>
+                              Round {interview.round}
+                            </Badge>
+                            <span className="capitalize text-sm text-gray-500">
+                              {interview.interviewType}
+                            </span>
                           </div>
                         </div>
 
@@ -666,8 +917,14 @@ const AllApplications = () => {
                             {cfg.label}
                           </Badge>
                           {interview.result && (
-                            <Badge className={resultConfig[interview.result]?.color}>
-                              {interview.result === "pass" ? <ThumbsUp className="w-3 h-3 mr-1" /> : <ThumbsDown className="w-3 h-3 mr-1" />}
+                            <Badge
+                              className={resultConfig[interview.result]?.color}
+                            >
+                              {interview.result === "pass" ? (
+                                <ThumbsUp className="w-3 h-3 mr-1" />
+                              ) : (
+                                <ThumbsDown className="w-3 h-3 mr-1" />
+                              )}
                               {resultConfig[interview.result]?.label}
                             </Badge>
                           )}
@@ -690,33 +947,47 @@ const AllApplications = () => {
                           {new Date(interview.scheduledAt).toLocaleString()}
                         </div>
 
-                        {interview.interviewType === "online" && interview.meetingLink && (
-                          <a
-                            href={interview.meetingLink}
-                            target="_blank"
-                            className="flex items-center gap-2 text-indigo-600 hover:underline"
-                          >
-                            <LinkIcon className="w-4 h-4" />
-                            Join Meeting
-                          </a>
-                        )}
+                        {interview.interviewType === "online" &&
+                          interview.meetingLink && (
+                            <a
+                              href={interview.meetingLink}
+                              target="_blank"
+                              className="flex items-center gap-2 text-indigo-600 hover:underline"
+                            >
+                              <LinkIcon className="w-4 h-4" />
+                              Join Meeting
+                            </a>
+                          )}
 
-                        {interview.interviewType === "offline" && interview.location && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" /> {interview.location}
-                          </div>
-                        )}
+                        {interview.interviewType === "offline" &&
+                          interview.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />{" "}
+                              {interview.location}
+                            </div>
+                          )}
 
                         {interview.meetingPerson && (
                           <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" /> {interview.meetingPerson}
+                            <Users className="w-4 h-4" />{" "}
+                            {interview.meetingPerson}
+                          </div>
+                        )}
+
+                        {interview.status === "hold" && (
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />{" "}
+                            {interview?.holdReason ||
+                              "On hold - reason not specified"}
                           </div>
                         )}
                       </div>
 
                       {interview.feedback && (
                         <div className="mt-4 pt-4 border-t">
-                          <p className="text-xs font-medium text-gray-500 mb-1">FEEDBACK</p>
+                          <p className="text-xs font-medium text-gray-500 mb-1">
+                            FEEDBACK
+                          </p>
                           <p className="text-gray-700">{interview.feedback}</p>
                         </div>
                       )}
@@ -737,7 +1008,9 @@ const AllApplications = () => {
       <Dialog open={showUpdateModal} onOpenChange={setShowUpdateModal}>
         <DialogContent className="sm:max-w-xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Round {selectedInterviewForUpdate?.round} Interview</DialogTitle>
+            <DialogTitle>
+              Edit Round {selectedInterviewForUpdate?.round} Interview
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -745,15 +1018,29 @@ const AllApplications = () => {
             <div>
               <Label>Interview Mode</Label>
               <div className="flex gap-3 mt-2">
-                {(["online", "offline"] as const).map((mode) => (
+                {(["online", "offline", "phone"] as const).map((mode) => (
                   <Button
                     key={mode}
-                    variant={updateForm.interviewType === mode ? "default" : "outline"}
+                    variant={
+                      updateForm.interviewType === mode ? "default" : "outline"
+                    }
                     className="flex-1"
-                    onClick={() => setUpdateForm({ ...updateForm, interviewType: mode })}
+                    onClick={() =>
+                      setUpdateForm({ ...updateForm, interviewType: mode })
+                    }
                   >
-                    {mode === "online" ? <Video className="w-4 h-4 mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
-                    {mode}
+                    {mode === "online" ? (
+                      <Video className="w-4 h-4 mr-2" />
+                    ) : mode === "offline" ? (
+                      <MapPin className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Phone className="w-4 h-4 mr-2" />
+                    )}
+                    {mode === "online"
+                      ? "Online"
+                      : mode === "offline"
+                        ? "Offline"
+                        : "Phone"}
                   </Button>
                 ))}
               </div>
@@ -764,7 +1051,9 @@ const AllApplications = () => {
               <Input
                 type="datetime-local"
                 value={updateForm.scheduledAt}
-                onChange={(e) => setUpdateForm({ ...updateForm, scheduledAt: e.target.value })}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, scheduledAt: e.target.value })
+                }
               />
             </div>
 
@@ -775,7 +1064,12 @@ const AllApplications = () => {
                   type="url"
                   placeholder="https://meet.google.com/..."
                   value={updateForm.meetingLink}
-                  onChange={(e) => setUpdateForm({ ...updateForm, meetingLink: e.target.value })}
+                  onChange={(e) =>
+                    setUpdateForm({
+                      ...updateForm,
+                      meetingLink: e.target.value,
+                    })
+                  }
                 />
               </div>
             )}
@@ -786,16 +1080,38 @@ const AllApplications = () => {
                   <Label>Location</Label>
                   <Input
                     value={updateForm.location}
-                    onChange={(e) => setUpdateForm({ ...updateForm, location: e.target.value })}
+                    onChange={(e) =>
+                      setUpdateForm({ ...updateForm, location: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label>Interviewer</Label>
                   <Input
                     value={updateForm.meetingPerson}
-                    onChange={(e) => setUpdateForm({ ...updateForm, meetingPerson: e.target.value })}
+                    onChange={(e) =>
+                      setUpdateForm({
+                        ...updateForm,
+                        meetingPerson: e.target.value,
+                      })
+                    }
                   />
                 </div>
+              </div>
+            )}
+
+            {updateForm.interviewType === "phone" && (
+              <div>
+                <Label>Interviewer Name (optional)</Label>
+                <Input
+                  value={updateForm.meetingPerson}
+                  onChange={(e) =>
+                    setUpdateForm({
+                      ...updateForm,
+                      meetingPerson: e.target.value,
+                    })
+                  }
+                />
               </div>
             )}
 
@@ -803,7 +1119,15 @@ const AllApplications = () => {
             <div>
               <Label>Status</Label>
               <div className="grid grid-cols-2 gap-3 mt-2">
-                {(["scheduled", "completed", "cancelled", "rescheduled"] as const).map((s) => {
+                {(
+                  [
+                    "scheduled",
+                    "completed",
+                    "cancelled",
+                    "rescheduled",
+                    "hold",
+                  ] as const
+                ).map((s) => {
                   const cfg = statusConfig[s];
                   const SIcon = cfg.icon;
                   return (
@@ -811,7 +1135,9 @@ const AllApplications = () => {
                       key={s}
                       variant={updateForm.status === s ? "default" : "outline"}
                       className="justify-start"
-                      onClick={() => setUpdateForm({ ...updateForm, status: s })}
+                      onClick={() =>
+                        setUpdateForm({ ...updateForm, status: s })
+                      }
                     >
                       <SIcon className="w-4 h-4 mr-2" />
                       {cfg.label}
@@ -827,7 +1153,12 @@ const AllApplications = () => {
                 <Textarea
                   placeholder="Reason for cancellation..."
                   value={updateForm.cancelReason}
-                  onChange={(e) => setUpdateForm({ ...updateForm, cancelReason: e.target.value })}
+                  onChange={(e) =>
+                    setUpdateForm({
+                      ...updateForm,
+                      cancelReason: e.target.value,
+                    })
+                  }
                   rows={3}
                 />
               </div>
@@ -839,7 +1170,26 @@ const AllApplications = () => {
                 <Textarea
                   placeholder="Why is it being rescheduled?"
                   value={updateForm.rescheduleReason}
-                  onChange={(e) => setUpdateForm({ ...updateForm, rescheduleReason: e.target.value })}
+                  onChange={(e) =>
+                    setUpdateForm({
+                      ...updateForm,
+                      rescheduleReason: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {updateForm.status === "hold" && (
+              <div>
+                <Label className="text-amber-600">Hold Reason *</Label>
+                <Textarea
+                  placeholder="Why is this interview being put on hold?"
+                  value={updateForm.holdReason}
+                  onChange={(e) =>
+                    setUpdateForm({ ...updateForm, holdReason: e.target.value })
+                  }
                   rows={3}
                 />
               </div>
@@ -854,9 +1204,15 @@ const AllApplications = () => {
                       key={r}
                       variant={updateForm.result === r ? "default" : "outline"}
                       className={`flex-1 ${r === "pass" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
-                      onClick={() => setUpdateForm({ ...updateForm, result: r })}
+                      onClick={() =>
+                        setUpdateForm({ ...updateForm, result: r })
+                      }
                     >
-                      {r === "pass" ? <ThumbsUp className="w-4 h-4 mr-2" /> : <ThumbsDown className="w-4 h-4 mr-2" />}
+                      {r === "pass" ? (
+                        <ThumbsUp className="w-4 h-4 mr-2" />
+                      ) : (
+                        <ThumbsDown className="w-4 h-4 mr-2" />
+                      )}
                       {r === "pass" ? "Passed" : "Failed"}
                     </Button>
                   ))}
@@ -869,20 +1225,157 @@ const AllApplications = () => {
               <Textarea
                 placeholder="Add feedback or internal notes..."
                 value={updateForm.feedback}
-                onChange={(e) => setUpdateForm({ ...updateForm, feedback: e.target.value })}
+                onChange={(e) =>
+                  setUpdateForm({ ...updateForm, feedback: e.target.value })
+                }
                 rows={4}
               />
             </div>
           </div>
 
           <div className="flex gap-3 pt-6">
-            <Button variant="outline" className="flex-1" onClick={() => setShowUpdateModal(false)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowUpdateModal(false)}
+            >
               Cancel
             </Button>
             <Button className="flex-1" onClick={handleUpdateInterview}>
               Save Changes
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* FINAL DECISION MODAL */}
+      <Dialog
+        open={showFinalDecisionModal}
+        onOpenChange={setShowFinalDecisionModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center">
+                <UserCheck className="w-4 h-4 text-emerald-600" />
+              </div>
+              <DialogTitle>Final selection</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">
+                Final salary offered
+              </Label>
+              <div className="relative">
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Input
+                  type="number"
+                  placeholder="e.g. 850000"
+                  className="pl-8"
+                  value={finalDecisionForm.finalSalaryOffered}
+                  onChange={(e) =>
+                    setFinalDecisionForm((p) => ({
+                      ...p,
+                      finalSalaryOffered: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">Joining date</Label>
+              <Input
+                type="date"
+                value={finalDecisionForm.joiningDate}
+                onChange={(e) =>
+                  setFinalDecisionForm((p) => ({
+                    ...p,
+                    joiningDate: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">Comment / notes</Label>
+              <Textarea
+                placeholder="Any additional notes..."
+                rows={3}
+                value={finalDecisionForm.comment}
+                onChange={(e) =>
+                  setFinalDecisionForm((p) => ({
+                    ...p,
+                    comment: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowFinalDecisionModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleConfirmFinalDecision}
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Confirm selection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* LEAVING DATE MODAL */}
+      <Dialog
+        open={showLeavingDateModal}
+        onOpenChange={setShowLeavingDateModal}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center">
+                <CalendarDays className="w-4 h-4 text-orange-600" />
+              </div>
+              <DialogTitle>Set Leaving Date</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="py-4 space-y-1.5">
+            <Label className="text-sm text-gray-500">
+              Leaving / Last Working Date
+            </Label>
+            <Input
+              type="date"
+              value={leavingDate}
+              onChange={(e) => setLeavingDate(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowLeavingDateModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={handleUpdateLeavingDate}
+            >
+              <CalendarDays className="w-4 h-4 mr-2" />
+              Save Date
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

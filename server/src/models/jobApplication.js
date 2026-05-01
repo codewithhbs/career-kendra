@@ -139,6 +139,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
 
+      leavingDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+
       statusUpdatedBy: {
         type: DataTypes.INTEGER,
         allowNull: true,

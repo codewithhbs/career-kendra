@@ -61,6 +61,7 @@ const MyInterView = () => {
 
             if (res.data?.success) {
                 const apiData = res.data.data.data || [];
+                console.log("apiData",apiData)
 
                 const flattened: Interview[] = apiData.flatMap((app: any) =>
                     (app.interviews || []).map((interview: any) => ({
@@ -404,6 +405,15 @@ const MyInterView = () => {
                                                     </p>
                                                 </div>
 
+                                                {interview.location && (
+                                                    <div>
+                                                    <p className="text-gray-500">Location</p>
+                                                    <p className="font-medium flex items-center gap-2">
+                                                        <User size={16} /> {interview.location}
+                                                    </p>
+                                                </div>
+                                                )}
+
                                                 <div>
                                                     <p className="text-gray-500">Status</p>
                                                     <span className={`inline-block px-4 py-1 rounded-full text-xs font-medium ${isCompleted ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
@@ -481,6 +491,19 @@ const MyInterView = () => {
                                                         <p className="font-semibold text-green-700">Interview Completed</p>
                                                         <p className="text-sm text-green-600 mt-1">
                                                             Result: <span className="font-medium capitalize">{interview.result}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Completed with Result */}
+                                            {interview.holdReason && (
+                                                <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 flex items-start gap-3">
+                                                    <CheckCircle className="text-orange-600 mt-0.5" size={24} />
+                                                    <div>
+                                                        <p className="font-semibold text-orange-700">Interview Hold</p>
+                                                        <p className="text-sm text-orange-600 mt-1">
+                                                            Reason: <span className="font-medium capitalize">{interview.holdReason}</span>
                                                         </p>
                                                     </div>
                                                 </div>
