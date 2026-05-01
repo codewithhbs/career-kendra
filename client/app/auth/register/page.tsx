@@ -1,8 +1,8 @@
 import SignUpForm from '@/components/Login/SignUpForm'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 const page = () => {
-  return <SignUpForm/>
+  return <Suspense fallback={"...Loading"}><SignUpForm/></Suspense>
 }
 
 export default page
