@@ -26,6 +26,7 @@ import {
   Timer,
   UserPlus,
   UploadCloudIcon,
+  Users,
 } from "lucide-react";
 import Modal from "../../components/Model";
 import { getUserRole } from "../../utils/getRole";
@@ -1190,10 +1191,10 @@ export const AllJobs = () => {
                                 onClick={() =>
                                   navigate(`/jobs/check-applies/${job.id}`)
                                 }
-                                title="Verify"
+                                title="Check Applies"
                                 className="p-2 rounded-lg text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
                               >
-                                <UploadCloudIcon size={15} />
+                                <Users size={15} />
                               </button>
                             </>
                           )}

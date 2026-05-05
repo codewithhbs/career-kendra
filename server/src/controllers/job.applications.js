@@ -12,6 +12,7 @@ const { sendMessage } = require("../utils/sendMessage");
 const { WebSettings } = require("../models");
 const path = require("path");
 const fs = require("fs");
+const ExcelJS = require("exceljs");
 const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
   let lastError;
 
@@ -31,6 +32,92 @@ const withRetry = async (fn, maxRetries = 3, delayMs = 1000) => {
     }
   }
 };
+
+/* ================================================================
+   HELPER: Date range from filter key
+   ================================================================ */
+const getDateRange = (period) => {
+  const now = new Date();
+  const from = new Date();
+
+  switch (period) {
+    case "15days":
+      from.setDate(now.getDate() - 15);
+      break;
+    case "1month":
+      from.setMonth(now.getMonth() - 1);
+      break;
+    case "3months":
+      from.setMonth(now.getMonth() - 3);
+      break;
+    case "6months":
+      from.setMonth(now.getMonth() - 6);
+      break;
+    case "1year":
+      from.setFullYear(now.getFullYear() - 1);
+      break;
+    default:
+      return null; // No date filter
+  }
+
+  return { [Op.between]: [from, now] };
+};
+
+/* ================================================================
+   HELPER: Build summary stats for a list of applications
+   ================================================================ */
+const buildStats = (applications = []) => {
+  const total = applications.length;
+  const selected = applications.filter((a) => a.isSelected).length;
+  const joined = applications.filter((a) => a.status === "joined").length;
+  const notJoined = applications.filter((a) => a.status === "not_joined").length;
+  const finalShort = applications.filter((a) => a.status === "final_shortlist").length;
+  const rejected = applications.filter((a) => a.status === "rejected").length;
+  const shortlisted = applications.filter((a) => a.status === "shortlisted").length;
+  const interviewStage = applications.filter((a) => a.status === "interview_stage").length;
+  const withdrawn = applications.filter((a) => a.status === "withdrawn").length;
+  const offerSent = applications.filter((a) => a.offerEmailSent).length;
+
+  // Interview stats
+  const allInterviews = applications.flatMap((a) => a.interviews || []);
+  const totalInterviews = allInterviews.length;
+  const scheduledIntvw = allInterviews.filter((i) => i.status === "scheduled").length;
+  const completedIntvw = allInterviews.filter((i) => i.status === "completed").length;
+  const cancelledIntvw = allInterviews.filter((i) => i.status === "cancelled").length;
+  const passedIntvw = allInterviews.filter((i) => i.result === "pass").length;
+  const failedIntvw = allInterviews.filter((i) => i.result === "fail").length;
+
+  // Avg salary offered
+  const salaries = applications
+    .filter((a) => a.finalSalaryOffered)
+    .map((a) => a.finalSalaryOffered);
+  const avgSalary = salaries.length
+    ? Math.round(salaries.reduce((s, v) => s + v, 0) / salaries.length)
+    : null;
+
+  return {
+    total,
+    selected,
+    joined,
+    notJoined,
+    finalShort,
+    rejected,
+    shortlisted,
+    interviewStage,
+    withdrawn,
+    offerSent,
+    interviews: {
+      total: totalInterviews,
+      scheduled: scheduledIntvw,
+      completed: completedIntvw,
+      cancelled: cancelledIntvw,
+      passed: passedIntvw,
+      failed: failedIntvw,
+    },
+    avgSalaryOffered: avgSalary,
+  };
+};
+
 exports.ApplyToJob = async (req, res) => {
   const userId = req.user?.id;
   const { jobId } = req.params;
@@ -804,7 +891,7 @@ exports.getAllApplications = async (req, res) => {
       {
         model: Job,
         as: "job",
-        attributes: ["id", "jobTitle"],
+        attributes: ["id", "jobTitle", "jobCategory", "industry"],
       },
       {
         model: Employer,
@@ -878,7 +965,7 @@ exports.getAllApplicationsForEmpoyer = async (req, res) => {
     const whereCondition = {
       jobId,
       status: {
-        [Op.in]: ["final_shortlist", "selected", "rejected", "interview_stage"]
+        [Op.in]: [, "applied", "under_review", "shortlisted", "final_shortlist", "selected", "joined", "not_joined", "rejected", "interview_stage"]
       }
     };
     const include = [
@@ -1797,6 +1884,53 @@ exports.finalDecision = async (req, res) => {
   }
 };
 
+exports.updateJoiningDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, joiningDate, notJoinReason } = req.body;
+
+    const application = await JobApplication.findByPk(id);
+
+    if (!application) {
+      return sendError(res, 404, "Application not found");
+    }
+
+    if (!status) {
+      return sendError(res, 400, "Status is required");
+    }
+
+    const updateData = { status };
+
+    if (status === "not_joined") {
+      if (!notJoinReason) {
+        return sendError(res, 400, "notJoinReason is required when status is not_joined");
+      }
+      updateData.notJoinReason = notJoinReason;
+      updateData.joiningDate = null; // clear joining date
+    }
+
+    else if (status === "joined") {
+      updateData.joiningDate = joiningDate || null;
+      updateData.notJoinReason = null; // clear not join reason
+    }
+
+    else {
+      return sendError(res, 400, "Invalid status. Use 'joined' or 'not_joined'");
+    }
+
+    await application.update(updateData);
+
+    return res.status(200).json({
+      success: true,
+      message: status === "joined" ? "Joining details updated!" : "Not joined reason saved!",
+      data: application,
+    });
+
+  } catch (error) {
+    console.error("Update Joining Detail Error:", error);
+    return sendError(res, 500, "Failed to update joining detail");
+  }
+};
 
 exports.GetAllInterviews = async (req, res) => {
   try {
@@ -2865,3 +2999,1128 @@ exports.getAdminDashboard = async (req, res) => {
 
   }
 };
+
+
+exports.exportApplications = async (req, res) => {
+  try {
+    const { id: jobId } = req.params;
+    console.log("I am hit")
+    const {
+      status,
+      search,
+      sortBy = "createdAt",
+      order = "DESC",
+      dateFrom,
+      dateTo,
+      interviewStatus,
+      interviewResult,
+      candidateLocation,
+      candidateArea,
+      format = "xlsx", // "xlsx" or "csv"
+    } = req.query;
+
+    // ─── Build WHERE conditions (same as getAllApplications) ───────────────
+    const whereCondition = { jobId };
+
+    if (status) whereCondition.status = status;
+
+    if (dateFrom || dateTo) {
+      whereCondition.appliedAt = {};
+      if (dateFrom) whereCondition.appliedAt[Op.gte] = new Date(dateFrom);
+      if (dateTo)
+        whereCondition.appliedAt[Op.lte] = new Date(dateTo + "T23:59:59.999Z");
+    }
+
+    const interviewWhere = {};
+    if (interviewStatus) interviewWhere.status = interviewStatus;
+    if (interviewResult) interviewWhere.result = interviewResult;
+    const hasInterviewFilter = Object.keys(interviewWhere).length > 0;
+
+    const candidateWhere = {};
+    if (search) {
+      candidateWhere[Op.or] = [
+        { userName: { [Op.like]: `%${search}%` } },
+        { emailAddress: { [Op.like]: `%${search}%` } },
+        { contactNumber: { [Op.like]: `%${search}%` } },
+      ];
+    }
+    if (candidateLocation)
+      candidateWhere.location = { [Op.like]: `%${candidateLocation}%` };
+    if (candidateArea)
+      candidateWhere.area = { [Op.like]: `%${candidateArea}%` };
+
+    // ─── Fetch ALL matching records (no pagination for export) ────────────
+    const applications = await JobApplication.findAll({
+      where: whereCondition,
+      include: [
+        {
+          model: User,
+          as: "candidate",
+          attributes: [
+            "id",
+            "userName",
+            "emailAddress",
+            "contactNumber",
+            "location",
+            "area",
+          ],
+          where:
+            Object.keys(candidateWhere).length > 0 ? candidateWhere : undefined,
+          required: !!(search || candidateLocation || candidateArea),
+        },
+        {
+          model: Job,
+          as: "job",
+          attributes: ["id", "jobTitle", "jobCategory", "industry"],
+        },
+        {
+          model: JobInterview,
+          as: "interviews",
+          attributes: [
+            "id",
+            "round",
+            "interviewType",
+            "scheduledAt",
+            "feedback",
+            "meetingLink",
+            "location",
+            "meetingPerson",
+            "status",
+            "result",
+            "completedAt",
+            "cancelReason",
+            "rescheduleReason",
+          ],
+          where: hasInterviewFilter ? interviewWhere : undefined,
+          required: hasInterviewFilter,
+          order: [["round", "ASC"]],
+        },
+      ],
+      order: [[sortBy, order]],
+      distinct: true,
+    });
+
+    // ─── Flatten data for export ──────────────────────────────────────────
+    const rows = applications.map((app) => {
+      const latestInterview = app.interviews?.length
+        ? app.interviews[app.interviews.length - 1]
+        : null;
+
+      return {
+        "Application ID": app.id,
+        "Candidate Name": app.candidate?.userName || "",
+        Email: app.candidate?.emailAddress || "",
+        Phone: app.candidate?.contactNumber || "",
+        Location: app.candidate?.location || "",
+        Area: app.candidate?.area || "",
+        "Application Status": (app.status || "").replace(/_/g, " "),
+        "Applied At": app.appliedAt
+          ? new Date(app.appliedAt).toLocaleString("en-IN")
+          : "",
+        "Job Title": app.job?.jobTitle || "",
+        "Job Category": app.job?.jobCategory || "",
+        Industry: app.job?.industry || "",
+        "Rejection Reason": app.rejectionReason || "",
+        "Resume Link": app.resume || "",
+        "Total Interviews": app.interviews?.length || 0,
+        "Latest Interview Round": latestInterview?.round || "",
+        "Latest Interview Type": latestInterview?.interviewType || "",
+        "Latest Interview Status": latestInterview?.status
+          ? latestInterview.status.replace(/_/g, " ")
+          : "",
+        "Latest Interview Result": latestInterview?.result || "",
+        "Scheduled At": latestInterview?.scheduledAt
+          ? new Date(latestInterview.scheduledAt).toLocaleString("en-IN")
+          : "",
+        Interviewer: latestInterview?.meetingPerson || "",
+        "Meeting Link": latestInterview?.meetingLink || "",
+        "Interview Location": latestInterview?.location || "",
+        "Interview Feedback": latestInterview?.feedback || "",
+        "Cancel Reason": latestInterview?.cancelReason || "",
+        "Reschedule Reason": latestInterview?.rescheduleReason || "",
+      };
+    });
+
+    const filename = `applications_${jobId}_${Date.now()}`;
+
+    // ─── CSV Export ───────────────────────────────────────────────────────
+    if (format === "csv") {
+      const headers = Object.keys(rows[0] || {});
+      const csvLines = [
+        headers.join(","),
+        ...rows.map((row) =>
+          headers
+            .map((h) => `"${String(row[h] ?? "").replace(/"/g, '""')}"`)
+            .join(",")
+        ),
+      ];
+      const csvContent = csvLines.join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}.csv"`
+      );
+      return res.send(csvContent);
+    }
+
+    // ─── XLSX Export ──────────────────────────────────────────────────────
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "HireApp";
+    workbook.created = new Date();
+
+    const sheet = workbook.addWorksheet("Applications", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+
+    // Define columns
+    const columns = Object.keys(rows[0] || {}).map((key) => ({
+      header: key,
+      key,
+      width: Math.max(key.length + 4, 18),
+    }));
+    sheet.columns = columns;
+
+    // Style header row
+    const headerRow = sheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4C1D95" }, // violet-900
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+      cell.border = {
+        bottom: { style: "thin", color: { argb: "FFDDDDDD" } },
+      };
+    });
+    headerRow.height = 30;
+
+    // Status color map
+    const statusColors = {
+      applied: "FFDBEAFE",
+      under_review: "FFFEF3C7",
+      shortlisted: "FFD1FAE5",
+      interview_stage: "FFEDE9FE",
+      final_shortlist: "FFE0E7FF",
+      selected: "FFDCFCE7",
+      rejected: "FFFEE2E2",
+    };
+    const interviewResultColors = {
+      pass: "FFDCFCE7",
+      fail: "FFFEE2E2",
+      pending: "FFFEF3C7",
+    };
+
+    // Add data rows
+    rows.forEach((rowData, idx) => {
+      const row = sheet.addRow(rowData);
+      row.height = 20;
+
+      row.eachCell({ includeEmpty: true }, (cell) => {
+        cell.alignment = { vertical: "middle", wrapText: false };
+        cell.font = { size: 10 };
+        if (idx % 2 === 1) {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFF9FAFB" },
+          };
+        }
+      });
+
+      // Color-code Application Status cell
+      const statusKey = rowData["Application Status"]
+        ?.toLowerCase()
+        .replace(/ /g, "_");
+      if (statusColors[statusKey]) {
+        const statusCell = row.getCell("Application Status");
+        statusCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: statusColors[statusKey] },
+        };
+        statusCell.font = { size: 10, bold: true };
+      }
+
+      // Color-code Interview Result cell
+      const resultKey = rowData["Latest Interview Result"]?.toLowerCase();
+      if (interviewResultColors[resultKey]) {
+        const resultCell = row.getCell("Latest Interview Result");
+        resultCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: interviewResultColors[resultKey] },
+        };
+        resultCell.font = { size: 10, bold: true };
+      }
+    });
+
+    // Auto-fit some columns
+    sheet.getColumn("Email").width = 28;
+    sheet.getColumn("Candidate Name").width = 22;
+    sheet.getColumn("Interview Feedback").width = 35;
+    sheet.getColumn("Rejection Reason").width = 30;
+    sheet.getColumn("Meeting Link").width = 35;
+
+    // Add summary sheet
+    const summarySheet = workbook.addWorksheet("Summary");
+    const statusCounts = {};
+    rows.forEach((r) => {
+      const s = r["Application Status"] || "Unknown";
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
+
+    summarySheet.columns = [
+      { header: "Status", key: "status", width: 22 },
+      { header: "Count", key: "count", width: 12 },
+      { header: "Percentage", key: "pct", width: 15 },
+    ];
+
+    const sumHeader = summarySheet.getRow(1);
+    sumHeader.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF1F2937" },
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+    sumHeader.height = 25;
+
+    const total = rows.length;
+    Object.entries(statusCounts).forEach(([status, count], idx) => {
+      const row = summarySheet.addRow({
+        status,
+        count,
+        pct: `=B${idx + 2}/${total}`,
+      });
+      row.getCell("pct").numFmt = "0.0%";
+      row.height = 20;
+      row.eachCell((cell) => {
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.font = { size: 10 };
+      });
+    });
+
+    // Total row
+    const totalRow = summarySheet.addRow({
+      status: "TOTAL",
+      count: `=SUM(B2:B${Object.keys(statusCounts).length + 1})`,
+      pct: "100%",
+    });
+    totalRow.eachCell((cell) => {
+      cell.font = { bold: true, size: 10 };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF3F4F6" },
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    // Metadata in summary
+    summarySheet.addRow([]);
+    summarySheet.addRow(["Export Date", new Date().toLocaleString("en-IN")]);
+    summarySheet.addRow(["Job ID", jobId]);
+    summarySheet.addRow(["Total Records", total]);
+    if (status) summarySheet.addRow(["Filter: Status", status]);
+    if (search) summarySheet.addRow(["Filter: Search", search]);
+    if (dateFrom) summarySheet.addRow(["Filter: Date From", dateFrom]);
+    if (dateTo) summarySheet.addRow(["Filter: Date To", dateTo]);
+    if (interviewStatus)
+      summarySheet.addRow(["Filter: Interview Status", interviewStatus]);
+    if (interviewResult)
+      summarySheet.addRow(["Filter: Interview Result", interviewResult]);
+    if (candidateLocation)
+      summarySheet.addRow(["Filter: Location", candidateLocation]);
+    if (candidateArea)
+      summarySheet.addRow(["Filter: Area", candidateArea]);
+
+    // Stream response
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}.xlsx"`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("Export Applications Error:", error);
+    return res.status(500).json({ success: false, message: "Export failed" });
+  }
+};
+
+exports.AllJobsDetail = async (req, res) => {
+  try {
+
+    const {
+      period,
+      fromDate,
+      toDate,
+      jobStatus,
+      appStatus,
+      employerId,
+      companyId,
+      jobType,
+      workMode,
+      city,
+      isSelected,
+      interviewResult,
+      interviewStatus,
+    } = req.query;
+
+    /* ── Job-level WHERE ── */
+    const jobWhere = {};
+    if (jobStatus) jobWhere.status = jobStatus;
+    if (employerId) jobWhere.employerId = Number(employerId);
+    if (companyId) jobWhere.companyId = Number(companyId);
+    if (jobType) jobWhere.jobType = jobType;
+    if (workMode) jobWhere.workMode = workMode;
+    if (city) jobWhere.city = { [Op.like]: `%${city}%` };
+
+    /* ── Application-level WHERE ── */
+    const appWhere = {};
+    if (appStatus) appWhere.status = appStatus;
+    if (isSelected !== undefined) appWhere.isSelected = isSelected === "true";
+
+    // Date filter on applications
+    let dateRange = null;
+    if (period) {
+      dateRange = getDateRange(period);
+    } else if (fromDate && toDate) {
+      dateRange = { [Op.between]: [new Date(fromDate), new Date(toDate)] };
+    }
+    if (dateRange) appWhere.appliedAt = dateRange;
+
+    /* ── Interview-level WHERE ── */
+    const interviewWhere = {};
+    if (interviewResult) interviewWhere.result = interviewResult;
+    if (interviewStatus) interviewWhere.status = interviewStatus;
+
+    /* ── Query ── */
+    const jobs = await Job.findAll({
+      where: jobWhere,
+      include: [
+        {
+          model: JobApplication,
+          as: "applications",
+          where: Object.keys(appWhere).length ? appWhere : undefined,
+          required: false,
+          include: [
+            {
+              model: JobInterview,
+              as: "interviews",
+              where: Object.keys(interviewWhere).length ? interviewWhere : undefined,
+              required: false,
+            },
+            {
+              model: User,
+              as: "candidate",
+              attributes: ["id", "userName", "emailAddress", "contactNumber"],
+            },
+            {
+              model: Employer,
+              as: "decidedByEmployer",
+              attributes: ["id", "employerName", "employerEmail"],
+            },
+          ],
+        },
+        {
+          model: Company,
+          as: "company",
+          attributes: ["id", "companyName"],
+        },
+        {
+          model: Employer,
+          as: "employer",
+          attributes: ["id", "employerName", "employerEmail"],
+        },
+      ],
+      order: [
+        ["createdAt", "DESC"],
+        [
+          { model: JobApplication, as: "applications" },
+          { model: JobInterview, as: "interviews" },
+          "round",
+          "ASC",
+        ],
+      ],
+    });
+
+    /* ── Attach stats per job ── */
+    const data = jobs.map((job) => {
+      const j = job.toJSON();
+      return { ...j, _stats: buildStats(j.applications || []) };
+    });
+
+    /* ── Global summary ── */
+    const allApps = data.flatMap((j) => j.applications || []);
+    const globalStats = buildStats(allApps);
+
+    return res.status(200).json({
+      success: true,
+      totalJobs: data.length,
+      globalStats,
+      filters: { period, fromDate, toDate, jobStatus, appStatus, employerId, companyId, jobType, workMode, city, isSelected, interviewResult, interviewStatus },
+      data,
+    });
+  } catch (error) {
+    console.error("AllJobsDetail Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch jobs detail" });
+  }
+};
+
+exports.ExportJobsExcel = async (req, res) => {
+  try {
+    // const {
+    //   Job,
+    //   JobApplication,
+    //   JobInterview,
+    //   User,
+    //   Employer,
+    //   Company,
+    // } = req.app.get("models");
+
+    const {
+      period,
+      fromDate,
+      toDate,
+      jobStatus,
+      appStatus,
+      employerId,
+      companyId,
+      jobType,
+      workMode,
+      city,
+      isSelected,
+      interviewResult,
+      interviewStatus,
+    } = req.query;
+
+    /* ── Same WHERE logic ── */
+    const jobWhere = {};
+    if (jobStatus) jobWhere.status = jobStatus;
+    if (employerId) jobWhere.employerId = Number(employerId);
+    if (companyId) jobWhere.companyId = Number(companyId);
+    if (jobType) jobWhere.jobType = jobType;
+    if (workMode) jobWhere.workMode = workMode;
+    if (city) jobWhere.city = { [Op.like]: `%${city}%` };
+
+    const appWhere = {};
+    if (appStatus) appWhere.status = appStatus;
+    if (isSelected !== undefined) appWhere.isSelected = isSelected === "true";
+
+    let dateRange = null;
+    if (period) {
+      dateRange = getDateRange(period);
+    } else if (fromDate && toDate) {
+      dateRange = { [Op.between]: [new Date(fromDate), new Date(toDate)] };
+    }
+    if (dateRange) appWhere.appliedAt = dateRange;
+
+    const interviewWhere = {};
+    if (interviewResult) interviewWhere.result = interviewResult;
+    if (interviewStatus) interviewWhere.status = interviewStatus;
+
+    const jobs = await Job.findAll({
+      where: jobWhere,
+      include: [
+        {
+          model: JobApplication,
+          as: "applications",
+          where: Object.keys(appWhere).length ? appWhere : undefined,
+          required: false,
+          include: [
+            {
+              model: JobInterview,
+              as: "interviews",
+              where: Object.keys(interviewWhere).length ? interviewWhere : undefined,
+              required: false,
+            },
+            {
+              model: User,
+              as: "candidate",
+              attributes: ["id", "userName", "emailAddress", "contactNumber"],
+            },
+            {
+              model: Employer,
+              as: "decidedByEmployer",
+              attributes: ["id", "employerName"],
+            },
+          ],
+        },
+        {
+          model: Company,
+          as: "company",
+          attributes: ["id", "companyName"],
+        },
+        {
+          model: Employer,
+          as: "employer",
+          attributes: ["id", "employerName", "employerEmail"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const data = jobs.map((j) => {
+      const job = j.toJSON();
+      return { ...job, _stats: buildStats(job.applications || []) };
+    });
+
+    const allApps = data.flatMap((j) => j.applications || []);
+    const globalStats = buildStats(allApps);
+
+    /* ============================================================
+       BUILD EXCEL
+       ============================================================ */
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "HiringPortal";
+    wb.created = new Date();
+
+    /* ── Color palette ── */
+    const COLORS = {
+      headerBg: "1E3A5F",
+      headerFg: "FFFFFF",
+      subHeaderBg: "2E6DA4",
+      subHeaderFg: "FFFFFF",
+      accent1: "E8F4FD",
+      accent2: "D4EDDA",
+      accent3: "FFF3CD",
+      accent4: "F8D7DA",
+      rowAlt: "F8FAFC",
+      white: "FFFFFF",
+      borderColor: "CBD5E1",
+      statCard: "EFF6FF",
+    };
+
+    const headerFont = { name: "Arial", bold: true, size: 11, color: { argb: COLORS.headerFg } };
+    const subHeaderFont = { name: "Arial", bold: true, size: 10, color: { argb: COLORS.subHeaderFg } };
+    const bodyFont = { name: "Arial", size: 10 };
+    const boldBodyFont = { name: "Arial", size: 10, bold: true };
+    const thinBorder = {
+      top: { style: "thin", color: { argb: COLORS.borderColor } },
+      left: { style: "thin", color: { argb: COLORS.borderColor } },
+      bottom: { style: "thin", color: { argb: COLORS.borderColor } },
+      right: { style: "thin", color: { argb: COLORS.borderColor } },
+    };
+
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+    const fmtNum = (n) => n != null ? `₹${Number(n).toLocaleString("en-IN")}` : "—";
+
+    /* ══════════════════════════════════════════════════════════
+       SHEET 1 — Dashboard Summary
+       ══════════════════════════════════════════════════════════ */
+    const dash = wb.addWorksheet("📊 Dashboard", {
+      views: [{ showGridLines: false }],
+      pageSetup: { orientation: "landscape", fitToPage: true },
+    });
+
+    dash.getColumn("A").width = 4;
+    dash.getColumn("B").width = 30;
+    dash.getColumn("C").width = 18;
+    dash.getColumn("D").width = 30;
+    dash.getColumn("E").width = 18;
+    dash.getColumn("F").width = 30;
+    dash.getColumn("G").width = 18;
+
+    // Title
+    dash.mergeCells("A1:G1");
+    const titleCell = dash.getCell("A1");
+    titleCell.value = "HIRING PIPELINE — COMPLETE REPORT";
+    titleCell.font = { name: "Arial", bold: true, size: 16, color: { argb: COLORS.headerFg } };
+    titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.headerBg } };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    dash.getRow(1).height = 40;
+
+    // Generated at
+    dash.mergeCells("A2:G2");
+    const genCell = dash.getCell("A2");
+    genCell.value = `Generated: ${new Date().toLocaleString("en-IN")}   |   Filters: Period=${period || "All"} | Status=${jobStatus || "All"} | AppStatus=${appStatus || "All"}`;
+    genCell.font = { name: "Arial", size: 9, italic: true, color: { argb: "64748B" } };
+    genCell.alignment = { horizontal: "center" };
+    dash.getRow(2).height = 18;
+
+    dash.addRow([]);
+
+    // Section header helper
+    const addSectionHeader = (ws, row, text, cols) => {
+      ws.mergeCells(`B${row}:${cols}${row}`);
+      const c = ws.getCell(`B${row}`);
+      c.value = text;
+      c.font = subHeaderFont;
+      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.subHeaderBg } };
+      c.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+      ws.getRow(row).height = 22;
+    };
+
+    // Stat row helper
+    const addStatRow = (ws, row, label, value, bgColor = COLORS.statCard) => {
+      const lc = ws.getCell(`B${row}`);
+      const vc = ws.getCell(`C${row}`);
+      lc.value = label;
+      lc.font = bodyFont;
+      lc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      lc.border = thinBorder;
+      lc.alignment = { vertical: "middle", indent: 1 };
+      vc.value = value;
+      vc.font = boldBodyFont;
+      vc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      vc.border = thinBorder;
+      vc.alignment = { horizontal: "center", vertical: "middle" };
+      ws.getRow(row).height = 20;
+    };
+
+    // ── Application Stats (col B-C) + Interview Stats (col D-E) ──
+    let r = 4;
+    addSectionHeader(dash, r, "📋 APPLICATION OVERVIEW", "C"); r++;
+    addStatRow(dash, r, "Total Applications", globalStats.total); r++;
+    addStatRow(dash, r, "Shortlisted", globalStats.shortlisted); r++;
+    addStatRow(dash, r, "Interview Stage", globalStats.interviewStage); r++;
+    addStatRow(dash, r, "Final Shortlist", globalStats.finalShort); r++;
+    addStatRow(dash, r, "Selected", globalStats.selected, "D4EDDA"); r++;
+    addStatRow(dash, r, "Joined", globalStats.joined, "D4EDDA"); r++;
+    addStatRow(dash, r, "Not Joined", globalStats.notJoined, "F8D7DA"); r++;
+    addStatRow(dash, r, "Rejected", globalStats.rejected, "F8D7DA"); r++;
+    addStatRow(dash, r, "Withdrawn", globalStats.withdrawn); r++;
+    addStatRow(dash, r, "Offer Emails Sent", globalStats.offerSent); r++;
+    addStatRow(dash, r, "Avg Salary Offered", globalStats.avgSalaryOffered ? `₹${Number(globalStats.avgSalaryOffered).toLocaleString("en-IN")}` : "—"); r++;
+
+    // Interview stats — col D-E (same rows, offset)
+    const iStart = 5;
+    const addInterviewStat = (ws, row, label, value, bgColor = COLORS.statCard) => {
+      const lc = ws.getCell(`D${row}`);
+      const vc = ws.getCell(`E${row}`);
+      lc.value = label;
+      lc.font = bodyFont;
+      lc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      lc.border = thinBorder;
+      lc.alignment = { vertical: "middle", indent: 1 };
+      vc.value = value;
+      vc.font = boldBodyFont;
+      vc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+      vc.border = thinBorder;
+      vc.alignment = { horizontal: "center", vertical: "middle" };
+    };
+
+    // Interview section header
+    const ic = dash.getCell(`D4`);
+    dash.mergeCells("D4:E4");
+    ic.value = "🎯 INTERVIEW OVERVIEW";
+    ic.font = subHeaderFont;
+    ic.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.subHeaderBg } };
+    ic.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+
+    addInterviewStat(dash, iStart, "Total Interviews", globalStats.interviews.total);
+    addInterviewStat(dash, iStart + 1, "Scheduled", globalStats.interviews.scheduled);
+    addInterviewStat(dash, iStart + 2, "Completed", globalStats.interviews.completed);
+    addInterviewStat(dash, iStart + 3, "Cancelled", globalStats.interviews.cancelled);
+    addInterviewStat(dash, iStart + 4, "Passed", globalStats.interviews.passed, "D4EDDA");
+    addInterviewStat(dash, iStart + 5, "Failed", globalStats.interviews.failed, "F8D7DA");
+
+    // Job stats section — col F-G
+    dash.mergeCells("F4:G4");
+    const jc = dash.getCell("F4");
+    jc.value = "💼 JOB OVERVIEW";
+    jc.font = subHeaderFont;
+    jc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.subHeaderBg } };
+    jc.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+
+    const addJobStat = (ws, row, label, value) => {
+      const lc = ws.getCell(`F${row}`);
+      const vc = ws.getCell(`G${row}`);
+      lc.value = label; lc.font = bodyFont;
+      lc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.statCard } };
+      lc.border = thinBorder; lc.alignment = { vertical: "middle", indent: 1 };
+      vc.value = value; vc.font = boldBodyFont;
+      vc.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.statCard } };
+      vc.border = thinBorder; vc.alignment = { horizontal: "center", vertical: "middle" };
+    };
+
+    const activeJobs = data.filter((j) => j.status === "active").length;
+    const closedJobs = data.filter((j) => j.status === "closed").length;
+    const pausedJobs = data.filter((j) => j.status === "paused").length;
+    addJobStat(dash, iStart, "Total Jobs", data.length);
+    addJobStat(dash, iStart + 1, "Active", activeJobs);
+    addJobStat(dash, iStart + 2, "Closed", closedJobs);
+    addJobStat(dash, iStart + 3, "Paused", pausedJobs);
+    addJobStat(dash, iStart + 4, "Total Openings", data.reduce((s, j) => s + (j.openings || 0), 0));
+
+    /* ══════════════════════════════════════════════════════════
+       SHEET 2 — Jobs Summary
+       ══════════════════════════════════════════════════════════ */
+    const jobSheet = wb.addWorksheet("💼 Jobs Summary", {
+      views: [{ showGridLines: false, state: "frozen", ySplit: 2 }],
+    });
+
+    const jobCols = [
+      { header: "#", key: "sno", width: 5 },
+      { header: "Job Title", key: "jobTitle", width: 28 },
+      { header: "Company", key: "company", width: 22 },
+      { header: "Employer", key: "employer", width: 22 },
+      { header: "Job Type", key: "jobType", width: 14 },
+      { header: "Work Mode", key: "workMode", width: 13 },
+      { header: "City", key: "city", width: 14 },
+      { header: "Status", key: "status", width: 16 },
+      { header: "Openings", key: "openings", width: 10 },
+      { header: "Total Apps", key: "totalApps", width: 11 },
+      { header: "Shortlisted", key: "shortlisted", width: 12 },
+      { header: "Selected", key: "selected", width: 10 },
+      { header: "Joined", key: "joined", width: 10 },
+      { header: "Not Joined", key: "notJoined", width: 11 },
+      { header: "Rejected", key: "rejected", width: 10 },
+      { header: "Interviews", key: "interviews", width: 12 },
+      { header: "Avg Salary", key: "avgSalary", width: 16 },
+      { header: "Posted On", key: "postedOn", width: 14 },
+    ];
+    jobSheet.columns = jobCols;
+
+    // Header row
+    const jobHeaderRow = jobSheet.getRow(1);
+    jobCols.forEach((_, i) => {
+      const cell = jobHeaderRow.getCell(i + 1);
+      cell.font = headerFont;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.headerBg } };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      cell.border = thinBorder;
+    });
+    jobHeaderRow.height = 28;
+
+    data.forEach((job, idx) => {
+      const s = job._stats;
+      const row = jobSheet.addRow({
+        sno: idx + 1,
+        jobTitle: job.jobTitle,
+        company: job.company?.companyName || "—",
+        employer: job.employer?.employerName || "—",
+        jobType: job.jobType,
+        workMode: job.workMode,
+        city: job.city || "—",
+        status: job.status?.toUpperCase(),
+        openings: job.openings,
+        totalApps: s.total,
+        shortlisted: s.shortlisted,
+        selected: s.selected,
+        joined: s.joined,
+        notJoined: s.notJoined,
+        rejected: s.rejected,
+        interviews: s.interviews.total,
+        avgSalary: s.avgSalaryOffered ? `₹${Number(s.avgSalaryOffered).toLocaleString("en-IN")}` : "—",
+        postedOn: fmtDate(job.createdAt),
+      });
+      row.eachCell((cell) => {
+        cell.font = bodyFont;
+        cell.border = thinBorder;
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: idx % 2 === 0 ? COLORS.white : COLORS.rowAlt } };
+        cell.alignment = { vertical: "middle" };
+      });
+      // Status color
+      const statusCell = row.getCell(8);
+      const statusColors = { ACTIVE: "D4EDDA", CLOSED: "F8D7DA", PAUSED: "FFF3CD", DRAFT: "E2E8F0" };
+      const bg = statusColors[job.status?.toUpperCase()] || COLORS.white;
+      statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+      statusCell.alignment = { horizontal: "center", vertical: "middle" };
+      row.height = 20;
+    });
+
+    // Totals row
+    const totalRow = jobSheet.addRow({
+      sno: "", jobTitle: "TOTAL", company: "", employer: "", jobType: "", workMode: "", city: "", status: "",
+      openings: data.reduce((s, j) => s + (j.openings || 0), 0),
+      totalApps: globalStats.total,
+      shortlisted: globalStats.shortlisted,
+      selected: globalStats.selected,
+      joined: globalStats.joined,
+      notJoined: globalStats.notJoined,
+      rejected: globalStats.rejected,
+      interviews: globalStats.interviews.total,
+      avgSalary: "",
+      postedOn: "",
+    });
+    totalRow.eachCell((cell) => {
+      cell.font = { name: "Arial", bold: true, size: 10 };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } };
+      cell.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFF" } };
+      cell.border = thinBorder;
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+    totalRow.height = 22;
+
+    /* ══════════════════════════════════════════════════════════
+       SHEET 3 — All Applications
+       ══════════════════════════════════════════════════════════ */
+    const appSheet = wb.addWorksheet("📋 Applications", {
+      views: [{ showGridLines: false, state: "frozen", ySplit: 1 }],
+    });
+
+    const appCols = [
+      { header: "#", key: "sno", width: 5 },
+      { header: "App ID", key: "appId", width: 9 },
+      { header: "Candidate", key: "candidate", width: 22 },
+      { header: "Email", key: "email", width: 28 },
+      { header: "Phone", key: "phone", width: 14 },
+      { header: "Job Title", key: "jobTitle", width: 26 },
+      { header: "Company", key: "company", width: 20 },
+      { header: "App Status", key: "appStatus", width: 16 },
+      { header: "Is Selected", key: "isSelected", width: 12 },
+      { header: "Applied On", key: "appliedAt", width: 14 },
+      { header: "Interviews", key: "interviews", width: 11 },
+      { header: "Final Salary", key: "finalSalary", width: 14 },
+      { header: "Joining Date", key: "joiningDate", width: 14 },
+      { header: "Leaving Date", key: "leavingDate", width: 14 },
+      { header: "Not Join Reason", key: "notJoinReason", width: 28 },
+      { header: "Offer Email Sent", key: "offerEmail", width: 16 },
+      { header: "Decided By", key: "decidedBy", width: 20 },
+    ];
+    appSheet.columns = appCols;
+
+    const appHeaderRow = appSheet.getRow(1);
+    appCols.forEach((_, i) => {
+      const cell = appHeaderRow.getCell(i + 1);
+      cell.font = headerFont;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.headerBg } };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      cell.border = thinBorder;
+    });
+    appHeaderRow.height = 28;
+
+    let appRowIdx = 0;
+    data.forEach((job) => {
+      (job.applications || []).forEach((app) => {
+        appRowIdx++;
+        const row = appSheet.addRow({
+          sno: appRowIdx,
+          appId: app.id,
+          candidate: app.candidate?.userName || "—",
+          email: app.candidate?.emailAddress || "—",
+          phone: app.candidate?.contactNumber || "—",
+          jobTitle: job.jobTitle,
+          company: job.company?.companyName || "—",
+          appStatus: app.status?.toUpperCase(),
+          isSelected: app.isSelected ? "YES" : "NO",
+          appliedAt: fmtDate(app.appliedAt),
+          interviews: (app.interviews || []).length,
+          finalSalary: fmtNum(app.finalSalaryOffered),
+          joiningDate: fmtDate(app.joiningDate),
+          leavingDate: fmtDate(app.leavingDate),
+          notJoinReason: app.notJoinReason || "—",
+          offerEmail: app.offerEmailSent ? `YES (${fmtDate(app.offerEmailSentAt)})` : "NO",
+          decidedBy: app.decidedByEmployer?.employerName || "—",
+        });
+
+        const statusBgMap = {
+          JOINED: "D4EDDA",
+          SELECTED: "D1FAE5",
+          NOT_JOINED: "F8D7DA",
+          REJECTED: "F8D7DA",
+          FINAL_SHORTLIST: "FFF3CD",
+          SHORTLISTED: "E8F4FD",
+        };
+        const bg = statusBgMap[app.status?.toUpperCase()] || (appRowIdx % 2 === 0 ? COLORS.white : COLORS.rowAlt);
+
+        row.eachCell((cell) => {
+          cell.font = bodyFont;
+          cell.border = thinBorder;
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+          cell.alignment = { vertical: "middle", wrapText: false };
+        });
+        row.height = 20;
+      });
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       SHEET 4 — Interview Details
+       ══════════════════════════════════════════════════════════ */
+    const intvwSheet = wb.addWorksheet("🎯 Interviews", {
+      views: [{ showGridLines: false, state: "frozen", ySplit: 1 }],
+    });
+
+    const intvwCols = [
+      { header: "#", key: "sno", width: 5 },
+      { header: "Candidate", key: "candidate", width: 22 },
+      { header: "Email", key: "email", width: 28 },
+      { header: "Job Title", key: "jobTitle", width: 26 },
+      { header: "Company", key: "company", width: 20 },
+      { header: "Round", key: "round", width: 9 },
+      { header: "Round Label", key: "roundLabel", width: 14 },
+      { header: "Type", key: "type", width: 12 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Result", key: "result", width: 12 },
+      { header: "Scheduled At", key: "scheduledAt", width: 20 },
+      { header: "Meeting Link", key: "meetingLink", width: 32 },
+      { header: "Location", key: "location", width: 20 },
+      { header: "Interviewer", key: "interviewer", width: 20 },
+      { header: "Feedback", key: "feedback", width: 35 },
+      { header: "Cancel Reason", key: "cancelReason", width: 28 },
+      { header: "Hold Reason", key: "holdReason", width: 28 },
+    ];
+    intvwSheet.columns = intvwCols;
+
+    const intvwHeaderRow = intvwSheet.getRow(1);
+    intvwCols.forEach((_, i) => {
+      const cell = intvwHeaderRow.getCell(i + 1);
+      cell.font = headerFont;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.headerBg } };
+      cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      cell.border = thinBorder;
+    });
+    intvwHeaderRow.height = 28;
+
+    let intvwIdx = 0;
+    const roundLabel = (r) => (r === 2 ? "HR Round" : `Round ${r}`);
+
+    data.forEach((job) => {
+      (job.applications || []).forEach((app) => {
+        (app.interviews || []).forEach((iv) => {
+          intvwIdx++;
+          const row = intvwSheet.addRow({
+            sno: intvwIdx,
+            candidate: app.candidate?.userName || "—",
+            email: app.candidate?.emailAddress || "—",
+            jobTitle: job.jobTitle,
+            company: job.company?.companyName || "—",
+            round: iv.round,
+            roundLabel: roundLabel(iv.round),
+            type: iv.interviewType?.toUpperCase(),
+            status: iv.status?.toUpperCase(),
+            result: iv.result?.toUpperCase() || "—",
+            scheduledAt: iv.scheduledAt ? new Date(iv.scheduledAt).toLocaleString("en-IN") : "—",
+            meetingLink: iv.meetingLink || "—",
+            location: iv.location || "—",
+            interviewer: iv.meetingPerson || "—",
+            feedback: iv.feedback || "—",
+            cancelReason: iv.cancelReason || "—",
+            holdReason: iv.holdReason || "—",
+          });
+
+          const resultBgMap = { PASS: "D4EDDA", FAIL: "F8D7DA", NEXT_ROUND: "E8F4FD" };
+          const bg = iv.result ? (resultBgMap[iv.result.toUpperCase()] || COLORS.white) : (intvwIdx % 2 === 0 ? COLORS.white : COLORS.rowAlt);
+
+          row.eachCell((cell) => {
+            cell.font = bodyFont;
+            cell.border = thinBorder;
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+            cell.alignment = { vertical: "middle", wrapText: false };
+          });
+          row.height = 20;
+        });
+      });
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       SHEET 5 — Employer Performance
+       ══════════════════════════════════════════════════════════ */
+    const empSheet = wb.addWorksheet("👤 Employer Stats", {
+      views: [{ showGridLines: false, state: "frozen", ySplit: 1 }],
+    });
+
+    // Group by employer
+    const empMap = {};
+    data.forEach((job) => {
+      const eId = job.employer?.id || "unknown";
+      const eName = job.employer?.employerName || "Unknown";
+      if (!empMap[eId]) empMap[eId] = { name: eName, jobs: [], apps: [] };
+      empMap[eId].jobs.push(job);
+      empMap[eId].apps.push(...(job.applications || []));
+    });
+
+    const empCols = [
+      { header: "#", key: "sno", width: 5 },
+      { header: "Employer", key: "employer", width: 24 },
+      { header: "Total Jobs", key: "jobs", width: 12 },
+      { header: "Total Apps", key: "apps", width: 12 },
+      { header: "Shortlisted", key: "shortlisted", width: 13 },
+      { header: "Selected", key: "selected", width: 11 },
+      { header: "Joined", key: "joined", width: 11 },
+      { header: "Not Joined", key: "notJoined", width: 12 },
+      { header: "Rejected", key: "rejected", width: 11 },
+      { header: "Interviews", key: "interviews", width: 12 },
+      { header: "Pass Rate", key: "passRate", width: 11 },
+      { header: "Join Rate", key: "joinRate", width: 11 },
+      { header: "Avg Salary", key: "avgSalary", width: 16 },
+    ];
+    empSheet.columns = empCols;
+
+    const empHeaderRow = empSheet.getRow(1);
+    empCols.forEach((_, i) => {
+      const cell = empHeaderRow.getCell(i + 1);
+      cell.font = headerFont;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.headerBg } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = thinBorder;
+    });
+    empHeaderRow.height = 28;
+
+    Object.values(empMap).forEach((emp, idx) => {
+      const s = buildStats(emp.apps);
+      const allIv = emp.apps.flatMap((a) => a.interviews || []);
+      const passed = allIv.filter((i) => i.result === "pass").length;
+      const passRate = allIv.length ? ((passed / allIv.length) * 100).toFixed(1) + "%" : "—";
+      const joinRate = s.selected ? ((s.joined / s.selected) * 100).toFixed(1) + "%" : "—";
+
+      const row = empSheet.addRow({
+        sno: idx + 1,
+        employer: emp.name,
+        jobs: emp.jobs.length,
+        apps: s.total,
+        shortlisted: s.shortlisted,
+        selected: s.selected,
+        joined: s.joined,
+        notJoined: s.notJoined,
+        rejected: s.rejected,
+        interviews: s.interviews.total,
+        passRate,
+        joinRate,
+        avgSalary: s.avgSalaryOffered ? `₹${Number(s.avgSalaryOffered).toLocaleString("en-IN")}` : "—",
+      });
+      row.eachCell((cell) => {
+        cell.font = bodyFont;
+        cell.border = thinBorder;
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: idx % 2 === 0 ? COLORS.white : COLORS.rowAlt } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+      row.getCell(2).alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+      row.height = 20;
+    });
+
+    /* ── Send file ── */
+    const fileName = `hiring-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+
+    await wb.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error("ExportJobsExcel Error:", error);
+    return res.status(500).json({ success: false, message: "Export failed" });
+  }
+};
+
+exports.updatePaymentDate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentDate, paymentStatus } = req.body;
+    const jobApplication = await JobApplication.findByPk(id);
+
+    if (!jobApplication) {
+      return sendError(res, 404, "Application not found");
+    }
+
+    jobApplication.paymentDate = paymentDate;
+    jobApplication.paymentStatus = paymentStatus;
+    await jobApplication.save();
+
+    return sendSuccess(res, jobApplication, "Payment date updated successfully");
+  } catch (error) {
+    console.log("Internal server error", error)
+    return sendError(res, 500, "Failed to update payment date");
+  }
+}

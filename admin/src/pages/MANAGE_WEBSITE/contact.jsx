@@ -158,7 +158,7 @@ const ContactMessages = () => {
               <th className="p-3 text-left">Email</th>
               <th className="p-3 text-left">Phone</th>
 
-              <th className="p-3 text-left">Status</th>
+              {/* <th className="p-3 text-left">Status</th> */}
               <th className="p-3 text-left">Actions</th>
             </tr>
 
@@ -178,7 +178,8 @@ const ContactMessages = () => {
 
 
 
-                <td className="p-3 capitalize">{msg.status}</td>
+                {/* <td className="p-3 capitalize">{msg.status}</td> */}
+                {/* {console.log("msg",msg)} */}
 
                 <td className="p-3 flex gap-2">
 
@@ -195,12 +196,12 @@ const ContactMessages = () => {
                   </button>
 
 
-                  <button
+                  {/* <button
                     onClick={() => updateMessage(msg)}
                     className="text-green-600"
                   >
                     <Edit size={18} />
-                  </button>
+                  </button> */}
 
 
                   <button

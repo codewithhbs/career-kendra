@@ -31,6 +31,7 @@ import Services from "./pages/MANAGE_WEBSITE/service";
 import CreateAndEditService from "./pages/EditAndCreatePages/CreateAndEditService";
 import CreateAndEditPages from "./pages/EditAndCreatePages/CreateAndEditPages";
 import AllEmployerList from "./pages/MANAGE_EMPLOYERS/AllEmployerList";
+import AllJobsData from "./pages/MANAGE_JOBS/AllJobsData";
 
 
 const App = () => {
@@ -89,6 +90,9 @@ const App = () => {
             <Route path="/jobs/:status" element={<AllJobs />} />
             <Route path="/jobs/edit/:id" element={<EditJob />} />
             <Route path="/jobs/check-applies/:id" element={<CheckApplies />} />
+
+            <Route path="/all-job-data" element={<AllJobsData />} />
+            
 
 
             {/* Teams amd Roles */}

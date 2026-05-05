@@ -46,8 +46,15 @@ router.put("/reupload-document/:id", auth, createUploader("document").any(), reu
 router.post("/upload-cover-letter/:id",createUploader("offer-letter").single("offer-letter"), jobController.uploadCoverLetter);
 router.put("/update-leave-date/:id", auth, jobController.updateLeaveDate);
 
+router.get("/export/:id", jobController.exportApplications);
 
-
+router.put("/update-joining-detail/:id", auth, jobController.updateJoiningDetail);
 
 router.post("/send-offer-email/:id", auth, jobController.sendSelectionMail) // New route for sending offer emails
+
+router.get("/all-detail", auth, jobController.AllJobsDetail);
+router.get("/export-excel", auth, jobController.ExportJobsExcel);
+
+router.put("/update-payment-detail/:id", auth, jobController.updatePaymentDate);
+
 module.exports = router;

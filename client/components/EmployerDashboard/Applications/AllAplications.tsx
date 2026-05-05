@@ -52,7 +52,7 @@ import {
   Phone,
   IndianRupee,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 axios.defaults.baseURL = API_URL;
 
@@ -137,6 +137,7 @@ const resultConfig: Record<string, { label: string; color: string }> = {
    ============================================================ */
 const AllApplications = () => {
   const { token } = useEmployerAuthStore();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -161,6 +162,23 @@ const AllApplications = () => {
   const [showLeavingDateModal, setShowLeavingDateModal] = useState(false);
   const [leavingDateAppId, setLeavingDateAppId] = useState<string | null>(null);
   const [leavingDate, setLeavingDate] = useState("");
+
+  const [showJoiningStatusModal, setShowJoiningStatusModal] = useState(false);
+  const [joiningStatusAppId, setJoiningStatusAppId] = useState<string | null>(
+    null,
+  );
+  const [joiningStatusForm, setJoiningStatusForm] = useState({
+    status: "" as "joined" | "not_joined" | "",
+    joiningDate: "",
+    notJoinReason: "",
+  });
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAppId, setPaymentAppId] = useState<string | null>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    paymentDate: "",
+    paymentStatus: false,
+  });
 
   // Forms
   const [scheduleForm, setScheduleForm] = useState<ScheduleForm>({
@@ -205,9 +223,9 @@ const AllApplications = () => {
       });
       const jobsData = res.data?.data?.jobs || [];
       setJobs(jobsData);
-      if (jobsData.length > 0 && !selectedJobId) {
-        setSelectedJobId(jobsData[0].id);
-      }
+      // if (jobsData.length > 0 && !selectedJobId) {
+      //   setSelectedJobId(jobsData[0].id);
+      // }
     } catch {
       Swal.fire("Error", "Failed to fetch jobs", "error");
     }
@@ -221,6 +239,7 @@ const AllApplications = () => {
         `/applications/get-all-applications-for-employer/${selectedJobId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      console.log("res.data", res.data);
       setApplications(res.data?.applications || []);
     } catch {
       Swal.fire("Error", "Failed to fetch applications", "error");
@@ -252,14 +271,53 @@ const AllApplications = () => {
     }
   };
 
+  const handleUpdateJoiningStatus = async () => {
+    if (!joiningStatusForm.status) {
+      Swal.fire("Warning", "Please select a status", "warning");
+      return;
+    }
+    if (
+      joiningStatusForm.status === "not_joined" &&
+      !joiningStatusForm.notJoinReason
+    ) {
+      Swal.fire("Warning", "Please provide reason for not joining", "warning");
+      return;
+    }
+
+    try {
+      await axios.put(
+        `/applications/update-joining-detail/${joiningStatusAppId}`,
+        {
+          status: joiningStatusForm.status,
+          joiningDate: joiningStatusForm.joiningDate || null,
+          notJoinReason: joiningStatusForm.notJoinReason || null,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      Swal.fire("Success", "Joining status updated!", "success");
+      setShowJoiningStatusModal(false);
+      fetchApplications();
+    } catch (error: any) {
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to update",
+        "error",
+      );
+    }
+  };
+
+  const hasRound1 = (app: any) =>
+    app.interviews?.some((i: any) => i.round === 1);
+
   const hasRound2 = (app: any) =>
     app.interviews?.some((i: any) => i.round === 2);
 
   /* ---- SCHEDULE ---- */
-  const openScheduleModal = (applicationId: string) => {
+  const openScheduleModal = (applicationId: string, round: number) => {
     setSelectedApplicationId(applicationId);
     setScheduleForm({
-      round: 2,
+      round, // ← dynamic
       interviewType: "online",
       scheduledAt: "",
       meetingLink: "",
@@ -296,6 +354,32 @@ const AllApplications = () => {
       Swal.fire(
         "Error",
         error.response?.data?.message || "Failed to schedule",
+        "error",
+      );
+    }
+  };
+
+  const handleUpdatePaymentDetail = async () => {
+    if (!paymentAppId || !paymentForm.paymentDate) {
+      Swal.fire("Warning", "Please select a payment date", "warning");
+      return;
+    }
+    try {
+      await axios.put(
+        `/applications/update-payment-detail/${paymentAppId}`,
+        {
+          paymentDate: paymentForm.paymentDate,
+          paymentStatus: paymentForm.paymentStatus,
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      Swal.fire("Success", "Payment details updated successfully!", "success");
+      setShowPaymentModal(false);
+      fetchApplications();
+    } catch (error: any) {
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Failed to update payment details",
         "error",
       );
     }
@@ -429,6 +513,23 @@ const AllApplications = () => {
     }
   };
 
+  useEffect(() => {
+    if (jobs.length === 0) return;
+    const jobIdFromUrl = searchParams.get("jobId");
+    if (jobIdFromUrl) {
+      const match = jobs.find((j) => String(j.id) === String(jobIdFromUrl));
+      // console.log(
+      //   "match",
+      //   match,
+      //   "jobs",
+      //   jobs.map((j) => ({ id: j.id, type: typeof j.id })),
+      // );
+      setSelectedJobId(match ? String(match.id) : String(jobs[0].id));
+    } else {
+      setSelectedJobId(String(jobs[0].id));
+    }
+  }, [jobs]);
+
   /* ---- EFFECTS ---- */
   useEffect(() => {
     fetchJobs();
@@ -460,7 +561,7 @@ const AllApplications = () => {
           <div className="w-full sm:w-80">
             <Select
               value={selectedJobId || ""}
-              onValueChange={setSelectedJobId}
+              onValueChange={(val) => setSelectedJobId(String(val))}
             >
               <SelectTrigger className="bg-white border-gray-200">
                 <div className="flex items-center gap-2">
@@ -470,7 +571,7 @@ const AllApplications = () => {
               </SelectTrigger>
               <SelectContent>
                 {jobs.map((job: any) => (
-                  <SelectItem key={job.id} value={job.id}>
+                  <SelectItem key={job.id} value={String(job.id)}>
                     {job.jobTitle}
                   </SelectItem>
                 ))}
@@ -494,8 +595,14 @@ const AllApplications = () => {
                 color: "text-emerald-600",
               },
               {
+                label: "Pending Round 1",
+                value: applications.filter((a) => !hasRound1(a)).length,
+                color: "text-violet-600",
+              },
+              {
                 label: "Pending Round 2",
-                value: applications.filter((a) => !hasRound2(a)).length,
+                value: applications.filter((a) => hasRound1(a) && !hasRound2(a))
+                  .length,
                 color: "text-amber-600",
               },
             ].map((stat) => (
@@ -566,9 +673,9 @@ const AllApplications = () => {
                       </div>
                       <Badge
                         variant="secondary"
-                        className="bg-indigo-100 text-indigo-700 font-medium"
+                        className="bg-indigo-100 capitalize text-indigo-700 font-medium"
                       >
-                        {app.isSelected ? "Selected" : app?.status}
+                        {app?.status}
                       </Badge>
                     </div>
 
@@ -636,7 +743,7 @@ const AllApplications = () => {
                             statusConfig[iv.status] || statusConfig.scheduled;
                           return (
                             <Badge key={iv.id} className={cfg.color}>
-                              R{iv.round}
+                              {iv.round === 2 ? "Client Round" : `R${iv.round}`}
                             </Badge>
                           );
                         })}
@@ -659,13 +766,25 @@ const AllApplications = () => {
                         View Interview History
                       </Button>
 
-                      {!roundTwo && (
+                      {/* Round 1 - agar koi interview nahi */}
+                      {!hasRound1(app) && (
                         <Button
-                          className="w-full bg-indigo-600 hover:bg-indigo-700"
-                          onClick={() => openScheduleModal(app.id)}
+                          className="w-full bg-violet-600 hover:bg-violet-700"
+                          onClick={() => openScheduleModal(app.id, 1)}
                         >
                           <CalendarDays className="w-4 h-4 mr-2" />
-                          Schedule Round 2
+                          Schedule Round 1
+                        </Button>
+                      )}
+
+                      {/* Round 2 - sirf tab jab Round 1 ho but Round 2 na ho */}
+                      {hasRound1(app) && !hasRound2(app) && (
+                        <Button
+                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                          onClick={() => openScheduleModal(app.id, 2)}
+                        >
+                          <CalendarDays className="w-4 h-4 mr-2" />
+                          Schedule Round 2 (Client Round)
                         </Button>
                       )}
 
@@ -692,6 +811,29 @@ const AllApplications = () => {
                       <Eye className="w-4 h-4 mr-2" />
                       View Complete Details
                     </Button>
+
+                    {app.isSelected && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-blue-300 text-blue-600 hover:bg-blue-50"
+                        onClick={() => {
+                          setJoiningStatusAppId(app.id);
+                          setJoiningStatusForm({
+                            status: "",
+                            joiningDate: app.joiningDate
+                              ? new Date(app.joiningDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : "",
+                            notJoinReason: "",
+                          });
+                          setShowJoiningStatusModal(true);
+                        }}
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        Update Joining Status
+                      </Button>
+                    )}
                     {app.isSelected && (
                       <Button
                         variant="outline"
@@ -714,6 +856,30 @@ const AllApplications = () => {
                           : "Set Leaving Date"}
                       </Button>
                     )}
+
+                    {app.isSelected && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-green-300 text-green-600 hover:bg-green-50"
+                        onClick={() => {
+                          setPaymentAppId(app.id);
+                          setPaymentForm({
+                            paymentDate: app.paymentDate
+                              ? new Date(app.paymentDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : "",
+                            paymentStatus: app.paymentStatus || false,
+                          });
+                          setShowPaymentModal(true);
+                        }}
+                      >
+                        <IndianRupee className="w-4 h-4 mr-2" />
+                        {app.paymentStatus
+                          ? "Payment Done"
+                          : "Update Payment Details"}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -725,9 +891,10 @@ const AllApplications = () => {
       {/* SCHEDULE MODAL */}
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Schedule Round 2 Interview</DialogTitle>
-          </DialogHeader>
+          <DialogTitle>
+            Schedule Round {scheduleForm.round}{" "}
+            {scheduleForm.round === 2 ? "(Client Round)" : ""} Interview
+          </DialogTitle>
 
           <div className="space-y-6 py-4">
             <div>
@@ -897,6 +1064,7 @@ const AllApplications = () => {
                       key={interview.id}
                       className="border-l-4 border-gray-200 pl-6 mb-8 relative"
                     >
+                      {console.log("interview", interview)}
                       <div className="absolute -left-2 top-2 w-4 h-4 rounded-full bg-white border-4 border-gray-300" />
 
                       <div className="flex justify-between items-start">
@@ -1374,6 +1542,196 @@ const AllApplications = () => {
             >
               <CalendarDays className="w-4 h-4 mr-2" />
               Save Date
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* JOINING STATUS MODAL */}
+      <Dialog
+        open={showJoiningStatusModal}
+        onOpenChange={setShowJoiningStatusModal}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                <UserCheck className="w-4 h-4 text-blue-600" />
+              </div>
+              <DialogTitle>Update Joining Status</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {/* Status Buttons */}
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">Status *</Label>
+              <div className="flex gap-3">
+                <Button
+                  className={`flex-1 ${
+                    joiningStatusForm.status === "joined"
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() =>
+                    setJoiningStatusForm((p) => ({
+                      ...p,
+                      status: "joined",
+                      notJoinReason: "",
+                    }))
+                  }
+                >
+                  <ThumbsUp className="w-4 h-4 mr-2" />
+                  Joined
+                </Button>
+                <Button
+                  className={`flex-1 ${
+                    joiningStatusForm.status === "not_joined"
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() =>
+                    setJoiningStatusForm((p) => ({
+                      ...p,
+                      status: "not_joined",
+                      joiningDate: "",
+                    }))
+                  }
+                >
+                  <ThumbsDown className="w-4 h-4 mr-2" />
+                  Not Joined
+                </Button>
+              </div>
+            </div>
+
+            {/* Joined - show date */}
+            {joiningStatusForm.status === "joined" && (
+              <div className="space-y-1.5">
+                <Label className="text-sm text-gray-500">Joining Date</Label>
+                <Input
+                  type="date"
+                  value={joiningStatusForm.joiningDate}
+                  onChange={(e) =>
+                    setJoiningStatusForm((p) => ({
+                      ...p,
+                      joiningDate: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            )}
+
+            {/* Not Joined - show reason */}
+            {joiningStatusForm.status === "not_joined" && (
+              <div className="space-y-1.5">
+                <Label className="text-sm text-red-500">
+                  Reason for not joining *
+                </Label>
+                <Textarea
+                  placeholder="Why did the candidate not join?"
+                  rows={3}
+                  value={joiningStatusForm.notJoinReason}
+                  onChange={(e) =>
+                    setJoiningStatusForm((p) => ({
+                      ...p,
+                      notJoinReason: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowJoiningStatusModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={handleUpdateJoiningStatus}
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Save Status
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PAYMENT DETAIL MODAL */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
+                <IndianRupee className="w-4 h-4 text-green-600" />
+              </div>
+              <DialogTitle>Update Payment Details</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">Payment Date *</Label>
+              <Input
+                type="date"
+                value={paymentForm.paymentDate}
+                onChange={(e) =>
+                  setPaymentForm((p) => ({ ...p, paymentDate: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm text-gray-500">Payment Status</Label>
+              <div className="flex gap-3">
+                <Button
+                  className={`flex-1 ${
+                    paymentForm.paymentStatus
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() =>
+                    setPaymentForm((p) => ({ ...p, paymentStatus: true }))
+                  }
+                >
+                  <ThumbsUp className="w-4 h-4 mr-2" />
+                  Paid
+                </Button>
+                <Button
+                  className={`flex-1 ${
+                    !paymentForm.paymentStatus
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() =>
+                    setPaymentForm((p) => ({ ...p, paymentStatus: false }))
+                  }
+                >
+                  <ThumbsDown className="w-4 h-4 mr-2" />
+                  Pending
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowPaymentModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleUpdatePaymentDetail}
+            >
+              <IndianRupee className="w-4 h-4 mr-2" />
+              Save Payment
             </Button>
           </DialogFooter>
         </DialogContent>

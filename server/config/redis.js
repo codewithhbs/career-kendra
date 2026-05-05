@@ -1,12 +1,18 @@
 const Redis = require("ioredis");
 require('dotenv').config();
 
-const redis = new Redis({
+// BullMQ ke liye connection config (plain object)
+const redisConnection = {
   host: process.env.REDIS_HOST || "127.0.0.1",
   port: process.env.REDIS_PORT || 6379,
+};
+
+// Normal redis client (baaki jagah use ke liye - caching etc.)
+const redis = new Redis({
+  ...redisConnection,
   retryStrategy() {
-    return 2000; // retry every 2 sec
-  }
+    return 2000;
+  },
 });
 
 redis.on("connect", () => {
@@ -17,3 +23,4 @@ redis.on("error", () => {
 });
 
 module.exports = redis;
+module.exports.redisConnection = redisConnection; // BullMQ ke liye

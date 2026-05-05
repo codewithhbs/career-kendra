@@ -36,9 +36,18 @@ import {
 } from "@/components/ui/tooltip";
 
 import {
-  Pencil, Trash2, Eye, MapPin, Briefcase, IndianRupee,
-  Users, CalendarDays, Clock, Building2,
-  X,  // ✅ add karo
+  Pencil,
+  Trash2,
+  Eye,
+  MapPin,
+  Briefcase,
+  IndianRupee,
+  Users,
+  CalendarDays,
+  Clock,
+  Building2,
+  X,
+  UserRoundPlus, // ✅ add karo
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -102,6 +111,7 @@ export default function MyJobs() {
       const res = await axios.get("/jobs", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      // console.log("res",res)
       setJobs(res.data?.data?.jobs || res.data?.jobs || res.data?.data || []);
     } catch (err) {
       const message =
@@ -272,8 +282,8 @@ export default function MyJobs() {
         icon: "error",
         title: "Failed",
         text: isAxiosError(error)
-  ? error.response?.data?.message || error.message
-  : "Something went wrong while applying",
+          ? error.response?.data?.message || error.message
+          : "Something went wrong while applying",
       });
     } finally {
       setApplying(false);
@@ -417,6 +427,26 @@ export default function MyJobs() {
                             <Button
                               variant="outline"
                               size="icon"
+                              className="h-9 w-9 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200"
+                              onClick={() =>
+                                router.push(
+                                  `/employer/profile?tab=applications&jobId=${job.id}`,
+                                )
+                              }
+                            >
+                              <Users className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>View Applications</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
+                      <TooltipProvider delayDuration={400}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
                               className="h-9 w-9"
                               onClick={() =>
                                 router.push(
@@ -450,21 +480,21 @@ export default function MyJobs() {
                       </TooltipProvider>
 
                       {/* ✅ Quick Apply Button — yahan add karo */}
-  <TooltipProvider delayDuration={400}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 text-purple-600 hover:text-purple-700 hover:bg-purple-50 border-purple-200"
-          onClick={() => handleQuickApplyOpen(job)}
-        >
-          <Users className="h-4 w-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>Quick Apply (HR)</TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+                      <TooltipProvider delayDuration={400}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 text-purple-600 hover:text-purple-700 hover:bg-purple-50 border-purple-200"
+                              onClick={() => handleQuickApplyOpen(job)}
+                            >
+                              <UserRoundPlus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Quick Apply (HR)</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>

@@ -947,3 +947,4 @@ exports.updateWebSettings = async (req, res) => {
     });
   }
 };
+

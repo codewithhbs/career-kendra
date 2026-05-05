@@ -32,11 +32,18 @@ module.exports = (sequelize, DataTypes) => {
           "interview_stage",
           "final_shortlist",
           "selected",
+          "joined",
+          "not_joined",
           "rejected",
           "withdrawn"
         ),
         allowNull: false,
         defaultValue: "applied",
+      },
+
+      notJoinReason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
 
       appliedAt: {
@@ -163,6 +170,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      paymentDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      paymentStatus: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: true,
+      }
     },
     {
       tableName: "job_applications",

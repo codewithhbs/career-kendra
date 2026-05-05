@@ -22,6 +22,7 @@ import {
 
 const API_URL = "https://api.careerkendra.com/api/v1/ad/admin-dashboard";
 
+
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -206,7 +207,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Most Saved Jobs */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        {/* <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
           <h3 className="text-2xl font-semibold mb-6 flex items-center gap-3">
             <Clock className="h-6 w-6 text-teal-600" />
             Most Saved Jobs
@@ -229,11 +230,11 @@ export default function AdminDashboard() {
               <p className="text-gray-500 py-8 text-center">No saved jobs data available yet.</p>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Extra Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white rounded-3xl shadow-sm border border-gray-100 p-10">
+      {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white rounded-3xl shadow-sm border border-gray-100 p-10">
         <div className="text-center">
           <p className="text-4xl font-bold text-gray-900">{stats.totalRoles}</p>
           <p className="text-sm text-gray-500 mt-2">Total Roles</p>
@@ -250,7 +251,7 @@ export default function AdminDashboard() {
           <p className="text-4xl font-bold text-gray-900">{stats.totalDocumentsUploaded}</p>
           <p className="text-sm text-gray-500 mt-2">Documents Uploaded</p>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

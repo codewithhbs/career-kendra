@@ -1,14 +1,17 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",      // ✅ service ki jagah host use karo
+  port: 465,
+  secure: true,                // ✅ SSL
   auth: {
     user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
+    pass: process.env.SMTP_PASSWORD,  // ← App Password (no spaces)
   },
 });
 
 const sendEmail = async (html, options) => {
+  console.log("I am hit for sending email")
   try {
     const info = await transporter.sendMail({
       from: `"Career Kendra" <${process.env.SMTP_EMAIL}>`,
@@ -18,6 +21,7 @@ const sendEmail = async (html, options) => {
     });
 
     if (info.accepted && info.accepted.length > 0) {
+      console.log("i am accepted")
       return {
         status: true,
         message: "Email sent successfully",

@@ -4,7 +4,9 @@ const sendEmail = require("../utils/sendEmail");
 const worker = new Worker(
   "emailQueue",
   async (job) => {
-    const { html, options } = job.data;
+    console.log(`[EmailWorker] Job "${job.name}" started`);
+
+    const { html, options } = job.data; // ✅ job.data se lo, receiver_email nahi
 
     await sendEmail(html, options);
   },

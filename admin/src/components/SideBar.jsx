@@ -38,6 +38,11 @@ const navItems = [
         path: "/dashboard",
         icon: <LayoutDashboard size={18} />
       },
+      {
+        label: "Data Overview",
+        path: "/all-job-data",
+        icon: <LayoutDashboard size={18} />
+      },
     ],
   },
 
@@ -97,26 +102,26 @@ const navItems = [
         path: "/employers",
         icon: <Users size={18} />
       },
-      {
-        label: "Company Employees",
-        path: "/active/company-employees",
-        icon: <TeamIcon size={18} />
-      },
-      {
-        label: "Admins",
-        path: "/active/admins",
-        icon: <ShieldCheck size={18} />
-      },
-      {
-        label: "Roles",
-        path: "/active/roles",
-        icon: <UserCheckIcon size={18} />
-      },
-      {
-        label: "Permissions",
-        path: "/active/permission",
-        icon: <ArrowUpRightSquare size={18} />
-      }
+      // {
+      //   label: "Company Employees",
+      //   path: "/active/company-employees",
+      //   icon: <TeamIcon size={18} />
+      // },
+      // {
+      //   label: "Admins",
+      //   path: "/active/admins",
+      //   icon: <ShieldCheck size={18} />
+      // },
+      // {
+      //   label: "Roles",
+      //   path: "/active/roles",
+      //   icon: <UserCheckIcon size={18} />
+      // },
+      // {
+      //   label: "Permissions",
+      //   path: "/active/permission",
+      //   icon: <ArrowUpRightSquare size={18} />
+      // }
     ],
   },
 

@@ -43,33 +43,33 @@ const ViewApply = () => {
   const fileInputRef = useRef(null);
 
   const parsedAnswers = (() => {
-  try {
-    if (!application?.screeningAnswers) return null;
+    try {
+      if (!application?.screeningAnswers) return null;
 
-    const raw =
-      typeof application.screeningAnswers === "string"
-        ? JSON.parse(application.screeningAnswers)
-        : application.screeningAnswers;
+      const raw =
+        typeof application.screeningAnswers === "string"
+          ? JSON.parse(application.screeningAnswers)
+          : application.screeningAnswers;
 
-    // Array hai to seedha return
-    if (Array.isArray(raw)) return raw;
+      // Array hai to seedha return
+      if (Array.isArray(raw)) return raw;
 
-    // { q_xxx: "{...}", q_yyy: "{...}" } format
-    if (typeof raw === "object" && raw !== null) {
-      return Object.values(raw).map((val) => {
-        try {
-          return typeof val === "string" ? JSON.parse(val) : val;
-        } catch {
-          return val;
-        }
-      });
+      // { q_xxx: "{...}", q_yyy: "{...}" } format
+      if (typeof raw === "object" && raw !== null) {
+        return Object.values(raw).map((val) => {
+          try {
+            return typeof val === "string" ? JSON.parse(val) : val;
+          } catch {
+            return val;
+          }
+        });
+      }
+
+      return null;
+    } catch {
+      return null;
     }
-
-    return null;
-  } catch {
-    return null;
-  }
-})();
+  })();
 
   const joditConfig = {
     readonly: false,
@@ -623,30 +623,34 @@ const ViewApply = () => {
                       {application.joiningDate
                         ? new Date(application.joiningDate).toLocaleDateString(
                             "en-IN",
-                            { day: "numeric", month: "long", year: "numeric" },
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            },
                           )
                         : "Not Specified"}
                     </p>
                   </div>
-                  {/* {console.log("application",application)} */}
+
                   {application.leavingDate && (
                     <div>
                       <p className="text-emerald-700 text-sm font-medium tracking-widest">
                         LEAVING DATE
                       </p>
                       <p className="text-2xl font-semibold text-gray-800 mt-3">
-                        {application.leavingDate
-                          ? new Date(
-                              application.leavingDate,
-                            ).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            })
-                          : "Not Specified"}
+                        {new Date(application.leavingDate).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          },
+                        )}
                       </p>
                     </div>
                   )}
+
                   <div>
                     <p className="text-emerald-700 text-sm font-medium tracking-widest">
                       DECIDED BY
@@ -656,6 +660,61 @@ const ViewApply = () => {
                     </p>
                   </div>
                 </div>
+
+                {/* ── Joining Status Block ── */}
+                {application.status === "joined" && (
+                  <div className="mt-8 pt-8 border-t border-emerald-200">
+                    <div className="flex items-center gap-3 bg-emerald-100 border border-emerald-300 rounded-2xl px-6 py-4">
+                      <ThumbsUp className="w-5 h-5 text-emerald-700" />
+                      <div>
+                        <p className="text-xs font-semibold tracking-widest text-emerald-700">
+                          JOINING STATUS
+                        </p>
+                        <p className="text-lg font-bold text-emerald-800 mt-0.5">
+                          Candidate Joined
+                        </p>
+                        {application.joiningDate && (
+                          <p className="text-sm text-emerald-700 mt-0.5">
+                            Joined on:{" "}
+                            {new Date(
+                              application.joiningDate,
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {application.status === "not_joined" && (
+                  <div className="mt-8 pt-8 border-t border-emerald-200">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl px-6 py-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <ThumbsDown className="w-5 h-5 text-red-600" />
+                        <p className="text-xs font-semibold tracking-widest text-red-700">
+                          JOINING STATUS
+                        </p>
+                      </div>
+                      <p className="text-lg font-bold text-red-800">
+                        Candidate Did Not Join
+                      </p>
+                      {application.notJoinReason && (
+                        <div className="mt-3 bg-red-100 rounded-xl px-4 py-3">
+                          <p className="text-xs font-semibold text-red-600 tracking-widest mb-1">
+                            REASON
+                          </p>
+                          <p className="text-sm text-red-900">
+                            {application.notJoinReason}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
