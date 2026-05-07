@@ -17,7 +17,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import axios from "axios";
 
-const DASHBOARD_API = "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
+const DASHBOARD_API =
+  "https://api.careerkendra.com/api/v1/auth-employer/dashboard";
 
 interface AdminHeaderProps {
   onMenuClick?: () => void;
@@ -26,7 +27,7 @@ interface AdminHeaderProps {
   companyEmail?: string;
   name?: string;
   companyName?: string;
-  token?: string;                    // Add token prop
+  token?: string; // Add token prop
 }
 
 interface Notification {
@@ -44,7 +45,7 @@ export function AdminHeader({
   companyEmail,
   name,
   companyName,
-  token,                       // Receive token from parent
+  token, // Receive token from parent
 }: AdminHeaderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -63,7 +64,9 @@ export function AdminHeader({
         const result = await res.json();
         if (result.success && result.recentMessages) {
           setNotifications(result.recentMessages);
-          const unread = result.recentMessages.filter((n: Notification) => !n.isRead).length;
+          const unread = result.recentMessages.filter(
+            (n: Notification) => !n.isRead,
+          ).length;
           setUnreadCount(unread);
         }
       }
@@ -90,21 +93,18 @@ export function AdminHeader({
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // Update UI instantly
       setNotifications((prev) =>
-        prev.map((m) =>
-          m.id === msgId ? { ...m, isRead: true } : m
-        )
+        prev.map((m) => (m.id === msgId ? { ...m, isRead: true } : m)),
       );
 
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
       // Optional: Refresh full list
       // fetchNotifications();
-
     } catch (error) {
       console.error("Failed to mark message as read", error);
     }
@@ -115,22 +115,21 @@ export function AdminHeader({
 
     try {
       // Mark all unread messages as read
-      const unreadMessages = notifications.filter(n => !n.isRead);
-      
+      const unreadMessages = notifications.filter((n) => !n.isRead);
+
       await Promise.all(
-        unreadMessages.map(msg =>
+        unreadMessages.map((msg) =>
           axios.put(
             `/auth/mark-message-read/${msg.id}`,
             {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-        )
+            { headers: { Authorization: `Bearer ${token}` } },
+          ),
+        ),
       );
 
       // Update UI
       setNotifications((prev) => prev.map((m) => ({ ...m, isRead: true })));
       setUnreadCount(0);
-
     } catch (error) {
       console.error("Failed to mark all as read", error);
     }
@@ -152,11 +151,17 @@ export function AdminHeader({
 
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 bg-orange-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">{company?.employer?.employerName?.charAt(0) || user?.employerName?.charAt(0) || "E"}</span>
+              <span className="text-white font-bold text-xl">
+                {company?.employer?.employerName?.charAt(0) ||
+                  user?.employerName?.charAt(0) ||
+                  "E"}
+              </span>
             </div>
             <div className="hidden sm:block">
               <p className="font-semibold text-lg tracking-tight text-gray-900">
-                {company?.employer?.employerName || user?.employerName || "Employer"}
+                {company?.employer?.employerName ||
+                  user?.employerName ||
+                  "Employer"}
               </p>
             </div>
           </div>
@@ -175,7 +180,6 @@ export function AdminHeader({
 
         {/* Right Side */}
         <div className="flex items-center gap-3">
-
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -189,7 +193,7 @@ export function AdminHeader({
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuContent align="end" className="w-84">
               <div className="p-4 border-b">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
@@ -200,7 +204,9 @@ export function AdminHeader({
                   </Avatar>
                   <div>
                     <p className="font-semibold">{name || "Admin User"}</p>
-                    <p className="text-sm text-gray-500 truncate">{companyEmail}</p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {companyEmail}
+                    </p>
                     <p className="text-xs text-orange-600">{companyName}</p>
                   </div>
                 </div>
@@ -224,8 +230,8 @@ export function AdminHeader({
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem 
-                onClick={onLogout} 
+              <DropdownMenuItem
+                onClick={onLogout}
                 className="text-red-600 focus:text-red-600 cursor-pointer"
               >
                 <LogOut className="mr-3 h-4 w-4" />

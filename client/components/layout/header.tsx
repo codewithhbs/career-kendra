@@ -48,7 +48,7 @@ export default function Header() {
       ? "/employer/profile"
       : "/auth/login";
 
-  const userDisplayName = activeUser?.name || "Profile";
+  const userDisplayName = activeUser?.name || "Dashboard";
 
   // Dynamic Logo
   const logoSrc = settings?.siteLogo || "/assets/logo/logo.svg";

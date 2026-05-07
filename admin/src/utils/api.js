@@ -27,44 +27,36 @@ api.interceptors.response.use(
     (error) => {
         const status = error.response?.status;
         const message =
-            error.response?.data?.message || "Something went wrong";
-
-        if (error.response?.status !== 401) {
-            toast.error(message);
-        }
+            error.response?.data?.error ||   // server "error" field bhejta hai
+            error.response?.data?.message || 
+            "Something went wrong";
 
         if (status === 401) {
             console.warn("Session expired. Logging out...");
 
-            // localStorage.removeItem("token");
-            // localStorage.removeItem("user");
+            // Dono tokens remove karo
+            localStorage.removeItem("adpt_token");
+            localStorage.removeItem("empl_token");
+            localStorage.removeItem("user");
 
-            // localStorage.clear();
+            toast.error(message); // "Token expired. Please login again."
 
-            // window.location.href = "/login";
+            window.location.href = "/login";
+
+            return Promise.reject({ status, message, original: error });
         }
 
+        // Baaki sab errors pe toast dikhao
+        toast.error(message);
 
-        if (status === 403) {
-            console.warn("Forbidden:", message);
-        }
-
-        if (status === 404) {
-            console.warn("Not Found:", message);
-        }
-
-        if (status >= 500) {
-            console.error("Server Error:", message);
-        }
-
-
-        if (!error.response) {
-            console.error("Network Error. Check internet connection.");
-        }
+        if (status === 403) console.warn("Forbidden:", message);
+        if (status === 404) console.warn("Not Found:", message);
+        if (status >= 500) console.error("Server Error:", message);
+        if (!error.response) console.error("Network Error. Check internet connection.");
 
         return Promise.reject({
             status,
-            message:error.response?.data?.message || error.response?.data?.error || "An error occurred",
+            message,
             original: error,
         });
     }

@@ -226,7 +226,7 @@ exports.resendOtp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "OTP resent successfully",
-      otp, // ❌ production me OTP return mat karna
+      // otp, // ❌ production me OTP return mat karna
     });
 
   } catch (error) {

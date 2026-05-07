@@ -60,7 +60,7 @@ const Topbar = ({ onMenuClick }) => {
 
       <div className="flex items-center gap-3">
         {/* Search */}
-        <div
+        {/* <div
           style={{
             display: "flex",
             alignItems: "center",
@@ -77,10 +77,10 @@ const Topbar = ({ onMenuClick }) => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <span className="hidden sm:inline">Search...</span>
-        </div>
+        </div> */}
 
         {/* Notifications */}
-        <div style={{ position: "relative" }}>
+        {/* <div style={{ position: "relative" }}>
           <button
             onClick={() => setNotifOpen(!notifOpen)}
             style={{
@@ -149,7 +149,7 @@ const Topbar = ({ onMenuClick }) => {
               ))}
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Avatar */}
         <div
